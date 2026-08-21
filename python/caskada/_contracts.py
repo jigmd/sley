@@ -180,12 +180,16 @@ class ScopeFailure:
     settled_before_fence: tuple[Terminal, ...]
     result: ScopeResult | None
     failing_activation_id: int | None
+    _suppressed_count: int = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_suppressed_count", len(self.suppressed))
 
     def __repr__(self) -> str:
         return (
             "ScopeFailure("
             f"primary=<Failure {self.primary.failure_id}>, "
-            f"suppressed=<count {len(self.suppressed)}>, "
+            f"suppressed=<count {self._suppressed_count}>, "
             f"settled_before_fence=<count {len(self.settled_before_fence)}>, "
             f"result={'present' if self.result is not None else 'None'}, "
             f"failing_activation_id={self.failing_activation_id!r})"
