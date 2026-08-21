@@ -18,8 +18,8 @@ long_description = (
 setup(
     name="caskada",
     version="3.0.0",
-    packages=["caskada", "caskada_logging"],
-    package_data={"caskada": ["py.typed"], "caskada_logging": ["py.typed"]},
+    packages=["caskada"],
+    package_data={"caskada": ["py.typed"]},
     author="Victor Duarte",
     description="Structured workflow runtime for Python and TypeScript.",
     long_description=long_description,

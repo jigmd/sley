@@ -1,16 +1,6 @@
 {
   "include": [
-    "v3_definitions_typing.py",
-    "v3_serial_typing.py",
-    "v3_results_typing.py",
-    "v3_retry_typing.py",
-    "v3_flow_recovery_typing.py",
-    "v3_cancellation_typing.py",
-    "v3_timers_typing.py",
-    "v3_limits_typing.py",
-    "v3_events_typing.py",
-    "v3_reports_typing.py",
-    "v3_logging_typing.py"
+    "v3_typing.py"
   ],
   "extraPaths": [".."],
   "typeCheckingMode": "strict",

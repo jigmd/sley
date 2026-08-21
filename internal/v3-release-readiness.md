@@ -1,57 +1,22 @@
 # V3 Release Readiness
 
-- Status: runtime simplification in progress; prior release evidence superseded
+- Status: implementation in progress
 - Evidence date: 2026-08-21
 - Authority: [RFC 0001](rfcs/0001-caskada-v3-runtime.md)
 
-## Gate Matrix
+## Current Gates
 
-| Gate | Status       | Evidence                                                                                                                                                                                                                                  |
-| ---: | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|    1 | Pass         | `conformance/run-all.py` reports exact Python/TypeScript agreement across all 68 shared fixtures and scale programs.                                                                                                                      |
-|    2 | Pass         | The Python public surface imports under CPython 3.13.11; strict TypeScript 5.9.3 compilation passes with exact optional properties and unchecked indexed access enabled.                                                                  |
-|    3 | Pass         | Serial topology, state, input, output, terminal, failure, event, and stats snapshots are byte-equivalent across ports.                                                                                                                    |
-|    4 | Pass         | Shared scale cases cover 100,000 nodes, 10,000 scopes, 20,000 fan-out arms, and concurrent compiled-graph reuse; port tests cover bounded failure representation and timer/packet behavior.                                               |
-|    5 | Pass         | Python and TypeScript cancellation suites cover cooperative and uncooperative work, immutable fences, grace, and abandonment.                                                                                                             |
-|    6 | Pass         | Current guides teach function-backed nodes, state/input, `emit`/`end`, target-first `link`, `Flow`, and direct `run()` state before policy.                                                                                               |
-|    7 | Pass         | Official examples use buffered Context control and introduce input, output, topology, combine, and `start()` only where their lesson needs them.                                                                                          |
-|    8 | Pass         | All 36 Python and two TypeScript cookbook contracts execute from staged projects with test-owned service fixtures. A fresh independent before/after API review accepted the complete migration after its pedagogy findings were resolved. |
-|    9 | Pass         | The current-source scan is clean outside explicit migration/history and negative contract tests. Generated v2 translation artifacts were removed.                                                                                         |
-|   10 | Pass         | Both packages declare zero runtime dependencies; the browser bundle passes a real Chromium snapshot; concurrency tests prove run-local framework state and distinct top-level state carriers.                                             |
-|   11 | Partial pass | A fresh independent author-API review accepts D10 with no blocker or major finding. Kernel-semantics and cross-port-implementability reviews remain pending.                                                                              |
+| Gate | Status  | Evidence |
+| ---- | ------- | -------- |
+| Lean normative contract | Pass | RFC 0001 contains only retained v3 behavior and explicit non-goals. |
+| Python runtime | Pass | 36 runtime tests, Ruff, strict mypy, Pyright, sdist, and wheel pass. |
+| TypeScript runtime | Pending | The port still implements the superseded scheduler contract. |
+| Cross-port conformance | Pending | Fixtures and adapters still contain deleted feature groups. |
+| Author documentation | Pending | Repository guides still describe removed features. |
+| Cookbook execution | Pending | Examples require verification against both final packages. |
+| Package checks | Pending | Final ESM, CommonJS, browser, wheel, and installed typing checks remain. |
+| Independent review | Pending | Review the completed lean kernel and cross-port behavior. |
 
-## Port Evidence
-
-Python:
-
-- 141 runtime tests pass.
-- Strict mypy 1.17.1 and Pyright 1.1.413 checks pass.
-- The sdist and wheel build; the wheel installs cleanly; both public packages
-  expose PEP 561 types; installed imports and strict mypy consumption pass.
-
-TypeScript:
-
-- 146 runtime tests pass through the package test script.
-- Strict declarations, fixtures, and typed cookbook examples compile.
-- The browser bundle contains no Node.js built-in import and passes the exact
-  Chromium fan-out/combine/report snapshot.
-- The packed artifact loads its core and logging exports through ESM and
-  CommonJS.
-
-Repository:
-
-- All 38 cookbook contracts pass.
-- The cookbook catalog, Python parsing, changed-file formatting, Markdown
-  fences/local links, baseline hashes, and `git diff --check` pass.
-
-## Freeze Blockers
-
-The implementation is not ready for release or API freeze while the lean-runtime
-pass is active. Two independent reviews will remain afterward:
-
-- The kernel-semantics review required by release gate 11.
-- The cross-port-implementability review required by release gate 11.
-
-The prior size-triggered architecture verdict no longer applies to the changed
-module hashes. The cookbook and author-API reviews remain useful, but final
-runtime evidence must be regenerated after simplification.
+The implementation is not ready for release or API freeze until every pending
+gate is regenerated against the lean runtime. Evidence from the superseded D10
+implementation is not release evidence.

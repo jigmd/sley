@@ -6,95 +6,46 @@
 
 ## Ownership
 
-- Owns the Python public API, runtime internals, packaging metadata, and
+- Owns the Python public API, runtime internals, packaging, inline types, and
   Python-specific tests.
-- `caskada/__init__.py` is the explicit public facade. Internal ownership is
-  divided among `_contracts.py`, `_definition.py`, `_execution.py`, `_state.py`,
-  `_failures.py`, `_timing.py`, `_observation.py`, and `_scheduling.py`.
-- `caskada_logging` is a non-core standard-library logging adapter package; it must
-  remain a synchronous projection of `RunEvent` and must not add scheduler
-  buffering or delivery policy.
+- `caskada/__init__.py` is the public facade. `_contracts.py` owns public values,
+  `_definition.py` graph definitions and compilation, `_state.py` state capture,
+  and `_scheduling.py` graph execution.
 
 ## Local Contracts
 
-- `internal/rfcs/0001-caskada-v3-runtime.md` is the normative behavior source.
-- Shared semantics must consume the language-neutral conformance fixtures;
-  Python-specific tests may add only host-language construction and typing
-  assertions.
-- Public definitions use exact runtime validation where the RFC requires it;
-  Python coercion and subclass acceptance must not silently widen the contract.
-- Implementation phases land in RFC order. A later scheduler phase must not be
-  used to conceal an incomplete earlier layer.
+- `internal/rfcs/0001-caskada-v3-runtime.md` is normative.
+- Shared semantics consume language-neutral conformance fixtures. Python tests
+  add host-language validation, asyncio, and typing coverage.
+- Public definitions fail immediately on invalid values. Application failures
+  become runtime `Failure` records only where retry or recovery can act on them.
 
 ## Work Guidance
 
-- Keep public imports stable through `caskada/__init__.py`. Split runtime internals
-  into focused modules when doing so makes ownership and control flow easier to
-  understand.
-- `_definition.py` is inert graph data and compilation. `_execution.py` composes
-  the public `Flow` lifecycle with state capture and `_scheduling.py`, the sole
-  activation and scope orchestrator. Definition and leaf modules must not import
-  or call back into the scheduler.
-- `_state.py` performs only start-boundary validation and a native shallow copy;
-  do not wrap normal Python dictionary behavior in a framework collection.
-- Keep `py.typed` markers in both public packages so installed mypy and Pyright
-  consumers receive the same inline types verified from source.
-- Prefer explicit private helpers over framework abstractions that are not part
-  of the accepted contract.
-- Raise immediately on invalid public input and impossible kernel states; do not
-  conceal defects with fallback behavior.
+- Keep `caskada/__init__.py` to imports and `__all__`; scheduler logic is private.
+- Keep the shipped runner smaller than its verification. Use ordinary `dict`,
+  `asyncio` tasks, lists, and tuples before custom runtime machinery.
+- Definitions store no invocation state. `_scheduling.py` is the only activation
+  and scope orchestrator; leaf modules do not call back into it.
+- `_state.py` performs only start-boundary validation and a native shallow copy.
+- Preserve `caskada/py.typed` so installed mypy and Pyright users receive the
+  verified inline types.
+- Let `BaseException` keep native behavior. Catch ordinary application
+  exceptions only at callbacks and declared policy boundaries.
+- Raise on impossible compiled states; do not hide runtime defects in fallback
+  outcomes.
 
 ## Verification
 
-- Run `PYTHONPATH=python python3 -m unittest python.tests.test_v3_definitions
-python.tests.test_v3_compile python.tests.test_v3_serial
-python.tests.test_v3_state python.tests.test_v3_results
-python.tests.test_v3_failures python.tests.test_v3_atomic
-python.tests.test_v3_retry python.tests.test_v3_flow_recovery
-python.tests.test_v3_cancellation python.tests.test_v3_timers
-python.tests.test_v3_limits python.tests.test_v3_concurrency
-python.tests.test_v3_stats python.tests.test_v3_events
-python.tests.test_v3_reports python.tests.test_v3_logging
-python.tests.test_v3_scale` for definition,
-  compilation, deterministic serial execution, state-carrier semantics,
-  result/handle behavior, portable failure normalization, and atomic callback
-  settlement, retry policy, retry delays, Node recovery, and Flow failure/recovery
-  propagation, caller cancellation, cooperative callback cancellation, and
-  cancellation suppression, run deadlines, Node attempt timeouts, grace,
-  abandonment, and run-wide and scope-local resource admission limits.
-  Topology-aware concurrency coverage fixes automatic and explicit global
-  ceilings, local scope slots, retry permit release and priority, fair
-  cross-scope admission, and sibling fencing before Flow recovery.
-  Stats coverage fixes committed counters and the frozen terminal duration for
-  completed, failed, cancelled, and abandoned results.
-  Event coverage fixes the public event schema, one-based sequence, opening and
-  terminal bundles, callback dispositions, transition and terminal payloads,
-  nested scope closure, failure/retry references, synchronous cancellation
-  publication, observer disablement/diagnostics, and terminal-time exclusion.
-  Report coverage fixes omission versus explicit data, accepted accounting with
-  or without an observer, name and budget precedence, reentrant observer
-  disablement, callback-phase availability, fence delivery, timer checkpoints,
-  and Context-lifetime closure.
-  Logging-adapter coverage fixes one synchronous standard-library log record per
-  event, fixed severity mapping, exact event retention without application-data
-  formatting, and nonfatal sink failure.
-  Scale coverage fixes iterative 100,000-node, 10,000-scope, and 20,000-arm
-  execution through shared conformance, plus bounded representation and
-  identity semantics for a 10,000-Failure replacement chain.
-- Run strict mypy and Pyright against `python/tests/v3_definitions_typing.py`
-  `python/tests/v3_serial_typing.py`, `python/tests/v3_results_typing.py`,
-  `python/tests/v3_retry_typing.py`, and
-  `python/tests/v3_flow_recovery_typing.py`, and
-  `python/tests/v3_cancellation_typing.py`, and
-  `python/tests/v3_timers_typing.py`, and
-  `python/tests/v3_limits_typing.py`, and
-  `python/tests/v3_events_typing.py`, and
-  `python/tests/v3_reports_typing.py`, and
-  `python/tests/v3_logging_typing.py`.
-  `python/tests/pyrightconfig.json` owns the strict Pyright target and source
-  path for this fixture set.
-- Build both the source distribution and wheel from `python/`; the wheel must
-  rebuild successfully from the generated source archive.
+- Run `PYTHONPATH=python python -m unittest discover -s python/tests -p
+  'test_v3_*.py'` for definition, routing, state/input, terminals, nested Flow,
+  combine, atomic control, results, retry, recovery, concurrency, and cycle
+  limits.
+- Run strict mypy and Pyright against `python/tests/v3_typing.py`.
+- Run Ruff checks and formatting over `python/caskada`, `python/tests`, and
+  `python/setup.py`.
+- Build the source distribution and wheel from `python/`; the wheel must rebuild
+  from the generated source archive.
 - Run `python3 conformance/run-all.py` after shared semantic changes.
 
 ## Child DOX Index

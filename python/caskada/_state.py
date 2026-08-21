@@ -3,22 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, cast
+from typing import TypeVar, cast
 
-from ._contracts import OptionValidationError
-
-type _StateCarrier = dict[str, Any]
+StateT = TypeVar("StateT")
 
 
-def _capture_initial_state(initial_state: object) -> _StateCarrier:
+def _capture_initial_state(initial_state: StateT) -> StateT:
     if not isinstance(initial_state, Mapping):
-        raise OptionValidationError("initial_state must be a Mapping")
-    try:
-        state = dict(initial_state)
-    except BaseException as cause:
-        raise OptionValidationError(
-            "initial_state could not be shallow-copied"
-        ) from cause
-    if any(type(key) is not str for key in state):
-        raise OptionValidationError("initial_state keys must be exact strings")
-    return cast(_StateCarrier, state)
+        raise TypeError("initial_state must be a mapping")
+    state = dict(initial_state)
+    if any(not isinstance(key, str) for key in state):
+        raise TypeError("initial_state keys must be strings")
+    return cast(StateT, state)
