@@ -11,7 +11,7 @@
 | Lean normative contract | Pass | RFC 0001 contains only retained v3 behavior and explicit non-goals. |
 | Python runtime | Pass | 36 runtime tests, Ruff, strict mypy, Pyright, sdist, and wheel pass. |
 | TypeScript runtime | Pass | 32 runtime tests, strict `tsc`, ESM, CommonJS, declarations, and package build pass. |
-| Cross-port conformance | Pending | Fixtures and adapters still contain deleted feature groups. |
+| Cross-port conformance | Pass | 18 exact retained-behavior cases pass through both public packages and match the accepted snapshots. |
 | Author documentation | Pending | Repository guides still describe removed features. |
 | Cookbook execution | Pending | Examples require verification against both final packages. |
 | Package checks | Partial | ESM, CommonJS, declarations, tarball, sdist, and wheel pass. The browser bundle builds without Node.js imports, but Chromium cannot launch on this host because `libglib-2.0.so.0` is unavailable. |

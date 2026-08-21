@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "implicit_link",
+      "requirement": "Silent handlers follow an unlabelled link and share state.",
+      "expected": {
+        "status": "completed",
+        "state": { "count": 2 },
+        "terminals": [{ "type": "exit", "action": null, "has_output": true, "output": null, "sequence": 1, "source_activation_id": 3 }]
+      }
+    },
+    {
+      "id": "named_input",
+      "requirement": "Named emissions carry branch input.",
+      "expected": {
+        "status": "completed",
+        "state": { "seen": 7 },
+        "terminals": [{ "type": "exit", "action": null, "has_output": true, "output": 7, "sequence": 1, "source_activation_id": 3 }]
+      }
+    },
+    {
+      "id": "unlabelled_input",
+      "requirement": "Unlabelled emissions can replace branch input.",
+      "expected": {
+        "status": "completed",
+        "state": { "seen": 9 },
+        "terminals": [{ "type": "exit", "action": null, "has_output": true, "output": 9, "sequence": 1, "source_activation_id": 3 }]
+      }
+    },
+    {
+      "id": "fanout_ends",
+      "requirement": "Repeated emissions fan out and End outputs settle independently.",
+      "expected": {
+        "status": "completed",
+        "state": {},
+        "terminals": [
+          { "type": "end", "action": null, "has_output": true, "output": 10, "sequence": 1, "source_activation_id": 3 },
+          { "type": "end", "action": null, "has_output": true, "output": 20, "sequence": 2, "source_activation_id": 4 }
+        ]
+      }
+    },
+    {
+      "id": "output_presence",
+      "requirement": "End omission differs from an explicit null output.",
+      "expected": {
+        "status": "completed",
+        "state": {},
+        "terminals": [
+          { "type": "end", "action": null, "has_output": false, "output": null, "sequence": 1, "source_activation_id": 2 },
+          { "type": "end", "action": null, "has_output": true, "output": null, "sequence": 2, "source_activation_id": 2 }
+        ]
+      }
+    },
+    {
+      "id": "combine_preserve",
+      "requirement": "A silent combiner observes outputs and preserves terminals.",
+      "expected": {
+        "status": "completed",
+        "state": { "total": 3 },
+        "terminals": [
+          { "type": "end", "action": null, "has_output": true, "output": 1, "sequence": 1, "source_activation_id": 3 },
+          { "type": "end", "action": null, "has_output": true, "output": 2, "sequence": 2, "source_activation_id": 4 }
+        ]
+      }
+    },
+    {
+      "id": "nested_combine",
+      "requirement": "A nested combiner can replace terminals with one continuation.",
+      "expected": {
+        "status": "completed",
+        "state": { "total": 50 },
+        "terminals": [{ "type": "exit", "action": null, "has_output": true, "output": 50, "sequence": 4, "source_activation_id": 6 }]
+      }
+    },
+    {
+      "id": "declared_exit",
+      "requirement": "A declared named Flow exit settles successfully.",
+      "expected": {
+        "status": "completed",
+        "state": {},
+        "terminals": [{ "type": "exit", "action": "done", "has_output": true, "output": 4, "sequence": 1, "source_activation_id": 2 }]
+      }
+    },
+    {
+      "id": "unknown_action",
+      "requirement": "An unknown action fails the scope.",
+      "expected": {
+        "status": "failed",
+        "state": {},
+        "terminals": [],
+        "failure": { "kind": "unknown_action", "attempt": null, "previous_kind": null }
+      }
+    },
+    {
+      "id": "atomic_unknown",
+      "requirement": "One unknown route rejects the complete callback buffer.",
+      "expected": {
+        "status": "failed",
+        "state": {},
+        "terminals": [],
+        "failure": { "kind": "unknown_action", "attempt": null, "previous_kind": null }
+      }
+    },
+    {
+      "id": "retry",
+      "requirement": "Retry repeats the handler and discards failed control buffers.",
+      "expected": {
+        "status": "completed",
+        "state": { "calls": 3 },
+        "terminals": [
+          { "type": "end", "action": null, "has_output": true, "output": "attempt-3", "sequence": 1, "source_activation_id": 2 }
+        ]
+      }
+    },
+    {
+      "id": "node_recovery",
+      "requirement": "Node recovery can replace a handler failure.",
+      "expected": {
+        "status": "completed",
+        "state": {},
+        "terminals": [
+          { "type": "end", "action": null, "has_output": true, "output": "recovered", "sequence": 1, "source_activation_id": 2 }
+        ]
+      }
+    },
+    {
+      "id": "flow_recovery",
+      "requirement": "Flow recovery sees settled terminals and replaces failure.",
+      "expected": {
+        "status": "completed",
+        "state": { "settled": [1] },
+        "terminals": [
+          { "type": "end", "action": null, "has_output": true, "output": "replacement", "sequence": 2, "source_activation_id": 1 }
+        ]
+      }
+    },
+    {
+      "id": "combine_recovery",
+      "requirement": "Flow recovery receives the failed combine result.",
+      "expected": {
+        "status": "completed",
+        "state": { "combine_outputs": [4] },
+        "terminals": [{ "type": "end", "action": null, "has_output": true, "output": 4, "sequence": 2, "source_activation_id": 1 }]
+      }
+    },
+    {
+      "id": "invalid_return",
+      "requirement": "A non-empty callback return is invalid.",
+      "expected": {
+        "status": "failed",
+        "state": {},
+        "terminals": [],
+        "failure": { "kind": "invalid_outcome", "attempt": 1, "previous_kind": null }
+      }
+    },
+    {
+      "id": "activation_limit",
+      "requirement": "max_activations stops a cycle before excess work starts.",
+      "expected": {
+        "status": "failed",
+        "state": {},
+        "terminals": [],
+        "failure": { "kind": "activation_limit", "attempt": null, "previous_kind": null }
+      }
+    },
+    {
+      "id": "local_concurrency",
+      "requirement": "Flow concurrency bounds callbacks in that scope.",
+      "expected": {
+        "status": "completed",
+        "state": { "peak": 2 },
+        "terminals": [
+          { "type": "exit", "action": null, "has_output": true, "output": 0, "source_activation_id": 3 },
+          { "type": "exit", "action": null, "has_output": true, "output": 1, "source_activation_id": 4 },
+          { "type": "exit", "action": null, "has_output": true, "output": 2, "source_activation_id": 5 },
+          { "type": "exit", "action": null, "has_output": true, "output": 3, "source_activation_id": 6 }
+        ]
+      }
+    },
+    {
+      "id": "nested_end",
+      "requirement": "A hard End bypasses links on a nested Flow.",
+      "expected": {
+        "status": "completed",
+        "state": {},
+        "terminals": [{ "type": "end", "action": null, "has_output": true, "output": 7, "sequence": 1, "source_activation_id": 3 }]
+      }
+    }
+  ]
+}

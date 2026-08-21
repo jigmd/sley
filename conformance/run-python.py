@@ -1,43 +1,295 @@
 from __future__ import annotations
 
+import asyncio
 import json
+import sys
 from pathlib import Path
+from typing import Any
 
-from reference import ReferenceInterpreter
+ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(ROOT / "python"))
 
-ROOT = Path(__file__).parent
-FIXTURE_PATH = ROOT / "fixtures" / "serial.json"
+from caskada import (
+    Context,
+    Flow,
+    RetryPolicy,
+    RunResult,
+    ScopeFailure,
+    ScopeResult,
+    node,
+)
 
 
-def _canonical(value: object) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+def terminal_snapshot(terminal: Any) -> dict[str, Any]:
+    return {
+        "type": terminal.type,
+        "action": terminal.action if terminal.type == "exit" else None,
+        "has_output": terminal.has_output,
+        "output": terminal.output if terminal.has_output else None,
+        "sequence": terminal.sequence,
+        "source_activation_id": terminal.source_activation_id,
+    }
 
 
-def main() -> None:
-    collection = json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
-    if collection.get("schema_version") != 1:
-        raise AssertionError("unsupported fixture schema")
+def result_snapshot(result: RunResult[Any]) -> dict[str, Any]:
+    snapshot: dict[str, Any] = {
+        "status": result.status,
+        "state": result.state,
+        "terminals": [terminal_snapshot(item) for item in result.terminals],
+    }
+    if result.status == "failed":
+        snapshot["failure"] = {
+            "kind": result.failure.kind,
+            "attempt": result.failure.attempt,
+            "previous_kind": (
+                None
+                if result.failure.previous is None
+                else result.failure.previous.kind
+            ),
+        }
+    return snapshot
 
-    observed: list[dict[str, object]] = []
-    fixture_ids: set[str] = set()
-    for fixture in collection["fixtures"]:
-        fixture_id = fixture["id"]
-        if fixture_id in fixture_ids:
-            raise AssertionError(f"duplicate fixture ID {fixture_id}")
-        fixture_ids.add(fixture_id)
 
-        actual = ReferenceInterpreter(fixture["program"]).run()
-        selected = {key: actual[key] for key in fixture["expect"]}
-        if selected != fixture["expect"]:
-            raise AssertionError(
-                f"{fixture_id} mismatch\n"
-                f"expected={json.dumps(fixture['expect'], indent=2, sort_keys=True)}\n"
-                f"actual={json.dumps(selected, indent=2, sort_keys=True)}"
-            )
-        observed.append({"id": fixture_id, "snapshot": selected})
+async def implicit_link() -> RunResult[Any]:
+    def first(context: Context[dict[str, Any]]) -> None:
+        context.state["count"] = 1
 
-    print(_canonical({"schema_version": 1, "fixtures": observed}))
+    def second(context: Context[dict[str, Any]]) -> None:
+        context.state["count"] += 1
+
+    first_node = node(first)
+    first_node.link(node(second))
+    return await Flow(first_node).start({"count": 0}).result()
+
+
+async def named_input() -> RunResult[Any]:
+    source = node(lambda context: context.emit("work", 7))
+    source.link(
+        node(lambda context: context.state.__setitem__("seen", context.input)),
+        "work",
+    )
+    return await Flow(source).start({}).result()
+
+
+async def unlabelled_input() -> RunResult[Any]:
+    def produce(context: Context[dict[str, Any]]) -> None:
+        context.emit(input=9)
+
+    source = node(produce)
+    source.link(node(lambda context: context.state.__setitem__("seen", context.input)))
+    return await Flow(source).start({}).result()
+
+
+async def fanout_ends() -> RunResult[Any]:
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", 1)
+        context.emit("work", 2)
+
+    source = node(dispatch)
+    source.link(node(lambda context: context.end(context.input * 10)), "work")
+    return await Flow(source).start({}).result()
+
+
+async def output_presence() -> RunResult[Any]:
+    def finish(context: Context[dict[str, Any]]) -> None:
+        context.end()
+        context.end(None)
+
+    return await Flow(node(finish)).start({}).result()
+
+
+async def combine_preserve() -> RunResult[Any]:
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", 1)
+        context.emit("work", 2)
+
+    def combine(context: Context[dict[str, Any]], result: ScopeResult) -> None:
+        context.state["total"] = sum(result.outputs)
+
+    source = node(dispatch)
+    source.link(node(lambda context: context.end(context.input)), "work")
+    return await Flow(source, combine=combine).start({}).result()
+
+
+async def nested_combine() -> RunResult[Any]:
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", 2)
+        context.emit("work", 3)
+
+    def combine(context: Context[dict[str, Any]], result: ScopeResult) -> None:
+        context.emit(input=sum(result.outputs))
+
+    source = node(dispatch)
+    source.link(node(lambda context: context.end(context.input * 10)), "work")
+    child = Flow(source, combine=combine)
+    child.link(node(lambda context: context.state.__setitem__("total", context.input)))
+    return await Flow(child).start({}).result()
+
+
+async def declared_exit() -> RunResult[Any]:
+    source = node(lambda context: context.emit("done", 4))
+    return await Flow(source, exits=("done",)).start({}).result()
+
+
+async def unknown_action() -> RunResult[Any]:
+    source = node(lambda context: context.emit("missing"))
+    return await Flow(source).start({}).result()
+
+
+async def atomic_unknown() -> RunResult[Any]:
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("valid", 1)
+        context.emit("missing", 2)
+
+    source = node(dispatch)
+    source.link(
+        node(lambda context: context.state.__setitem__("ran", context.input)),
+        "valid",
+    )
+    return await Flow(source).start({}).result()
+
+
+async def retry() -> RunResult[Any]:
+    calls = 0
+
+    def work(context: Context[dict[str, Any]]) -> None:
+        nonlocal calls
+        calls += 1
+        context.state["calls"] = calls
+        context.end(f"attempt-{calls}")
+        if calls < 3:
+            raise ValueError("retry")
+
+    return await Flow(node(work, retry=RetryPolicy(max_attempts=3))).start({}).result()
+
+
+async def node_recovery() -> RunResult[Any]:
+    def fail(_context: Context[dict[str, Any]]) -> None:
+        raise ValueError("failed")
+
+    def recover(context: Context[dict[str, Any]], _failure: object) -> None:
+        context.end("recovered")
+
+    return await Flow(node(fail, recover=recover)).start({}).result()
+
+
+async def flow_recovery() -> RunResult[Any]:
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("done", 1)
+        context.emit("fail", 2)
+        context.emit("late", 3)
+
+    def fail(_context: Context[dict[str, Any]]) -> None:
+        raise ValueError("failed")
+
+    def recover(context: Context[dict[str, Any]], failure: ScopeFailure) -> None:
+        context.state["settled"] = [item.output for item in failure.terminals]
+        context.end("replacement")
+
+    source = node(dispatch)
+    source.link(node(lambda context: context.end(context.input)), "done")
+    source.link(node(fail), "fail")
+    source.link(node(lambda context: context.state.__setitem__("late", True)), "late")
+    return await Flow(source, recover=recover).start({}).result()
+
+
+async def combine_recovery() -> RunResult[Any]:
+    def combine(_context: object, _result: ScopeResult) -> None:
+        raise ValueError("combine")
+
+    def recover(context: Context[dict[str, Any]], failure: ScopeFailure) -> None:
+        context.state["combine_outputs"] = list(failure.result.outputs)  # type: ignore[union-attr]
+        context.end(sum(failure.result.outputs))  # type: ignore[union-attr,arg-type]
+
+    return (
+        await Flow(
+            node(lambda context: context.end(4)),
+            combine=combine,
+            recover=recover,
+        )
+        .start({})
+        .result()
+    )
+
+
+async def invalid_return() -> RunResult[Any]:
+    invalid = lambda _context: 42
+    return await Flow(node(invalid)).start({}).result()  # type: ignore[arg-type]
+
+
+async def activation_limit() -> RunResult[Any]:
+    looping = node(lambda _context: None)
+    looping.link(looping)
+    return await Flow(looping, max_activations=3).start({}).result()
+
+
+async def local_concurrency() -> RunResult[Any]:
+    active = 0
+    gate = asyncio.Event()
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        for value in range(4):
+            context.emit("work", value)
+
+    async def work(context: Context[dict[str, Any]]) -> None:
+        nonlocal active
+        active += 1
+        context.state["peak"] = max(context.state.get("peak", 0), active)
+        if active == 2:
+            gate.set()
+        await gate.wait()
+        active -= 1
+
+    source = node(dispatch)
+    source.link(node(work), "work")
+    return await Flow(source, concurrency=2).start({}).result()
+
+
+async def nested_end() -> RunResult[Any]:
+    child = Flow(node(lambda context: context.end(7)))
+    child.link(node(lambda context: context.state.__setitem__("ran", True)))
+    return await Flow(child).start({}).result()
+
+
+CASES = {
+    "implicit_link": implicit_link,
+    "named_input": named_input,
+    "unlabelled_input": unlabelled_input,
+    "fanout_ends": fanout_ends,
+    "output_presence": output_presence,
+    "combine_preserve": combine_preserve,
+    "nested_combine": nested_combine,
+    "declared_exit": declared_exit,
+    "unknown_action": unknown_action,
+    "atomic_unknown": atomic_unknown,
+    "retry": retry,
+    "node_recovery": node_recovery,
+    "flow_recovery": flow_recovery,
+    "combine_recovery": combine_recovery,
+    "invalid_return": invalid_return,
+    "activation_limit": activation_limit,
+    "local_concurrency": local_concurrency,
+    "nested_end": nested_end,
+}
+
+
+async def main() -> None:
+    requested = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))["cases"]
+    ids = [case["id"] for case in requested]
+    if set(ids) != set(CASES):
+        raise ValueError("Python adapter case ids do not match fixture ids")
+    snapshots = [
+        {"id": case_id, "snapshot": result_snapshot(await CASES[case_id]())}
+        for case_id in ids
+    ]
+    concurrent = next(
+        item["snapshot"] for item in snapshots if item["id"] == "local_concurrency"
+    )
+    concurrent["terminals"].sort(key=lambda item: item["output"])
+    for terminal in concurrent["terminals"]:
+        terminal.pop("sequence")
+    print(json.dumps(snapshots, separators=(",", ":")))
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

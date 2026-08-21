@@ -1,152 +1,24 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://caskada.dev/conformance/v3-phase0.schema.json",
-  "title": "Caskada v3 Phase 0 fixture collection",
+  "title": "Caskada v3 conformance fixture",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "fixtures"],
+  "required": ["schema_version", "cases"],
   "properties": {
     "schema_version": { "const": 1 },
-    "fixtures": {
+    "cases": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/fixture" }
-    }
-  },
-  "$defs": {
-    "fixture": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "purpose", "requirements", "program", "expect"],
-      "properties": {
-        "id": { "type": "string", "pattern": "^S[0-9]{2}_[a-z0-9_]+$" },
-        "purpose": { "type": "string", "minLength": 1 },
-        "requirements": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "type": "string", "minLength": 1 },
-          "uniqueItems": true
-        },
-        "program": { "$ref": "#/$defs/program" },
-        "expect": {
-          "type": "object",
-          "minProperties": 1,
-          "properties": {
-            "compiled": { "type": "object" },
-            "result": { "type": "object" },
-            "run_projection": { "type": "object" },
-            "event_kinds": { "type": "array", "items": { "type": "string" } },
-            "stats": { "type": "object" },
-            "initial_state_after": {}
-          },
-          "additionalProperties": false
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "requirement", "expected"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "requirement": { "type": "string", "minLength": 1 },
+          "expected": { "type": "object" }
         }
       }
-    },
-    "program": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["root", "elements", "links", "initial_state"],
-      "properties": {
-        "root": { "type": "string", "minLength": 1 },
-        "elements": {
-          "type": "object",
-          "minProperties": 2,
-          "additionalProperties": { "$ref": "#/$defs/element" }
-        },
-        "links": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/link" }
-        },
-        "initial_state": { "type": "object" }
-      }
-    },
-    "element": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["kind", "steps"],
-          "properties": {
-            "kind": { "const": "node" },
-            "steps": { "type": "array", "items": { "$ref": "#/$defs/step" } }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["kind", "entry"],
-          "properties": {
-            "kind": { "const": "flow" },
-            "entry": { "type": "string", "minLength": 1 },
-            "exits": {
-              "type": "array",
-              "items": { "type": "string", "minLength": 1 },
-              "uniqueItems": true
-            },
-            "concurrency": { "type": "integer", "minimum": 1 },
-            "combine": { "type": "array", "items": { "$ref": "#/$defs/step" } }
-          }
-        }
-      ]
-    },
-    "link": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["source", "target"],
-      "properties": {
-        "source": { "type": "string", "minLength": 1 },
-        "target": { "type": "string", "minLength": 1 },
-        "action": { "type": "string", "minLength": 1 }
-      }
-    },
-    "path": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "type": "string", "minLength": 1 }
-    },
-    "step": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["op", "path", "value"],
-          "properties": {
-            "op": { "const": "set" },
-            "path": { "$ref": "#/$defs/path" },
-            "value": {}
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["op", "path", "value"],
-          "properties": {
-            "op": { "const": "append" },
-            "path": { "$ref": "#/$defs/path" },
-            "value": {}
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["op"],
-          "properties": {
-            "op": { "const": "emit" },
-            "action": { "type": "string", "minLength": 1 },
-            "input": {}
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["op"],
-          "properties": {
-            "op": { "const": "end" },
-            "output": {}
-          }
-        }
-      ]
     }
   }
 }

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "revision": "lean-v3",
   "accepted_on": "2026-08-21",
-  "status": "implementation_in_progress",
+  "status": "accepted_implementation_baseline",
   "hash_algorithm": "sha256",
   "authority": [
     {
@@ -11,229 +11,37 @@
     },
     {
       "path": "internal/v3-architecture-verdict.md",
-      "sha256": "4450badedc0964eab24ab5b22ecc94ca074092503ee57eb962c84c129aeaa627"
+      "sha256": "a1ffc40a4196516b4296333de1b35447e19cf630ef8d58a5aad5ea4e563ad608"
     },
     {
       "path": "conformance/fixture.schema.json",
-      "sha256": "de0c7c5028569f22797940af980086d7ec29d6a7f03a00c4f8123bfa55aab3f4"
+      "sha256": "3ae6e94d0378e0c2b374c84ef1da9a9da76d587b094090986da55aebc99d1c41"
     },
     {
-      "path": "conformance/fixtures/serial.json",
-      "sha256": "675c6520e9e3458b5c934589a6c1f358dd20253ade5b239bfb6bc04ea2d1c244"
-    },
-    {
-      "path": "conformance/fixtures/definitions.json",
-      "sha256": "11e851b6cda0ac50df8d8e20d193552c78ceddbc1bdd09200ba4c040b860e3b3"
-    },
-    {
-      "path": "conformance/fixtures/compile-scale.json",
-      "sha256": "38948f62612740b38d0c26b5e82870d3ab8cacb52fad1eae154a894ba49cd917"
-    },
-    {
-      "path": "conformance/fixtures/runtime-scale.json",
-      "sha256": "c48fbbf13501ea190460e615a135bd482910d3ce813660bbe83a4926cadb5079"
-    },
-    {
-      "path": "conformance/failure-recovery.schema.json",
-      "sha256": "2af4fed42acc1706bd12871daf826cea0568b23ba83549e61198caa5c84a76c1"
-    },
-    {
-      "path": "conformance/fixtures/failure-recovery.json",
-      "sha256": "50a34c4236126527685cdebea0e9ba8eea289b0046200abb730fd17bce1e2b39"
-    },
-    {
-      "path": "conformance/scheduling-cancellation.schema.json",
-      "sha256": "d00fe242ef1b4a4c7fe1d15776ac87bf90ffca8711084a572d0b1d6c9213a5f9"
-    },
-    {
-      "path": "conformance/fixtures/scheduling-cancellation.json",
-      "sha256": "8bcd6e8b120ed8a5ea6377ea678ade168c2a4183635119a84b421677976d0d5f"
-    },
-    {
-      "path": "conformance/events-reports-limits.schema.json",
-      "sha256": "54ffdc3e10f7ee0b1a55a9211c6ca5f6f69badba75bdfc0e14ecf4d7e7cf348a"
-    },
-    {
-      "path": "conformance/fixtures/events-reports-limits.json",
-      "sha256": "6d61b552fae3342bb16a4ee54a243c19dcf9ec11dc9e527081253a7511a4522a"
+      "path": "conformance/fixtures/runtime.json",
+      "sha256": "e38a03e277f2c1fb147b04144ca93d629e6ab14e13235bbfa42558ba088e68f1"
     },
     {
       "path": "conformance/coverage.md",
-      "sha256": "1bb0e0be8f91c1727ee7729bc4c608fb354fa0da16b01dee34c707f78b279902"
+      "sha256": "1ea564581d3dd80712779d45254e75465ff00073bd8701ff0b39f1bff65096ff"
     }
   ],
   "verification_tools": [
     {
       "path": "conformance/reference.py",
-      "sha256": "90741a059e9b889dcbf64e2a9c4fb203b33a88d4c360da03482dafa3c50bb15d"
-    },
-    {
-      "path": "conformance/reference.mts",
-      "sha256": "4d36638d89d26dcb6faaa674223c195d10fbb3698a546c33c7a766628dbdf6b2"
+      "sha256": "e0c2da66d12a0096d8a4186fd87ea134454028af02631e03343f5164ad765444"
     },
     {
       "path": "conformance/run-python.py",
-      "sha256": "95b6356abe532a0c3004f86bbcea6f0067c17e5ee31e26bd8e82778b60c9addf"
+      "sha256": "0521715169dcf407ae40a4246bdf48c773469007fbc0f330123a0c1a17a7d474"
     },
     {
       "path": "conformance/run-typescript.mts",
-      "sha256": "545b776e71de9c8b4c891ee65bdf0b2437bfc668dd7f6a44822830ea7ccdbba9"
-    },
-    {
-      "path": "conformance/run-python-definitions.py",
-      "sha256": "7447ddd9ed04bf1db9ce5e8505f859ad6fc601af56909b43b87791af1962d077"
-    },
-    {
-      "path": "conformance/run-typescript-definitions.mts",
-      "sha256": "57de45f6f67b3d6411dba8f38eade3622cb9fb9a0e3af9b9cc685ce16fba40a1"
-    },
-    {
-      "path": "conformance/run-definitions.py",
-      "sha256": "afd4f7961f45ceb445efc5ec232eef7da0e767b8fae31c97efd85cb726240dbc"
-    },
-    {
-      "path": "conformance/run-python-compile.py",
-      "sha256": "96184b86752d8481bcb60fa5798cd3c9e2bc1c84ac20ac14303fe601e87aed0a"
-    },
-    {
-      "path": "conformance/run-typescript-compile.mts",
-      "sha256": "145a057e5356fc59de36b2db569e9cbc7127da4fb8577e9daf930dd28fd0beb1"
-    },
-    {
-      "path": "conformance/run-compile.py",
-      "sha256": "22832778b7bc282a028bf200c4c5459a7c1a715b93838e947dc81023e61eb472"
-    },
-    {
-      "path": "conformance/run-python-compile-scale.py",
-      "sha256": "c7c0af117249cfc2d392fded1ea2a2fae22273161c80af7e0cca6b2cab1c932a"
-    },
-    {
-      "path": "conformance/run-typescript-compile-scale.mts",
-      "sha256": "2e4f53b22f76589f9e5559d7101b29e1568adbbd13492b8d1bea5cdd4d474f6f"
-    },
-    {
-      "path": "conformance/run-compile-scale.py",
-      "sha256": "d6616305890a0fadcbbdfd720ca752e8968d71e4a12ae1efe50b27ef622de620"
-    },
-    {
-      "path": "conformance/run-python-runtime-scale.py",
-      "sha256": "2bc6501378b59cc991fa60a23d09e31cbc06eb5b1626126350124d00343d7b8b"
-    },
-    {
-      "path": "conformance/run-typescript-runtime-scale.mts",
-      "sha256": "12e73e007222509c21c151c4703c24e6ccd716c0526d9cca856439da8cbfd815"
-    },
-    {
-      "path": "conformance/run-runtime-scale.py",
-      "sha256": "c689738a2d50b9fe3316613ce50886a74c341d0d6f4a260ded51ff8784807343"
-    },
-    {
-      "path": "conformance/run-python-serial-production.py",
-      "sha256": "47043e36ab3b78a4bd48cc07478443a940085c9833746ed13db20d400217033a"
-    },
-    {
-      "path": "conformance/run-typescript-serial-production.mts",
-      "sha256": "08d1cbf69bdd5ad9f77a77d2a48e8bd101918a4945eeb1357c9b5e2fdf462d9a"
-    },
-    {
-      "path": "conformance/run-serial-production.py",
-      "sha256": "058f2d7d537a519e61b0a6a4a5738447a3c25adc1ff2cc1436199134f9f6627a"
-    },
-    {
-      "path": "conformance/failure_recovery_reference.py",
-      "sha256": "b94c0f24013d97227e5b83c60471542fcf90ee96ee463b404321accd0f9694cf"
-    },
-    {
-      "path": "conformance/failure-recovery-reference.mts",
-      "sha256": "bbddf870f059a4da80d8e18ae0dfe29721278c92883491c87abd43ebeeb2a396"
-    },
-    {
-      "path": "conformance/run-python-failure-recovery.py",
-      "sha256": "540a5aa3e48a0c1ccbf847b03b30163fd35ebe7a4f2c909b45046f2edd3adc6b"
-    },
-    {
-      "path": "conformance/run-typescript-failure-recovery.mts",
-      "sha256": "2cfb1725bf78ea86099fb0db4e93d723fe5e81d01522e5e8b9fa7618b51d0a7c"
-    },
-    {
-      "path": "conformance/run-python-failure-recovery-production.py",
-      "sha256": "6bf295e90542297c12ff6d320f099023c34ad5cf5935839c538f47dc18f4665b"
-    },
-    {
-      "path": "conformance/run-typescript-failure-recovery-production.mts",
-      "sha256": "d63ab0f20ab047f698d9b5c26d7822db59a806b6a49221ccee2588fb4e74bf28"
-    },
-    {
-      "path": "conformance/run-failure-recovery.py",
-      "sha256": "f2096f3f7fd0673bbea24c760cd9f01f86ea735988276ffc53a3b06c9d6c3fcc"
-    },
-    {
-      "path": "conformance/scheduling_cancellation_reference.py",
-      "sha256": "848dc2fa31c62afc8737f1d517d76cba4eb3fb31d49c125b05fff3bbace125d4"
-    },
-    {
-      "path": "conformance/scheduling-cancellation-reference.mts",
-      "sha256": "c771456771bbe6ad345e49712950fe36e973587669c49279180ee7aa1c81302d"
-    },
-    {
-      "path": "conformance/run-python-scheduling-cancellation.py",
-      "sha256": "f916d90daf44c6e4bd90b86e22e7751eaa33f8a3f345112964e4fdb5286cfff4"
-    },
-    {
-      "path": "conformance/run-typescript-scheduling-cancellation.mts",
-      "sha256": "ced23a319cc1350b773f0a4025736bd962372bf549c608b05c24e0b032073d21"
-    },
-    {
-      "path": "conformance/run-python-scheduling-cancellation-production.py",
-      "sha256": "c57a4e0c98fd1b04f7ff9b5eb106f1bf4bb1e0b891a4cbb37acc731902491dd1"
-    },
-    {
-      "path": "conformance/run-typescript-scheduling-cancellation-production.mts",
-      "sha256": "53e717f0d86eeab10ac98bbb96ce7a229039ac2aa0b33edef324a49651b1756d"
-    },
-    {
-      "path": "conformance/run-scheduling-cancellation.py",
-      "sha256": "9dd1ae082ebb9ffcbe977855c02400caa58eaea37c5faa2530a7be3d36f48f4c"
-    },
-    {
-      "path": "conformance/events_reports_limits_reference.py",
-      "sha256": "7b2b441915901976c6e10603edc718141dd77e8dacb925aa33d4e242fa5f04f6"
-    },
-    {
-      "path": "conformance/events-reports-limits-reference.mts",
-      "sha256": "7f021963010dd82ae0729eb8dca7c1bfc26d9ba481b6c6f758c8da4078e3967d"
-    },
-    {
-      "path": "conformance/run-python-events-reports-limits.py",
-      "sha256": "406a1a78cc461c873d84920fd73f1fd978405e7d4140701b4663fc0b10fd595c"
-    },
-    {
-      "path": "conformance/run-typescript-events-reports-limits.mts",
-      "sha256": "1e287a28ef351aeae8e6cea039c77f607d40e445bf84df3ceb69dd18c04d57d4"
-    },
-    {
-      "path": "conformance/run-python-events-reports-limits-production.py",
-      "sha256": "e8249fadf747a09cba193f7608a04259125935d1657a8b829028bcac10eabd9a"
-    },
-    {
-      "path": "conformance/run-typescript-events-reports-limits-production.mts",
-      "sha256": "d95e6ee4cccb6dd5331ea1081d1869bab5bc4d0ec06ca0ddebf20947e7850c24"
-    },
-    {
-      "path": "conformance/run-events-reports-limits.py",
-      "sha256": "df246d2b4636924ffcded2fd70c4b76583ae557bcce60600487dc178662ea8aa"
-    },
-    {
-      "path": "typescript/tests/browser.v3.entry.ts",
-      "sha256": "6d439c8c17872e3f1bf38166d78689471e3e2490b6de7b8d6571cb85dff0cbdd"
-    },
-    {
-      "path": "typescript/tests/run-browser-v3.py",
-      "sha256": "b05cff2e194b8d4c5d36f720a7026bb4ea0a8a4bd680d41424a78382855c67e8"
+      "sha256": "f946ab186c04af71cf72e409e06aef7d630c1d97e7060879ddc334b16791cf2c"
     },
     {
       "path": "conformance/run-all.py",
-      "sha256": "c3afd9a5d7979446128d7071ad833e1b602383e16cdaaa0acdabe5569d70fcec"
+      "sha256": "bb2b41bf345532b16a442aeb651df0ae32a5fe5ad64ac150b2da3fda2ebd8cc8"
     }
   ]
 }

@@ -5,70 +5,64 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
+
+from reference import load_fixture
 
 ROOT = Path(__file__).parent.parent
-BASELINE_PATH = ROOT / "internal" / "v3-implementation-baseline.json"
+FIXTURE = ROOT / "conformance" / "fixtures" / "runtime.json"
+BASELINE = ROOT / "internal" / "v3-implementation-baseline.json"
 
 
-def _verify_baseline() -> None:
-    manifest = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
-    for group in ("authority", "verification_tools"):
-        for record in manifest[group]:
-            path = ROOT / record["path"]
-            actual = hashlib.sha256(path.read_bytes()).hexdigest()
-            if actual != record["sha256"]:
-                raise AssertionError(f"baseline hash mismatch: {record['path']}")
-
-
-def _run(command: list[str]) -> bytes:
+def run_json(command: list[str]) -> list[dict[str, Any]]:
     completed = subprocess.run(
         command,
         cwd=ROOT,
         check=True,
         capture_output=True,
+        text=True,
     )
-    if completed.stderr:
-        sys.stderr.buffer.write(completed.stderr)
-    return completed.stdout
+    value = json.loads(completed.stdout)
+    if not isinstance(value, list):
+        raise TypeError(f"adapter returned a non-list: {command[0]}")
+    return value
+
+
+def compare(
+    name: str,
+    actual: list[dict[str, Any]],
+    expected: list[dict[str, Any]],
+) -> None:
+    if actual != expected:
+        raise AssertionError(
+            f"{name} conformance mismatch\n"
+            f"expected={json.dumps(expected, indent=2, sort_keys=True)}\n"
+            f"actual={json.dumps(actual, indent=2, sort_keys=True)}"
+        )
+
+
+def verify_baseline() -> None:
+    document = json.loads(BASELINE.read_text(encoding="utf-8"))
+    for group in ("authority", "verification_tools"):
+        for record in document[group]:
+            path = ROOT / record["path"]
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            if digest != record["sha256"]:
+                raise AssertionError(f"baseline hash mismatch: {record['path']}")
 
 
 def main() -> None:
-    _verify_baseline()
-    python_snapshot = _run([sys.executable, "conformance/run-python.py"])
-    typescript_snapshot = _run(
-        ["node", "--import=tsx", "conformance/run-typescript.mts"]
+    cases = load_fixture(FIXTURE)
+    expected = [{"id": case["id"], "snapshot": case["expected"]} for case in cases]
+    python = run_json([sys.executable, "conformance/run-python.py", str(FIXTURE)])
+    typescript = run_json(
+        ["pnpm", "exec", "tsx", "conformance/run-typescript.mts", str(FIXTURE)]
     )
-    if python_snapshot != typescript_snapshot:
-        raise AssertionError(
-            "Python and TypeScript reference snapshots differ\n"
-            f"python={python_snapshot.decode()}\n"
-            f"typescript={typescript_snapshot.decode()}"
-        )
-    fixture_count = len(json.loads(python_snapshot)["fixtures"])
-    print(
-        f"Phase 0: {fixture_count} exact fixtures agree across Python and TypeScript",
-        flush=True,
-    )
-    definitions = _run([sys.executable, "conformance/run-definitions.py"])
-    sys.stdout.buffer.write(definitions)
-    compilation = _run([sys.executable, "conformance/run-compile.py"])
-    sys.stdout.buffer.write(compilation)
-    compile_scale = _run([sys.executable, "conformance/run-compile-scale.py"])
-    sys.stdout.buffer.write(compile_scale)
-    runtime_scale = _run([sys.executable, "conformance/run-runtime-scale.py"])
-    sys.stdout.buffer.write(runtime_scale)
-    serial_execution = _run([sys.executable, "conformance/run-serial-production.py"])
-    sys.stdout.buffer.write(serial_execution)
-    failure_recovery = _run([sys.executable, "conformance/run-failure-recovery.py"])
-    sys.stdout.buffer.write(failure_recovery)
-    scheduling_cancellation = _run(
-        [sys.executable, "conformance/run-scheduling-cancellation.py"]
-    )
-    sys.stdout.buffer.write(scheduling_cancellation)
-    events_reports_limits = _run(
-        [sys.executable, "conformance/run-events-reports-limits.py"]
-    )
-    sys.stdout.buffer.write(events_reports_limits)
+    compare("Python", python, expected)
+    compare("TypeScript", typescript, expected)
+    compare("cross-port", python, typescript)
+    verify_baseline()
+    print(f"Conformance: {len(cases)} retained v3 cases passed in both ports")
 
 
 if __name__ == "__main__":
