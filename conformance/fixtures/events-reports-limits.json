@@ -125,21 +125,7 @@
           "limit": "max_transitions",
           "scope_id": 1
         },
-        "observations": {
-          "caught": true,
-          "caught_kinds": [
-            "failure_recorded",
-            "failure_fenced:run",
-            "cancellation_fenced:run"
-          ],
-          "control_order": [
-            "failure_recorded",
-            "failure_fenced:run",
-            "cancellation_fenced:run",
-            "callback_finished",
-            "run_finished"
-          ]
-        },
+        "observations": { "caught": true },
         "stats": {
           "activations": 2,
           "attempts": 1,

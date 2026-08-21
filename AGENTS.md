@@ -91,6 +91,12 @@ When the user requests a durable behavior change, record it here or in the relev
   failure behavior easy to trace from the public API into the implementation.
 - Fail fast on invalid input, violated contracts, and impossible internal states
   when recovery would hide a defect or make behavior ambiguous.
+- Default coding work to full Ponytail mode: apply YAGNI and KISS, reuse existing
+  code and standard-library features, prefer deletion, and stop at the smallest
+  correct implementation of explicitly requested behavior.
+- Do not add speculative abstractions, optimizations, dependencies, or tests for
+  hypothetical requirements. Add complexity only after a real requirement or
+  measured limitation justifies it.
 
 ## Child DOX Index
 

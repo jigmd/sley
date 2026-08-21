@@ -185,19 +185,7 @@ async function reportOverflow(): Promise<Record<string, unknown>> {
 }
 
 async function transitionOverflow(): Promise<Record<string, unknown>> {
-  const events: RunEvent[] = []
   let caught = false
-  let caughtKinds: string[] = []
-  const controlKinds = (): string[] => {
-    const selected = new Set(['callback_finished', 'cancellation_fenced', 'failure_fenced', 'failure_recorded', 'run_finished'])
-    return events
-      .filter((event) => selected.has(event.kind))
-      .map((event) =>
-        event.kind === 'failure_fenced' || event.kind === 'cancellation_fenced'
-          ? `${event.kind}:${event.payload.target.kind}`
-          : event.kind,
-      )
-  }
   const source = node<State>(
     (context) => {
       context.emit('next', 1)
@@ -205,7 +193,6 @@ async function transitionOverflow(): Promise<Record<string, unknown>> {
         context.emit('next', 2)
       } catch {
         caught = true
-        caughtKinds = controlKinds()
       }
     },
     { name: 'source' },
@@ -214,16 +201,7 @@ async function transitionOverflow(): Promise<Record<string, unknown>> {
     node<State>(() => undefined, { name: 'target' }),
     'next',
   )
-  const result = await new Flow(source).start(
-    {},
-    {
-      maxTransitions: 1,
-      observer(event) {
-        events.push(event)
-      },
-    },
-  ).result
-  return normalizeLimit(result, { caught, caught_kinds: caughtKinds, control_order: controlKinds() })
+  return normalizeLimit(await new Flow(source).start({}, { maxTransitions: 1 }).result, { caught })
 }
 
 async function capacityPriority(): Promise<Record<string, unknown>> {

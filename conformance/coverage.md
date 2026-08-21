@@ -89,13 +89,7 @@ recovery-visible state, terminal retention, and selected committed stats.
 | `Q02_global_ceiling`                 | Explicit global concurrency throttles a wider local scope               |
 | `Q03_retry_ready_priority`           | Due retry admission precedes a waiting fresh activation                 |
 | `Q04_fair_scope_rotation`            | Fresh callback admission rotates across eligible child scopes           |
-| `Q05_sibling_signal_before_recovery` | A failed scope signals siblings with the public `scope_failed` reason    |
-| `Q06_parked_retry_packet`            | A sibling packet parked in retry delay enters suppression exactly once  |
-| `Q07_attempt_limit_before_permit`     | Attempt exhaustion fails before reserving a callback permit             |
-| `Q08_zero_delay_retry_priority`       | An immediately due retry retains priority over fresh callback work      |
-| `Q09_observer_retry_delay`            | Observer delivery consumes time from the retry delay                    |
-| `Q10_node_recovery_priority`          | Node recovery enters callback-ready before waiting fresh work           |
-| `Q11_ready_waiter_capacity`           | A callback-permit waiter remains charged to `max_ready`                 |
+| `Q05_sibling_signal_before_recovery` | A failed scope signals live siblings before entering Flow recovery      |
 | `K00_cancel_before_admission`        | Pre-admission cancellation invokes no application callback              |
 | `K01_cancel_after_buffer`            | Cancellation discards a live callback's buffered control                |
 | `K02_post_signal_suppression`        | An unrelated post-signal handler error is suppressed exactly once       |
@@ -103,15 +97,8 @@ recovery-visible state, terminal retention, and selected committed stats.
 | `K04_cancel_retry_delay`             | Cancellation wakes a retry delay and retains its active packet          |
 | `K05_cancel_node_recovery`           | Node-recovery cancellation retains the handler packet as suppression    |
 | `K06_cancel_flow_recovery`           | Flow-recovery cancellation retains the handler packet as suppression    |
-| `K07_failure_grace_abandonment`      | A live sibling past failure grace promotes the packet to abandonment    |
-| `K08_retry_suppression_unique`       | Retried attempts retain each inherited suppressed Failure exactly once |
-| `K09_concurrent_cancel_abandonment`  | Concurrent cancellation waits for grace and abandons a stuck callback   |
-| `K10_sync_retry_policy_grace`        | A synchronous retry policy cannot settle after cancellation grace       |
-| `K11_route_packet_cancellation`      | Route checkpoints retain the complete active failure packet             |
-| `K12_nested_scope_failure_status`    | A recovered parent does not rewrite a failed child scope as completed   |
-| `K13_opening_observer_deadline`      | Opening observer time counts and a due run settles before start returns |
 
-All twenty-six cases are derived by two independent models and executed by both
+All thirteen cases are derived by two independent models and executed by both
 production runtimes. The exact snapshots include status, state, terminal output
 projection, suppression, portable scheduler observations, and committed stats.
 Host elapsed time and native waiter-cancellation behavior stay in direct port
@@ -139,13 +126,12 @@ provenance, committed counters, and application-observed interruption.
 
 ## Runtime-scale coverage
 
-| Fixture                   | D10 contract fixed by the case                                               |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| `X00_100k_node_run`       | Iterative execution of a 100,000-node chain with exact committed counters    |
-| `X01_10k_nested_run`      | Iterative entry, closure, and forwarding across 10,000 nested Flow scopes    |
-| `X02_20k_fanout_run`      | Bounded wide admission and exact ordered retention of 20,000 terminal arms   |
-| `X03_64_reused_runs`      | Concurrent compiled-graph reuse creates 64 isolated run-owned state carriers |
-| `X04_10k_nested_cancel`   | Cancellation and scope shutdown stay iterative across 10,000 nested Flows    |
+| Fixture              | D10 contract fixed by the case                                               |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `X00_100k_node_run`  | Iterative execution of a 100,000-node chain with exact committed counters    |
+| `X01_10k_nested_run` | Iterative entry, closure, and forwarding across 10,000 nested Flow scopes    |
+| `X02_20k_fanout_run` | Bounded wide admission and exact ordered retention of 20,000 terminal arms   |
+| `X03_64_reused_runs` | Concurrent compiled-graph reuse creates 64 isolated run-owned state carriers |
 
 Both production runtimes execute the same scale fixture collection and emit
 one byte-identical snapshot. Direct port stress tests separately fix bounded

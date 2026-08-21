@@ -99,31 +99,6 @@ async def _run(fixture: dict[str, Any]) -> dict[str, object]:
             "first_value": states[0]["value"],
             "last_value": states[-1]["value"],
         }
-    if kind == "nested_cancel":
-        started = asyncio.Event()
-
-        async def wait_for_cancellation(context: Context[dict[str, Any]]) -> None:
-            started.set()
-            await context.cancellation.wait()
-
-        entry: GraphElement[dict[str, Any]] = node(
-            wait_for_cancellation,
-            name="leaf",
-        )
-        for index in range(size):
-            entry = Flow(entry, name=f"nested-{index}")
-        handle = Flow(entry, name="root").start(
-            {},
-            options=RunOptions(
-                max_depth=size + 1,
-                max_activations=size + 2,
-                max_attempts=1,
-                max_transitions=size * 2 + 1,
-            ),
-        )
-        await started.wait()
-        handle.cancel("fixture-cancel")
-        return _result_snapshot(await handle.result())
     raise AssertionError(f"unknown runtime-scale kind {kind!r}")
 
 

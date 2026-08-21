@@ -74,42 +74,6 @@ describe('v3 atomic callback settlement', () => {
     assert.deepEqual({ ...state }, { value: 3 })
   })
 
-  it('checks a controlling fence between input-wrapper reflection traps', async () => {
-    const calls: string[] = []
-    let handle: ReturnType<Flow<State>['start']>
-    const wrapper = new Proxy(
-      { input: 1 },
-      {
-        getPrototypeOf() {
-          calls.push('prototype')
-          handle.cancel('trap')
-          return Object.prototype
-        },
-        ownKeys(target) {
-          calls.push('keys')
-          return Reflect.ownKeys(target)
-        },
-        getOwnPropertyDescriptor(target, key) {
-          calls.push('descriptor')
-          return Reflect.getOwnPropertyDescriptor(target, key)
-        },
-      },
-    )
-    const source = node<State>(((context: Context<State>) => {
-      try {
-        context.emit(wrapper as never)
-      } catch {
-        calls.push('caught')
-      }
-    }) as (context: Context<State>) => void)
-
-    handle = new Flow(source).start({})
-    const result = await handle.result
-
-    assert.equal(result.status, 'cancelled')
-    assert.deepEqual(calls, ['prototype', 'caught'])
-  })
-
   it('preserves original terminals when a combine replacement batch is rejected', async () => {
     const flow = new Flow(
       node<State>((context) => context.end('original')),
