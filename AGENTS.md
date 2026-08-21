@@ -79,8 +79,28 @@ Default section order:
 
 When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md
 
+- Design and implementation must fit in a reader's head: prefer simple, modular,
+  explicit code with clear ownership and low cognitive load.
+- Add abstractions only when they remove real complexity. Keep control flow and
+  failure behavior easy to trace from the public API into the implementation.
+- Fail fast on invalid input, violated contracts, and impossible internal states
+  when recovery would hide a defect or make behavior ambiguous.
+
 ## Child DOX Index
 
+- `conformance/AGENTS.md` owns language-neutral executable contracts,
+  reference interpreters, and cross-port snapshot verification.
 - `cookbook/AGENTS.md` owns instructional examples, cookbook project structure,
   and pedagogy-first quality rules.
-- Root-owned files: `README.md`, `LICENSE`, `banner.jpg`, `video-thumbnail.jpg`, and root-level project documentation.
+- `internal/AGENTS.md` owns normative specifications, decision records,
+  implementation baselines, release-readiness evidence, and prototype audits.
+- `python/AGENTS.md` owns the Python runtime, package surface, and Python-side
+  conformance verification.
+- `tests/AGENTS.md` owns repository-level integration tests and cookbook smoke
+  contracts.
+- `typescript/AGENTS.md` owns the TypeScript runtime, package surface, and
+  TypeScript-side conformance verification.
+- Documentation outside an indexed child subtree, including `docs/`, remains
+  root-owned.
+- Root-owned files include `README.md`, `LICENSE`, `banner.jpg`, and
+  `video-thumbnail.jpg`.
