@@ -5,7 +5,7 @@ Caskada has four author-facing parts:
 | Part                        | Responsibility                                                                     |
 | --------------------------- | ---------------------------------------------------------------------------------- |
 | [Node](node.md)             | Run one ordinary function with retry and recovery policy                           |
-| [Context](context.md)       | Expose state, branch input, control, cancellation, and reports during one callback |
+| [Context](context.md)       | Expose state, branch input, and buffered control during one callback                |
 | [State and Input](state.md) | Separate run-wide facts from branch-specific values                                |
 | [Flow](flow.md)             | Own graph topology, a structured scope, concurrency, and branch combination        |
 
@@ -45,7 +45,7 @@ output, and the Flow invokes `combine` once after all workers settle.
 
 `Flow.compile()` validates and snapshots topology. A Flow may be compiled or
 run repeatedly, including by concurrent invocations; each run owns its runtime
-state, counters, scopes, cancellation token, results, and event sequence.
+state, activation counters, scopes, and result.
 
 Graph-definition and option errors are synchronous exceptions before a handle
 exists. Failures encountered by scheduler-owned lifecycle work become typed

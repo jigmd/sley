@@ -79,8 +79,8 @@ not need to know about Context or graph topology.
 
 ## Operational Rules
 
-- Set a provider-side request timeout; a runtime deadline cannot interrupt
-  synchronous blocking code.
+- Set a provider-side request timeout; Caskada does not interrupt synchronous
+  blocking code.
 - Decide whether provider retries or Caskada whole-handler retries own each
   failure. Avoid unbounded stacked retry policies.
 - Parse and validate structured model output before committing state.

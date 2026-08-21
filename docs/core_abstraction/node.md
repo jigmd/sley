@@ -43,7 +43,7 @@ v3.
 ## Occurrences And Reuse
 
 Calling `node(handler)` creates one occurrence with its own name, links, retry
-policy, timeout, and recovery callback. To place the same behavior twice in one
+policy, and recovery callback. To place the same behavior twice in one
 graph, create two occurrences:
 
 ```python
@@ -80,11 +80,11 @@ work immediately and do not stop the function.
 - Zero intents from a normal handler synthesize one unlabelled continuation.
 - One intent transfers the branch without a fan-out copy.
 - Several intents form one ordered, atomic fan-out.
-- A thrown error, timeout, or controlling fence discards the whole buffer.
+- A thrown error discards the whole buffer.
 
 State writes are immediate and are not rolled back when a callback fails.
 
-## Retry, Timeout, And Recovery
+## Retry And Recovery
 
 {% tabs %}
 {% tab title="Python" %}
@@ -95,7 +95,6 @@ from caskada import RetryPolicy, node
 fetch = node(
     fetch_handler,
     retry=RetryPolicy(max_attempts=3, delay_ms=500),
-    timeout_ms=5_000,
     recover=fetch_recovery,
 )
 ```
@@ -106,7 +105,6 @@ fetch = node(
 ```typescript
 const fetch = node<State>(fetchHandler, {
   retry: { maxAttempts: 3, delayMs: 500 },
-  timeoutMs: 5_000,
   recover: fetchRecovery,
 })
 ```

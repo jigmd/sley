@@ -35,7 +35,7 @@
 - [Best Practices](guides/best_practices.md)
 - [Testing](guides/testing.md)
 - [Limits and Concurrency](guides/throttling.md)
-- [Events and Logging](guides/visualization_logging.md)
+- [Inspection and Logging](guides/visualization_logging.md)
 - [Agentic Coding](guides/agentic_coding.md)
 - [Migrating from v2](guides/migration.md)
 - [Migrating from PocketFlow](guides/migrating_from_pocketflow.md)

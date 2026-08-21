@@ -15,7 +15,7 @@ production readiness.
 - 2 for a custom Flow combine callback.
 - 1 for local concurrency greater than one.
 - 1 for retry or recovery when it is part of the lesson.
-- 1 for cancellation, reports, events, or compiled inspection when central.
+- 1 for compiled graph inspection when central.
 
 ### Application Logic
 

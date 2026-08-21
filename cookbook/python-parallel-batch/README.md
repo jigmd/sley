@@ -14,8 +14,8 @@ The difference is local to the Flow definition:
 translation_flow = Flow(dispatch, concurrency=8)
 ```
 
-The runtime-wide callback ceiling is derived from the compiled topology unless
-the caller supplies a smaller `RunOptions.max_concurrency`.
+The concurrency cap belongs to this Flow scope. Nested Flows apply their own
+local limits.
 
 The generated translations are intentionally not checked into the repository:
 they describe whichever README version was translated and become stale quickly.

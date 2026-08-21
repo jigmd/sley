@@ -11,7 +11,7 @@
     },
     {
       "path": "internal/v3-architecture-verdict.md",
-      "sha256": "a1ffc40a4196516b4296333de1b35447e19cf630ef8d58a5aad5ea4e563ad608"
+      "sha256": "37b14acc09cc4c57c55d9ed22845bf76dbde9504771fd00a22892fed2187c893"
     },
     {
       "path": "conformance/fixture.schema.json",

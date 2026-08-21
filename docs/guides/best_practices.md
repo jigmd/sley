@@ -91,21 +91,18 @@ Prefer one composed root Flow when the phases are one logical run.
 ## Bound Work Explicitly
 
 Use Flow `concurrency` for local parallelism and optional Flow
-`max_activations` for a local cycle or scope budget. Use `RunOptions` for the
-run-wide concurrency ceiling, work limits, deadline, and cancellation grace.
+`max_activations` for a local cycle or scope budget.
 
-Runtime deadlines cannot interrupt synchronous blocking code. Use an async
-client, a provider timeout, or deliberate thread/process isolation for blocking
-operations. Thread offload does not make the underlying call cancellable.
+Provider quotas and timeouts remain application concerns. Put shared rate
+limiting in the service client when several Flows use the same provider.
 
-## Observe Without Driving Control
+## Inspect Without Driving Control
 
-Use `compile().describe()` for static topology. Use a synchronous observer and
-`context.report(...)` for runtime facts. Observers must be fast and must not be
-used to mutate workflow control.
+Use `compile().describe()` for static topology. Use ordinary application logging
+inside handlers for domain facts; logging must not decide graph control.
 
 Use `run()` when only the final state matters. Use `start()` when the caller
-needs cancellation, terminal metadata, failures, events, or statistics.
+needs terminal metadata or a structured failure.
 
 ## Organize for the Reader
 

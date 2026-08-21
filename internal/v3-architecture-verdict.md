@@ -1,6 +1,6 @@
 # V3 Architecture Verdict
 
-- Status: lean runtime accepted; implementation in progress
+- Status: lean runtime accepted; implementation complete
 - Date: 2026-08-21
 - Authority: [RFC 0001](rfcs/0001-caskada-v3-runtime.md)
 
@@ -45,6 +45,7 @@ states fail immediately.
 Both ports implement the lean contract in five files. Python passes runtime,
 Ruff, strict mypy, Pyright, sdist, and wheel checks. TypeScript passes runtime,
 strict declarations, ESM, CommonJS, and package-build checks. Eighteen exact
-shared scenarios pass through both public packages. Repository author
-documentation still targets parts of the superseded contract, so v3 is not yet
-release-ready.
+shared scenarios pass through both public packages. Author documentation now
+matches the retained surface, and all 38 cookbook contracts execute their real
+graphs. Browser-host verification and independent review remain release gates,
+not implementation work.

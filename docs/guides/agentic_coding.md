@@ -21,7 +21,7 @@ For a new workflow:
 3. identify external service calls;
 4. assign each data item to state, branch input, or End output;
 5. decide where fan-out joins and what the combiner produces;
-6. define failure, retry, cancellation, and work bounds;
+6. define failure, retry, recovery, and local work bounds;
 7. agree on observable success criteria;
 8. implement the smallest end-to-end path first.
 
@@ -81,13 +81,13 @@ flowchart LR
 - Retried failures and maximum attempts:
 - Side effects that must be idempotent:
 - Recovery behavior:
-- Run deadline and work limits:
+- Flow activation limits and provider timeouts:
 
 ## Verification
 
 - Unit checks for domain logic:
 - Flow scenarios:
-- Failure/cancellation scenarios:
+- Failure and recovery scenarios:
 - Commands that prove completion:
 
 ```
@@ -140,8 +140,8 @@ clear inputs, outputs, timeouts, and fakes. A handler coordinates them; it shoul
 not hide graph control inside a service wrapper.
 
 Prefer native async APIs. If a blocking call is offloaded, document that runtime
-cancellation cannot kill the underlying thread and that the provider still
-needs its own timeout.
+control cannot kill the underlying thread and that the provider still needs its
+own timeout.
 
 ## Implement in Reviewable Slices
 

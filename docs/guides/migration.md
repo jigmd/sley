@@ -25,7 +25,7 @@ state, retry, and terminal behavior before composing it into a larger graph.
 | `execFallback`                             | node `recover` callback                   |
 | Flow `post` aggregation                    | Flow `combine` callback                   |
 | execution tree from `run()`                | final shared state from `run()`           |
-| no cancellable handle                      | `start()` and structured `RunResult`      |
+| execution result tree                      | `start()` and a small `RunResult`         |
 
 ## Replace Node Classes with Handlers
 
@@ -64,7 +64,6 @@ Configuration moves to `node(...)`:
 answer = node(
     answer_handler,
     retry=RetryPolicy(max_attempts=3, delay_ms=1_000),
-    timeout_ms=30_000,
     recover=answer_recovery,
 )
 ```
@@ -189,9 +188,8 @@ is a nonnegative safe integer. Otherwise choose and document a rounding or
 backoff policy manually.
 
 V2 Flow `max_visits` defaulted to 15. V3 has no hidden visit default. Use a
-Flow-local `max_activations` for direct work in that scope and run-wide
-activation, transition, attempt, and deadline limits for the whole invocation.
-Review cycles explicitly because the counters do not all measure the same thing.
+Flow-local `max_activations` for direct work in that scope. Review cycles
+explicitly because v3 does not add hidden run-wide limits.
 
 ## Migrate Results and Observation
 
@@ -201,17 +199,16 @@ Use `run()` for the common state projection:
 final_state = await flow.run(initial_state)
 ```
 
-Use `start()` when terminal kinds, actions, outputs, failure packets,
-cancellation, statistics, or events matter:
+Use `start()` when terminal kinds, actions, outputs, or the structured failure
+matter:
 
 ```python
-handle = flow.start(initial_state, options=options)
+handle = flow.start(initial_state)
 result = await handle.result()
 ```
 
-Static topology is available from `flow.compile().describe()`. Runtime facts
-are delivered to a synchronous RunOptions observer; application code can add
-facts with `context.report(...)`.
+Static topology is available from `flow.compile().describe()`. Application
+logging remains ordinary host-language code inside handlers and service clients.
 
 ## Migration Checklist
 
@@ -222,6 +219,6 @@ facts with `context.report(...)`.
 5. Declare every intentional named Flow exit.
 6. Replace fan-in counters with a Flow combine callback where applicable.
 7. Re-evaluate whole-handler retry side effects and delay units.
-8. Add explicit loop, work, and deadline bounds.
+8. Add explicit Flow-local activation bounds where cycles require them.
 9. Capture the state returned by `run()`.
 10. Test zero emission, named routes, empty fan-out, End, combine, and failure.

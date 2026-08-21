@@ -5,8 +5,8 @@ machine-display: false
 # Choosing Caskada
 
 Caskada is a structured workflow runtime. It provides graph definition,
-branching, nested scopes, concurrency, retry and recovery, cancellation, limits,
-results, and typed events. It intentionally does not provide model clients,
+branching, nested scopes, local concurrency and limits, retry and recovery, and
+structured results. It intentionally does not provide model clients,
 vector stores, tool registries, prompt templates, or domain-specific agent
 classes.
 
@@ -37,10 +37,9 @@ integration wrapper.
 
 ### Structured Runtime Semantics
 
-The runtime owns callback admission, scope quiescence, retry, cancellation,
-work bounds, and terminal settlement. `start()` exposes a cancellable handle and
-a structured result rather than using native exceptions as the complete runtime
-protocol.
+The runtime owns local callback admission, scope quiescence, retry, recovery,
+activation bounds, and terminal settlement. `start()` exposes a structured
+result rather than using native exceptions as the complete runtime protocol.
 
 ### Bring-Your-Own Integrations
 
@@ -68,13 +67,13 @@ custom scheduler, compare the current releases on these questions:
 1. **Control:** Is topology explicit, model-directed, or conversation-directed?
 2. **State:** Is state shared, copied per branch, immutable, or externally owned?
 3. **Fan-in:** Who knows when a dynamic set of branches is complete?
-4. **Failure:** Are retry, cancellation, and partial results structured data?
-5. **Limits:** Which cumulative and live resources are bounded?
-6. **Observation:** Are events typed, ordered, and nonfatal?
+4. **Failure:** Are retry, recovery, and partial results structured data?
+5. **Limits:** Which local resources are bounded?
+6. **Inspection:** Can graph topology and terminal outcomes be inspected?
 7. **Integrations:** Does the framework wrap providers or use their SDKs directly?
 8. **Portability:** Are multiple language implementations behaviorally aligned?
 9. **Testing:** Can the real graph run with test-owned service fakes?
-10. **Operations:** What can a deadline actually interrupt?
+10. **Operations:** Which timeouts and rate limits remain application concerns?
 
 Product surfaces change frequently. Use each project's current official
 documentation rather than codebase-size or feature-count tables.
@@ -83,8 +82,8 @@ documentation rather than codebase-size or feature-count tables.
 
 Caskada began from PocketFlow's graph-oriented minimalism but v3 has a different
 authoring and runtime contract. It uses function-first nodes, shared run state,
-branch input, buffered emissions, structured Flow combine, cancellable handles,
-portable limits, and cross-language event/result schemas.
+branch input, buffered emissions, structured Flow combine, local limits, and
+cross-language result schemas.
 
 Migration is therefore a design conversion rather than an import rename. See
 [Migrating from PocketFlow](./guides/migrating_from_pocketflow.md).

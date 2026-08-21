@@ -17,9 +17,9 @@
 </p>
 
 Caskada runs ordinary functions as nodes in nested directed graphs. It provides
-explicit branching, structured fan-out and joining, retries, deadlines,
-cancellation, limits, and typed execution results without depending on an LLM
-provider or application framework.
+explicit branching, structured fan-out and joining, retries, recovery, local
+concurrency, and typed execution results without depending on an LLM provider
+or application framework.
 
 ## Install
 
@@ -149,12 +149,12 @@ continuations.
 ### Results
 
 `await flow.run(initial_state)` is the simple API. It returns the final state for
-every completed run and raises `RunError` for failure, cancellation, or
-abandonment. The error retains the complete result and exposes a controlling
-application error through standard native exception chaining.
+every completed run and raises `RunError` on failure. The error retains the
+failed result and exposes a controlling application error through standard
+native exception chaining.
 
-`flow.start(initial_state)` returns a `RunHandle` for cancellation and complete
-status, terminal, failure, event, diagnostic, and statistics data.
+`flow.start(initial_state)` returns a `RunHandle` whose `result()` method exposes
+the completed or failed result, including state and settled terminals.
 
 ## Learn
 

@@ -43,7 +43,7 @@ the application intentionally starts another conversation turn.
   run when possible.
 - Avoid storing large audio blobs in state unless later nodes need them.
 - Keep temporary-file ownership and deletion in the audio utility.
-- Do not assume cancellation can stop a synchronous playback or provider call.
+- Give synchronous playback or provider calls their own stop or timeout logic.
 - Treat spoken model output as user-visible content subject to the same safety
   policy as displayed text.
 

@@ -109,12 +109,11 @@ named outcomes that a parent graph may handle.
 final_state = await flow.run(initial_state)
 ```
 
-`run()` returns final state and raises `RunError` for failed, cancelled, or
-abandoned execution. Use `start()` for a cancellable handle and the complete
-structured result.
+`run()` returns final state and raises `RunError` for failed execution. Use
+`start()` when the caller needs the complete structured result.
 
 Use node retry/recovery for local failures and Flow recovery for a failed child
-scope. Use RunOptions for deadlines, cancellation grace, and work bounds.
+scope. Use Flow `concurrency` and `max_activations` for local scheduling bounds.
 
 ## Migration Order
 

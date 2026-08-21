@@ -1,6 +1,6 @@
 # V3 Implementation Budget Review
 
-- Status: simplification in progress
+- Status: accepted
 - Date: 2026-08-21
 
 Tests, conformance tools, and cookbook examples are excluded. This budget is

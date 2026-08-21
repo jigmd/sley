@@ -97,7 +97,7 @@ assert result.failure.kind == "handler"
 assert result.state["attempted"] is True
 ```
 
-Use the corresponding TypeScript `handle.result` Promise. Assert structured
+Use the corresponding TypeScript `handle.result()` Promise. Assert structured
 failure kinds, details, and provenance rather than native exception messages.
 When testing the simple `run()` projection, `RunError.result` exposes the same
 structured data and its standard native cause points to the controlling
@@ -115,32 +115,16 @@ For recovery, separately cover:
 - recovery emits nothing and preserves the original failure;
 - recovery itself fails.
 
-## Test Cancellation and Time Without Sleeping
-
-Use a gated async fake so the test controls when a callback settles. Cancel the
-handle after the callback starts, then release the gate and inspect the result.
-Runtime conformance tests should use fake clocks; application tests should avoid
-depending on millisecond scheduling races.
-
-Synchronous blocking callbacks cannot observe cancellation until they return.
-Do not write a test that assumes a runtime deadline kills a blocking provider
-call.
-
 ## Test Definitions Without Running
 
 `flow.compile()` catches invalid topology, duplicate ownership, and invalid
 definition options. `flow.compile().describe()` returns a portable snapshot for
-asserting links, scope concurrency, declared exits, and automatic concurrency.
+asserting links, scope concurrency, declared exits, and activation limits.
 
 Prefer semantic assertions over snapshots of the entire description. Full
 snapshots make harmless names or IDs expensive to change.
 
-## Observe Events Selectively
-
-Pass a synchronous observer through `RunOptions` when ordering or reporting is
-part of the behavior under test. Filter to relevant event kinds and assert their
-typed payload fields. Do not use log text as the event contract.
-
 Keep framework conformance tests separate from application tests. Application
-tests should prove the workflow's behavior; Caskada's own suite proves scheduler
-fairness, exact event ordering, limits, timer ties, and cross-language parity.
+tests should prove the workflow's behavior; Caskada's own suite proves the
+retained routing, terminal, combine, retry, recovery, concurrency, and
+cross-language contracts.

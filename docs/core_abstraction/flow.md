@@ -102,9 +102,7 @@ for item in items:
 ## Concurrency
 
 `Flow(concurrency=N)` caps simultaneously admitted direct child activations in
-that scope. Run-wide `max_concurrency`/`maxConcurrency` is an optional global
-ceiling. When omitted, Caskada derives the global ceiling from the largest
-compiled Flow concurrency value.
+that scope. Nested Flows apply their own local caps.
 
 Concurrency never makes synchronous callbacks nonblocking. Async callbacks
 must yield, and blocking clients need an async API or deliberate thread/process
@@ -112,10 +110,10 @@ offload.
 
 ## Recovery
 
-Flow recovery receives a `ScopeFailure` after the failing scope is fenced and
-settled. It contains the primary Failure, suppressed failures, terminals that
-settled before the fence, any partial ScopeResult, and the direct failing child
-activation when one exists.
+Flow recovery receives a `ScopeFailure` after the failing scope has settled. It
+contains the primary Failure, terminals that settled before the
+failure, any partial ScopeResult, and the direct failing child activation when
+one exists.
 
 Zero recovery emissions propagate the exact failure packet. Emissions replace
 it with normal outward control.
@@ -123,11 +121,10 @@ it with normal outward control.
 ## Run And Start
 
 `run(initial_state)` awaits a completed run and returns its shared state. It
-raises `RunError` for failed, cancelled, or abandoned results. The error retains
-the exact result; when a native application error caused the controlling
-Failure, standard Python exception chaining or TypeScript `Error.cause` also
-points to that exact error.
+raises `RunError` for a failed result. The error retains the exact result; when
+a native application error caused the controlling Failure, standard Python
+exception chaining or TypeScript `Error.cause` also points to that exact error.
 
-`start(initial_state)` returns immediately with a `RunHandle`. Use the handle to
-cancel, poll completion, or await the full discriminated `RunResult` including
-terminals, failures, suppressed failures, diagnostics, statistics, and state.
+`start(initial_state)` returns immediately with a `RunHandle`. Use `done()` to
+poll completion or `result()` to await the full `Completed` or `Failed` result,
+including state, terminals, and the controlling failure when one exists.

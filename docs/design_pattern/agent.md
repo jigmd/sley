@@ -34,7 +34,8 @@ Validate model-produced actions before emitting. An unknown Caskada action is a
 structured workflow failure, but a domain parser can provide a clearer error
 before control reaches the runtime.
 
-Use `max_activations`, run deadlines, and provider timeouts to bound a loop.
+Use `max_activations` to bound the Flow loop and provider timeouts to bound
+external calls.
 Retries repeat a whole handler, so keep retryable generation separate from
 state commits and irreversible effects.
 

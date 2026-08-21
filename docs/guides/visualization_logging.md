@@ -2,10 +2,10 @@
 machine-display: false
 ---
 
-# Inspection, Events, and Logging
+# Inspection and Logging
 
-Caskada exposes static graph descriptions and typed runtime events. It does not
-build an implicit execution tree or serialize application values for you.
+Caskada exposes a static graph description and structured final results.
+Application logging uses the host language's normal logging tools.
 
 ## Inspect a Compiled Graph
 
@@ -28,118 +28,65 @@ for (const element of description.elements) {
 }
 ```
 
-The description includes elements, links, scope ownership, entries, declared
-exits, local concurrency and activation caps, plus the topology-derived global
-concurrency default. It is suitable input for a diagram renderer or definition
-audit. `CompiledFlow.run()` and `.start()` execute that same snapshot.
+The description contains `elements`, `scopes`, links, entries, declared exits,
+local concurrency, and activation limits. It is suitable input for a diagram
+renderer or definition audit. `compiled.run()` and `compiled.start()` execute
+that same snapshot even if the original graph objects are later changed.
 
-## Observe a Run
+## Log Application Facts
 
-Pass a synchronous observer in RunOptions:
-
-{% tabs %}
-{% tab title="Python" %}
-
-```python
-from caskada import RunOptions
-
-
-def observe(event):
-    print(event.sequence, event.kind, event.run_id)
-
-
-handle = flow.start(initial_state, options=RunOptions(observer=observe))
-result = await handle.result()
-```
-
-{% endtab %}
-{% tab title="TypeScript" %}
-
-```typescript
-const handle = flow.start(initialState, {
-  observer(event) {
-    console.log(event.sequence, event.kind, event.runId)
-  },
-})
-
-const result = await handle.result
-```
-
-{% endtab %}
-{% endtabs %}
-
-Events cover run and scope lifecycle, callback admission and settlement, retry,
-committed transitions and terminals, failure and cancellation fences, and
-application reports. The schema version is `RUN_EVENT_SCHEMA_VERSION`.
-
-Events are causally ordered facts, not a promise that independent concurrent
-callbacks settle in a predetermined order.
-
-## Report Application Facts
-
-A live callback can publish a named application fact:
-
-```python
-context.report("documents_indexed", {"count": len(documents)})
-```
-
-```typescript
-context.report('documents_indexed', { count: documents.length })
-```
-
-Reports share the run event stream and consume the run report budget. Omitted
-data is distinct from explicit `None` / `undefined`.
-
-Use reports for facts an observer should see. Do not use them to transfer data
-between nodes; use state, input, or End output for that.
-
-## Standard Logging Adapters
-
-The Python adapter integrates with `logging`:
+Log inside handlers or injected service clients when a domain action matters:
 
 ```python
 import logging
 
-from caskada import RunOptions
-from caskada_logging import logging_observer
+logger = logging.getLogger("workflow")
 
-options = RunOptions(observer=logging_observer(logging.getLogger("workflow")))
+
+async def index(context):
+    documents = await client.index(context.input)
+    logger.info("documents indexed", extra={"count": len(documents)})
+    context.end(len(documents))
 ```
-
-The browser-safe TypeScript adapter accepts a small logger interface:
 
 ```typescript
-import { createLoggingObserver } from 'caskada/logging'
-
-const options = { observer: createLoggingObserver(logger) }
+const index = node(async (context) => {
+  const documents = await client.index(context.input)
+  logger.info({ count: documents.length }, 'documents indexed')
+  context.end(documents.length)
+})
 ```
 
-Adapters attach the complete typed event as structured metadata. Failure events
-log at error, cancellation fences at warning, important lifecycle facts at
-info, and detailed facts at debug.
+Use state, input, or End output to transfer workflow data. Logs are observations,
+not graph control or a data channel.
 
-## Observer Rules
+## Inspect a Full Result
 
-Observers run synchronously at defined publication checkpoints. Keep them
-bounded and fast:
+Use `run()` when only final state matters. Use `start()` when the caller needs
+terminal records or a structured failure:
 
-- enqueue work to an existing bounded sink rather than performing network I/O;
-- never return a coroutine, Promise, or thenable;
-- never depend on observers to drive graph control;
-- expect observer failures to become diagnostics rather than workflow failures.
+```python
+result = await flow.start(initial_state).result()
 
-Application values in causes, cancellation reasons, reports, terminal outputs,
-and state are borrowed host values. An observer must not assume that every event
-is JSON serializable or safe to format recursively.
+if result.status == "failed":
+    logger.error("workflow failed", extra={"kind": result.failure.kind})
+else:
+    for terminal in result.terminals:
+        logger.info("branch settled", extra={"type": terminal.type})
+```
 
-## Full Results
+```typescript
+const result = await flow.start(initialState).result()
 
-Use `run()` for the final shared state. Use `start()` when observability matters:
-every RunResult status carries state, terminals, statistics, and observer
-diagnostics. Failed, cancelled, and abandoned results retain structured failure
-or cancellation information without requiring log parsing.
+if (result.status === 'failed') {
+  logger.error({ kind: result.failure.kind }, 'workflow failed')
+} else {
+  for (const terminal of result.terminals) {
+    logger.info({ type: terminal.type }, 'branch settled')
+  }
+}
+```
 
-Terminal records contain kind, action where applicable, output presence and
-value, settlement sequence, and source activation ID. Combine callbacks receive
-the same boundary information through `ScopeResult.terminals`, plus the
-value-only `ScopeResult.outputs` projection.
+Terminal records distinguish End from Flow exit, preserve output presence and
+value, and identify the source activation. A Flow combiner receives the same
+boundary information through `ScopeResult.terminals`.

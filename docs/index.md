@@ -15,8 +15,8 @@ LLM providers, databases, web frameworks, and application schemas.
 - Named routing, loops, atomic fan-out, and hard branch termination
 - Structured Flow scopes with one synchronization point for aggregation
 - One run-wide state map plus per-branch input and terminal output
-- Retry policies, deadlines, cancellation, concurrency, and resource limits
-- Typed results, events, reports, diagnostics, and execution statistics
+- Retry and recovery policies, local concurrency, and activation limits
+- Typed completed and failed results with settled terminal records
 - Equivalent Python and TypeScript behavior
 
 ## The Small Model
@@ -28,7 +28,7 @@ LLM providers, databases, web frameworks, and application schemas.
 5. `context.end(...)` hard-terminates one branch.
 6. A `Flow` owns a structured scope and may `combine` its settled branches.
 7. `run(initial_state)` returns the completed state; `start(initial_state)`
-   exposes the full execution result and cancellation handle.
+   exposes the full completed or failed result.
 
 Caskada validates its graph and control protocol. Application data keeps normal
 host-language behavior: static types can describe it, but runtime schema

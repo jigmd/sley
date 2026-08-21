@@ -19,7 +19,6 @@ def flow_to_json(flow):
         {
             "id": element["element_id"],
             "name": element["name"],
-            "group": element["parent_scope_definition_id"],
         }
         for element in elements
         if element["kind"] == "node"
@@ -28,7 +27,6 @@ def flow_to_json(flow):
         {
             "id": element["element_id"],
             "name": element["name"],
-            "group": element["parent_scope_definition_id"],
         }
         for element in elements
         if element["kind"] == "flow"
@@ -48,7 +46,7 @@ def flow_to_json(flow):
             "target": scope["entry_element_id"],
             "action": "entry",
         }
-        for scope in description["scope_definitions"]
+        for scope in description["scopes"]
     ]
     return {"nodes": nodes, "flows": flows, "links": entry_links + links}
 

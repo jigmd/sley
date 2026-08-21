@@ -13,7 +13,7 @@ The important API is:
 description = flow.compile().describe()
 ```
 
-`describe()` returns stable element IDs, scope definitions, and links. The
+`describe()` returns stable element IDs, scopes, and links. The
 visualizer converts that public data to JSON instead of inspecting live Node or
 Flow internals.
 

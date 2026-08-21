@@ -26,9 +26,9 @@ assert final["settings"] is settings
 The final result exposes that same carrier; Caskada does not make another copy
 at settlement. Retained aliases remain live references, not snapshots.
 
-Top-level state supports normal record operations. Python uses a dict carrier;
-TypeScript uses a guarded object proxy. State keys must be ordinary strings and
-properties must remain data properties.
+Top-level state supports normal record operations. Python uses a new `dict`;
+TypeScript uses a new object created from the initial object's enumerable own
+properties. Top-level state keys must be strings.
 
 ## Shared-State Concurrency
 
