@@ -304,7 +304,7 @@ class RetryAndRecoveryTests(unittest.IsolatedAsyncioTestCase):
                 delay_ms=lambda _attempt, _failure: 4_294_967_295,
             ),
         )
-        with patch("caskada.asyncio.wait_for", new=expire):
+        with patch("caskada._timing.asyncio.wait_for", new=expire):
             result = await Flow(worker).start({}).result()
 
         self.assertEqual(result.status, "completed")

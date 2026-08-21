@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import * as caskada from '../caskada'
 import { DuplicateLinkError, Flow, GraphDefinitionError, GraphElement, Node, node } from '../caskada'
 
 import type { Context } from '../caskada'
@@ -12,6 +13,24 @@ function first(_context: Context<State>): void {}
 function second(_context: Context<State>): void {}
 
 describe('v3 graph definitions', () => {
+  it('exports only the intentional runtime values', () => {
+    assert.deepEqual(Object.keys(caskada).sort(), [
+      'CaskadaError',
+      'CompiledFlow',
+      'DuplicateLinkError',
+      'Flow',
+      'GraphDefinitionError',
+      'GraphElement',
+      'MAX_PORTABLE_COLLECTION_LENGTH',
+      'MAX_SAFE_INTEGER',
+      'Node',
+      'OptionValidationError',
+      'RUN_EVENT_SCHEMA_VERSION',
+      'RunError',
+      'node',
+    ])
+  })
+
   it('creates distinct configured occurrences with stable names', () => {
     const firstOccurrence = node(first)
     const secondOccurrence = node(first)

@@ -8,6 +8,10 @@
 
 - Owns the TypeScript public API, runtime internals, package output, and
   TypeScript-specific tests.
+- `caskada.ts` is the explicit public facade. `internal/contracts.ts`,
+  `definition.ts`, `execution.ts`, `state.ts`, `failures.ts`, `timing.ts`,
+  `observation.ts`, and `scheduling.ts` own the corresponding runtime
+  responsibilities.
 - `caskada-logging.ts` is a non-core browser-safe logging adapter; it must remain
   a synchronous `RunEvent` projection with no Node.js runtime dependency,
   buffering, or delivery policy.
@@ -28,6 +32,10 @@
 - Keep `caskada.ts` as the stable public entry point. Split runtime internals into
   focused modules when doing so makes ownership and control flow easier to
   understand.
+- `internal/definition.ts` is inert graph data and compilation.
+  `internal/execution.ts` composes the public `Flow` lifecycle with state capture
+  and `internal/scheduling.ts`, the sole activation and scope orchestrator.
+  Definition and leaf modules must not import or call back into the scheduler.
 - Preserve browser compatibility and avoid Node.js runtime dependencies.
 - Throw immediately on invalid public input and impossible kernel states; do not
   conceal defects with fallback behavior.

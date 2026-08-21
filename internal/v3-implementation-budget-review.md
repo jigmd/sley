@@ -1,11 +1,15 @@
 # V3 Implementation Budget Review
 
-- Status: implementation evidence; independent architecture approval pending
+- Status: independently accepted architecture evidence
 - Date: 2026-08-21
-- Python source SHA-256:
-  `9bc77c1bea30d20eabcaf6d1694ac9d3b1fde291b128d0e81087b6c7ef6030e1`
-- TypeScript source SHA-256:
-  `f606020ed912e989d33c36b4e86568a8078917e4916aa6a3abc828ac49867ef9`
+- Python ordered module-set SHA-256:
+  `a80ea8c84ff019897628eaca369b1a05bd6ab9a1c5dfa0acef741d54f9628545`
+- TypeScript ordered module-set SHA-256:
+  `d9571f0943bdf531577a9ab5c72cb08e3dca5cc23081d375b4298c7f6fd61f52`
+
+Each digest hashes the ordered `sha256sum` records for the public facade,
+contracts, definition, execution, state, failures, timing, observation, and
+scheduling modules in that order.
 
 ## Budget Result
 
@@ -19,8 +23,8 @@ conformance runners.
 
 | Port       | V2 lines | V3 lines | Ratio |
 | ---------- | -------: | -------: | ----: |
-| Python     |      207 |    4,766 | 23.0x |
-| TypeScript |      296 |    4,556 | 15.4x |
+| Python     |      207 |    5,352 | 25.9x |
+| TypeScript |      296 |    4,621 | 15.6x |
 
 The increase is not evidence of an equally large author model. It is primarily
 the cost of making the cross-language scheduler, failure lifecycle, limits,
@@ -58,28 +62,45 @@ The main implementation cost is concentrated in six kernel responsibilities:
 5. Deadline, timeout, cancellation, grace, and abandonment races.
 6. Atomic event bundles, reports, diagnostics, statistics, and terminal results.
 
-The Python and TypeScript files intentionally retain parallel organization so
-semantic comparison remains possible. That helps parity but leaves each core too
-large to fit comfortably in one reading session. A module split is justified
-only along the responsibilities above and must preserve one public entry point,
-avoid circular scheduler ownership, and keep cross-port section correspondence.
+The two ports now use the same responsibility map:
+
+| Module        | Ownership                                                            |
+| ------------- | -------------------------------------------------------------------- |
+| Facade        | Exact intentional public exports                                      |
+| Contracts     | Public data, protocols, options, results, and errors                  |
+| Definition    | Graph construction, validation, compilation, and inspection           |
+| Execution     | Public `Flow` lifecycle composition                                    |
+| State         | Run-state validation and the persistent carrier                       |
+| Failures      | Failure construction, packets, replacement, and retry policy          |
+| Timing        | Cancellation, callback permits, deadlines, grace, and callback races  |
+| Observation   | Event publication, failure fences, diagnostics, IDs, and statistics   |
+| Scheduling    | The sole activation and structured-scope orchestration owner          |
+
+The facade exposes execution and inert definitions; execution invokes the
+scheduler; the scheduler depends only on focused leaf modules. No leaf module
+imports or invokes the scheduler, and the scheduler does not depend on the
+execution layer. Python publishes an exact `__all__`; both ports have facade
+regression tests.
 
 ## Evidence Already Passing
 
 - All 68 shared conformance fixtures and scale programs agree across ports.
-- Python passes 141 runtime tests, strict mypy/Pyright fixtures, wheel/sdist
+- Python passes 142 runtime tests, strict mypy/Pyright fixtures, wheel/sdist
   rebuild, installed PEP 561 typing, and clean-package imports.
-- TypeScript passes 146 runtime tests, strict declaration/example checks, a real
+- TypeScript passes 147 runtime tests, strict declaration/example checks, a real
   Chromium bundle snapshot, and ESM/CommonJS/logging package imports.
 - All 36 Python and two TypeScript cookbook contracts execute through staged
   projects with test-owned external-service fixtures.
 - Both packages declare zero runtime dependencies.
 
-## Review Required
+## Independent Verdict
 
-This document satisfies the RFC requirement to publish counts and justify the
-public abstraction families. It does not satisfy the required independent
-architecture review or the three independent release reviews. Before API freeze,
-reviewers must decide whether the kernel responsibilities justify the size,
-whether an internal module split would reduce understanding cost, and whether
-any public family can be removed without weakening the accepted contract.
+An independent reviewer assessed the exact module-set hashes above after the
+responsibility split and returned `ACCEPT` with no blocker, major, or minor
+finding. The review confirmed an acyclic dependency graph, inert definition
+modules, local state ownership, bounded scheduler exports, paired cross-port
+responsibilities, and one execution composition layer per port.
+
+This closes the size-triggered architecture gate. The author-API,
+kernel-semantics, cross-port-implementability, and cookbook review gates remain
+separate release obligations.

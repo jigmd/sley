@@ -8,6 +8,9 @@
 
 - Owns the Python public API, runtime internals, packaging metadata, and
   Python-specific tests.
+- `caskada/__init__.py` is the explicit public facade. Internal ownership is
+  divided among `_contracts.py`, `_definition.py`, `_execution.py`, `_state.py`,
+  `_failures.py`, `_timing.py`, `_observation.py`, and `_scheduling.py`.
 - `caskada_logging` is a non-core standard-library logging adapter package; it must
   remain a synchronous projection of `RunEvent` and must not add scheduler
   buffering or delivery policy.
@@ -28,6 +31,10 @@
 - Keep public imports stable through `caskada/__init__.py`. Split runtime internals
   into focused modules when doing so makes ownership and control flow easier to
   understand.
+- `_definition.py` is inert graph data and compilation. `_execution.py` composes
+  the public `Flow` lifecycle with state capture and `_scheduling.py`, the sole
+  activation and scope orchestrator. Definition and leaf modules must not import
+  or call back into the scheduler.
 - Keep `py.typed` markers in both public packages so installed mypy and Pyright
   consumers receive the same inline types verified from source.
 - Prefer explicit private helpers over framework abstractions that are not part

@@ -24,14 +24,14 @@
 
 Python:
 
-- 141 runtime tests pass.
+- 142 runtime tests pass.
 - Strict mypy 1.17.1 and Pyright 1.1.413 checks pass.
 - The sdist and wheel build; the wheel installs cleanly; both public packages
   expose PEP 561 types; installed imports and strict mypy consumption pass.
 
 TypeScript:
 
-- 146 runtime tests pass through the package test script.
+- 147 runtime tests pass through the package test script.
 - Strict declarations, fixtures, and typed cookbook examples compile.
 - The browser bundle contains no Node.js built-in import and passes the exact
   Chromium fan-out/combine/report snapshot.
@@ -46,12 +46,14 @@ Repository:
 
 ## Freeze Blockers
 
-The implementation is ready for independent review, not release or API freeze.
-Two review obligations remain:
+The implementation is ready for the remaining independent reviews, not release
+or API freeze. Two review obligations remain:
 
-1. The fresh reviews required by release gates 8 and 11.
-2. The architecture review triggered by the core-size threshold, documented in
-   [V3 Implementation Budget Review](v3-implementation-budget-review.md).
+1. The fresh cookbook review required by release gate 8.
+2. The author-API, kernel-semantics, and cross-port-implementability reviews
+   required by release gate 11.
 
-No executable correctness, packaging, browser, cookbook, dependency, or stale
-model failure is currently open.
+The size-triggered architecture review is accepted with no finding, as recorded
+in [V3 Implementation Budget Review](v3-implementation-budget-review.md). No
+executable correctness, packaging, browser, cookbook, dependency, or stale model
+failure is currently open.

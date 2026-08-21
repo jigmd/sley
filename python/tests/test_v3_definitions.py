@@ -4,6 +4,7 @@ import unittest
 from collections.abc import Sequence
 from typing import Any
 
+import caskada
 from caskada import (
     MAX_SAFE_INTEGER,
     DuplicateLinkError,
@@ -51,6 +52,10 @@ class ThrowingSequence(Sequence[str]):
 
 
 class DefinitionTests(unittest.TestCase):
+    def test_public_surface_is_explicit(self) -> None:
+        public_names = {name for name in vars(caskada) if not name.startswith("_")}
+        self.assertEqual(public_names, set(caskada.__all__))
+
     def test_node_factory_creates_distinct_occurrences_and_decorator_forms(
         self,
     ) -> None:
