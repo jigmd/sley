@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import asyncio
+import heapq
 import inspect
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -153,18 +155,19 @@ class _Timer:
 
 
 class _TimerHeap:
-    """Indexed min-heap containing live timers only."""
-
-    __slots__ = ("_heap", "_next_id", "_next_sequence", "_positions")
+    __slots__ = ("_heap", "_next_id", "_next_sequence", "_timers")
 
     def __init__(self) -> None:
-        self._heap: list[_Timer] = []
-        self._positions: dict[int, int] = {}
+        self._heap: list[tuple[tuple[int, int, int], int]] = []
+        self._timers: dict[int, _Timer] = {}
         self._next_id = 1
         self._next_sequence = 1
 
     def __bool__(self) -> bool:
-        return bool(self._heap)
+        return bool(self._timers)
+
+    def __iter__(self) -> Iterator[_Timer]:
+        return iter(self._timers.values())
 
     def add(self, kind: _TimerKind, due_ns: int, owner_id: int) -> int:
         timer_id = self._next_id
@@ -178,76 +181,42 @@ class _TimerHeap:
             owner_id,
         )
         self._next_sequence += 1
-        self._positions[timer_id] = len(self._heap)
-        self._heap.append(timer)
-        self._sift_up(len(self._heap) - 1)
+        self._timers[timer_id] = timer
+        heapq.heappush(self._heap, (timer.key, timer_id))
         return timer_id
 
     def get(self, timer_id: int) -> _Timer:
-        position = self._positions.get(timer_id)
-        if position is None:
+        try:
+            return self._timers[timer_id]
+        except KeyError:
             raise RuntimeError("timer is not live")
-        return self._heap[position]
 
     def remove(self, timer_id: int) -> _Timer:
-        position = self._positions.pop(timer_id, None)
-        if position is None:
+        try:
+            return self._timers.pop(timer_id)
+        except KeyError:
             raise RuntimeError("timer is not live")
-        removed = self._heap[position]
-        last = self._heap.pop()
-        if position == len(self._heap):
-            return removed
-        self._heap[position] = last
-        self._positions[last.timer_id] = position
-        if position and self._heap[position].key < self._heap[(position - 1) // 2].key:
-            self._sift_up(position)
-        else:
-            self._sift_down(position)
-        return removed
 
     def discard(self, timer_id: int | None) -> None:
-        if timer_id is not None and timer_id in self._positions:
-            self.remove(timer_id)
+        if timer_id is not None:
+            self._timers.pop(timer_id, None)
 
     def peek(self) -> _Timer | None:
-        return None if not self._heap else self._heap[0]
+        while self._heap:
+            _, timer_id = self._heap[0]
+            timer = self._timers.get(timer_id)
+            if timer is not None:
+                return timer
+            heapq.heappop(self._heap)
+        return None
 
     def pop_due(self, now_ns: int) -> list[_Timer]:
         due: list[_Timer] = []
-        while self._heap and self._heap[0].due_ns <= now_ns:
-            due.append(self.remove(self._heap[0].timer_id))
+        while (timer := self.peek()) is not None and timer.due_ns <= now_ns:
+            heapq.heappop(self._heap)
+            due.append(self._timers.pop(timer.timer_id))
         return due
 
     def clear(self) -> None:
         self._heap.clear()
-        self._positions.clear()
-
-    def _sift_up(self, position: int) -> None:
-        while position:
-            parent = (position - 1) // 2
-            if self._heap[parent].key <= self._heap[position].key:
-                return
-            self._swap(parent, position)
-            position = parent
-
-    def _sift_down(self, position: int) -> None:
-        size = len(self._heap)
-        while True:
-            left = position * 2 + 1
-            if left >= size:
-                return
-            right = left + 1
-            child = (
-                right
-                if right < size and self._heap[right].key < self._heap[left].key
-                else left
-            )
-            if self._heap[position].key <= self._heap[child].key:
-                return
-            self._swap(position, child)
-            position = child
-
-    def _swap(self, left: int, right: int) -> None:
-        self._heap[left], self._heap[right] = self._heap[right], self._heap[left]
-        self._positions[self._heap[left].timer_id] = left
-        self._positions[self._heap[right].timer_id] = right
+        self._timers.clear()

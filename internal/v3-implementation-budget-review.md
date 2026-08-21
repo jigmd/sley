@@ -1,11 +1,11 @@
 # V3 Implementation Budget Review
 
-- Status: independently accepted architecture evidence
+- Status: simplification in progress; prior architecture verdict superseded
 - Date: 2026-08-21
 - Python ordered module-set SHA-256:
-  `5ed810dd5c55a27bdb015a9065486c0d696656a459553e542870e5762bf153d0`
+  `a23cc36c462fe34cd85e1a2698690e41ab092b8d2a84f7f60b626f7b1cd3dbb5`
 - TypeScript ordered module-set SHA-256:
-  `f982174b5e4ef86b68466a141448be605cc1e1681390b4b84e4a006be4a9f56d`
+  `54c3bc655b8e4ba5f3bfd25e328437043d4dac6ac09c52f0b6189ed7cf8f0401`
 
 Each digest hashes the ordered `sha256sum` records for the public facade,
 contracts, definition, execution, state, failures, timing, observation, and
@@ -23,8 +23,8 @@ conformance runners.
 
 | Port       | V2 lines | V3 lines | Ratio |
 | ---------- | -------: | -------: | ----: |
-| Python     |      207 |    5,360 | 25.9x |
-| TypeScript |      296 |    4,627 | 15.6x |
+| Python     |      207 |    4,798 | 23.2x |
+| TypeScript |      296 |    4,536 | 15.3x |
 
 The increase is not evidence of an equally large author model. It is primarily
 the cost of making the cross-language scheduler, failure lifecycle, limits,
@@ -85,23 +85,16 @@ regression tests.
 ## Evidence Already Passing
 
 - All 68 shared conformance fixtures and scale programs agree across ports.
-- Python passes 142 runtime tests, strict mypy/Pyright fixtures, wheel/sdist
+- Python passes 141 runtime tests, strict mypy/Pyright fixtures, wheel/sdist
   rebuild, installed PEP 561 typing, and clean-package imports.
-- TypeScript passes 147 runtime tests, strict declaration/example checks, a real
+- TypeScript passes 146 runtime tests, strict declaration/example checks, a real
   Chromium bundle snapshot, and ESM/CommonJS/logging package imports.
 - All 36 Python and two TypeScript cookbook contracts execute through staged
   projects with test-owned external-service fixtures.
 - Both packages declare zero runtime dependencies.
 
-## Independent Verdict
+## Review Status
 
-An independent reviewer assessed the exact module-set hashes above after the
-responsibility split and D10 delta, then returned `ACCEPT` with no blocker,
-major, or minor finding. The review confirmed an acyclic dependency graph,
-inert definition modules, local state ownership, bounded scheduler exports,
-paired cross-port responsibilities, and one execution composition layer per
-port.
-
-This closes the size-triggered architecture gate. The cookbook review has since
-been accepted separately, as has the D10 author-API review. The kernel-semantics
-and cross-port-implementability reviews remain separate release obligations.
+The previous architecture verdict assessed superseded module hashes. Review the
+lean implementation only after its deletion passes are complete; the cookbook
+and author-API reviews remain separate evidence.

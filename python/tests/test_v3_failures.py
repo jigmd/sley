@@ -121,7 +121,7 @@ class FailureNormalizationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(combine_result.failure.element_id, 1)
         self.assertIsNone(combine_result.failure.attempt)
 
-    async def test_uncaught_control_and_state_misuse_are_portable(self) -> None:
+    async def test_uncaught_control_misuse_is_portable(self) -> None:
         def invalid_action(context: Context[dict[str, Any]]) -> None:
             context.emit("")
 
@@ -135,19 +135,6 @@ class FailureNormalizationTests(unittest.IsolatedAsyncioTestCase):
             InvalidOutcomeDetail("invalid_action"),
         )
         self.assertIsNone(action_result.failure.cause)
-
-        def invalid_state(context: Context[dict[str, Any]]) -> None:
-            context.state[object()] = 1  # type: ignore[index]
-
-        state_result = await Flow(node(invalid_state)).start({}).result()
-        self.assertEqual(state_result.status, "failed")
-        if state_result.status != "failed":
-            self.fail("invalid state access must fail")
-        self.assertEqual(
-            state_result.failure.detail,
-            InvalidOutcomeDetail("state_record_misuse"),
-        )
-        self.assertIsNone(state_result.failure.cause)
 
     async def test_flow_combine_exception_has_flow_provenance(self) -> None:
         cause = RuntimeError("combine")

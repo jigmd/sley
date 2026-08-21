@@ -35,6 +35,8 @@
   the public `Flow` lifecycle with state capture and `_scheduling.py`, the sole
   activation and scope orchestrator. Definition and leaf modules must not import
   or call back into the scheduler.
+- `_state.py` performs only start-boundary validation and a native shallow copy;
+  do not wrap normal Python dictionary behavior in a framework collection.
 - Keep `py.typed` markers in both public packages so installed mypy and Pyright
   consumers receive the same inline types verified from source.
 - Prefer explicit private helpers over framework abstractions that are not part

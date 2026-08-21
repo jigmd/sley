@@ -18,7 +18,7 @@ later definition mutations.
 
 Each invocation owns:
 
-- one shallow-copied dict-compatible state carrier;
+- one shallow-copied native dictionary;
 - scope, activation, callback, timer, and ready-queue records;
 - failure packets and cancellation fences;
 - an event publisher, counters, diagnostics, and final result.

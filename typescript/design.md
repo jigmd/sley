@@ -17,13 +17,12 @@ partially initialized runtime object.
 
 ## State Carrier
 
-Each run shallow-copies initial state into one stable Proxy over a private plain
-record. Every callback and result sees the same Proxy identity. The Proxy keeps
-properties as configurable data bindings and rejects symbols, accessors,
-prototype mutation, and other non-record operations.
+Each run shallow-copies initial state into one ordinary object. Every callback
+and result sees that same object, whose reads and mutations follow JavaScript
+rules.
 
 `run()` uses a final native Promise capability and briefly masks the private
-target's `then` binding while resolving. This preserves exact state identity
+state object's `then` binding while resolving. This preserves exact state identity
 even when application state legitimately contains a callable `then` property.
 
 ## Scheduler

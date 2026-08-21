@@ -97,6 +97,12 @@ When the user requests a durable behavior change, record it here or in the relev
 - Do not add speculative abstractions, optimizations, dependencies, or tests for
   hypothetical requirements. Add complexity only after a real requirement or
   measured limitation justifies it.
+- Apply the strongest simplicity budget to shipped runtime code, especially the
+  graph runner; keep the public API thinner still, limited to contracts and
+  delegation into the core.
+- Do not treat thorough verification or pedagogical cookbook detail as runtime
+  bloat. Tests may be extensive, and cookbook examples may retain deliberate
+  detail when it teaches the intended lesson.
 
 ## Child DOX Index
 

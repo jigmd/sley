@@ -18,7 +18,6 @@ from typing import (
 MAX_SAFE_INTEGER = 9_007_199_254_740_991
 MAX_PORTABLE_COLLECTION_LENGTH = 4_294_967_295
 RUN_EVENT_SCHEMA_VERSION = 1
-_MAX_HOST_TIMER_DELAY_MS = 2_147_483_647
 
 Action: TypeAlias = str
 Phase: TypeAlias = Literal[
@@ -213,7 +212,6 @@ InvalidOutcomeReason: TypeAlias = Literal[
     "wrong_return_type",
     "invalid_action",
     "invalid_control_arguments",
-    "state_record_misuse",
     "report_name",
 ]
 InvalidCombinationReason: TypeAlias = InvalidOutcomeReason

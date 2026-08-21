@@ -54,11 +54,10 @@ detail, failed handle settlement, and the exact `RunError` projection.
 `S13` fixes complete-buffer preflight: a later invalid arm leaves direct state
 writes visible but commits no earlier transition, activation, or terminal from
 that callback batch.
-State-carrier tests extend `S02`, `S11`, and `S12` with host-specific assertions
-for descriptor-safe initial capture, exact top-level identity, shallow nested and
-self aliases, separate-run isolation, normal Python dictionary operations,
-exact-string key rejection before hashing, TypeScript record reflection and
-mutation guards, and thenable-safe exact `run()` fulfillment.
+State tests extend `S02`, `S11`, and `S12` with host-specific assertions for
+native shallow-copy behavior, exact top-level identity, shallow nested and self
+aliases, separate-run isolation, normal Python/JavaScript map operations, and
+thenable-safe exact TypeScript `run()` fulfillment.
 
 ## Failure and recovery coverage
 

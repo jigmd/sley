@@ -36,6 +36,9 @@
   `internal/execution.ts` composes the public `Flow` lifecycle with state capture
   and `internal/scheduling.ts`, the sole activation and scope orchestrator.
   Definition and leaf modules must not import or call back into the scheduler.
+- `internal/state.ts` performs only start-boundary validation, native shallow
+  copy, and Promise thenable masking; do not wrap normal object mutation in a
+  framework Proxy.
 - Preserve browser compatibility and avoid Node.js runtime dependencies.
 - Throw immediately on invalid public input and impossible kernel states; do not
   conceal defects with fallback behavior.

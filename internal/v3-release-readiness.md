@@ -1,6 +1,6 @@
 # V3 Release Readiness
 
-- Status: executable gates pass; two independent review gates pending
+- Status: runtime simplification in progress; prior release evidence superseded
 - Evidence date: 2026-08-21
 - Authority: [RFC 0001](rfcs/0001-caskada-v3-runtime.md)
 
@@ -24,14 +24,14 @@
 
 Python:
 
-- 142 runtime tests pass.
+- 141 runtime tests pass.
 - Strict mypy 1.17.1 and Pyright 1.1.413 checks pass.
 - The sdist and wheel build; the wheel installs cleanly; both public packages
   expose PEP 561 types; installed imports and strict mypy consumption pass.
 
 TypeScript:
 
-- 147 runtime tests pass through the package test script.
+- 146 runtime tests pass through the package test script.
 - Strict declarations, fixtures, and typed cookbook examples compile.
 - The browser bundle contains no Node.js built-in import and passes the exact
   Chromium fan-out/combine/report snapshot.
@@ -46,15 +46,12 @@ Repository:
 
 ## Freeze Blockers
 
-The implementation is ready for the remaining independent reviews, not release
-or API freeze. Two reviews remain:
+The implementation is not ready for release or API freeze while the lean-runtime
+pass is active. Two independent reviews will remain afterward:
 
 - The kernel-semantics review required by release gate 11.
 - The cross-port-implementability review required by release gate 11.
 
-The size-triggered architecture review is accepted with no finding, as recorded
-in [V3 Implementation Budget Review](v3-implementation-budget-review.md). The
-fresh cookbook API review is also accepted with no finding, and the fresh D10
-author-API review is accepted with no blocker or major finding. No executable
-correctness, packaging, browser, cookbook, dependency, or stale model failure is
-currently open.
+The prior size-triggered architecture verdict no longer applies to the changed
+module hashes. The cookbook and author-API reviews remain useful, but final
+runtime evidence must be regenerated after simplification.

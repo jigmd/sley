@@ -426,14 +426,12 @@ InvalidOutcomeReason: TypeAlias = Literal[
     "wrong_return_type",
     "invalid_action",
     "invalid_control_arguments",
-    "state_record_misuse",
     "report_name",
 ]
 InvalidCombinationReason: TypeAlias = Literal[
     "wrong_return_type",
     "invalid_action",
     "invalid_control_arguments",
-    "state_record_misuse",
     "report_name",
 ]
 LimitName: TypeAlias = Literal[
@@ -1352,10 +1350,9 @@ current Python type checkers do not consistently treat `TypedDict` as a
 `Mapping` bound; runtime still requires the initial value to satisfy the mapping
 contract.
 
-The runtime state carrier is a private `dict` subclass with native dictionary
-storage and the complete normal `dict` instance surface, so `copy()`, views,
-update, union, and ordinary mapping operations match the `TypedDict`/dictionary
-type authors see. `StateT` is a static record type with no runtime schema effect:
+The runtime state carrier is an ordinary `dict`, so its behavior matches the
+`TypedDict`/dictionary type authors see. `StateT` is a static record type with no
+runtime schema effect:
 supported typed forms are `TypedDict`, `dict[str, ...]`, and equivalent data-only
 record types, not
 preservation of an arbitrary source Mapping subclass or a method-bearing domain
@@ -1426,11 +1423,9 @@ export type FailureKind =
   | 'limit'
   | 'internal'
 
-export type InvalidOutcomeReason =
-  'wrong_return_type' | 'invalid_action' | 'invalid_control_arguments' | 'state_record_misuse' | 'report_name'
+export type InvalidOutcomeReason = 'wrong_return_type' | 'invalid_action' | 'invalid_control_arguments' | 'report_name'
 
-export type InvalidCombinationReason =
-  'wrong_return_type' | 'invalid_action' | 'invalid_control_arguments' | 'state_record_misuse' | 'report_name'
+export type InvalidCombinationReason = 'wrong_return_type' | 'invalid_action' | 'invalid_control_arguments' | 'report_name'
 
 export type LimitName =
   | 'max_activations'
@@ -1988,8 +1983,8 @@ Timer arithmetic does not add a duration to a host `number`/float and assume the
 sum remains exact. Each timer retains an origin plus its requested safe-integer
 relative duration and uses an overflow-safe elapsed-time comparator, implemented
 with arbitrary-precision integer accumulation or an equivalent quotient/remainder
-pair. A host timer is only a wakeup hint: delays larger than that host's maximum
-are scheduled in chunks, with the monotonic clock reread after every chunk.
+pair. A host timer is only a wakeup hint; an implementation may split a delay
+when its host timer has a smaller maximum.
 Implementations never clamp, shorten, wrap, or round a requested long duration
 into an earlier deadline. Mathematical `due_at` notation below refers to this
 record and comparator, not necessarily one representable host timestamp.
@@ -2059,7 +2054,7 @@ starts are data in `RunHandle.result`, not escaped framework exceptions.
 exceptions above; each exception retains the exact result and projection never
 reruns work. Every `Completed`, regardless of terminal kind or cardinality,
 projects to its singular shared state. Synchronous misuse of a borrowed/closed
-Context or scoped suppression view still raises at that API call; invalid
+Context still raises at that API call; invalid
 state-record operations raise at their operation. When either remains uncaught
 inside a live lifecycle wrapper, the wrapper normalizes it into the specified
 Failure.
@@ -2275,8 +2270,8 @@ Python, `context.state["answer"]` raises `KeyError` when the key is absent, whil
 `context.state.get("answer")` returns its supplied default; mapping-shaped branch
 inputs behave the same way when application code indexes them. If such an error
 escapes a live callback, Caskada records the ordinary Failure for that phase and
-applies its configured retry/recovery policy. It is not a special schema failure
-or `state_record_misuse`. In JavaScript, reading a missing state or input property
+applies its configured retry/recovery policy. It is not a framework schema
+failure. In JavaScript, reading a missing state or input property
 normally produces `undefined`; Caskada does not replace that language convention
 with an implicit throw. TypeScript's `--noUncheckedIndexedAccess` and ordinary
 optional-property checking keep potentially absent reads visible statically, but
@@ -2477,34 +2472,11 @@ budget and is not part of this hard-cap table.
 `start(initial_state)` and `run(initial_state)` shallow-copy the caller's
 top-level mapping once before a handle exists. Initial state is required; an
 empty workflow state is
-`{}`. Python accepts a `Mapping`, enumerates it once, requires every source key
-to be an exact `str`, and materializes the private native-storage `dict`
-carrier; a nonstring key is an `OptionValidationError` before any corresponding
-value lookup. A duplicate iterator key is rejected before its second value
-lookup. Mapping length, iteration, or value-access exceptions are wrapped with
-their exact cause.
-TypeScript accepts only a plain Object-prototype or null-prototype data record
-and captures it in this exact order:
-
-1. Require a non-null object that is not an array or function.
-2. Call `Object.getPrototypeOf` once and require exactly `Object.prototype` or
-   `null`.
-3. Call `Reflect.ownKeys` once and enforce the portable binding bound on that
-   returned key list.
-4. Visit those keys in the returned ECMAScript order. Reject a symbol immediately;
-   for a string, call `Reflect.getOwnPropertyDescriptor` once and require a
-   present, enumerable own data descriptor.
-5. Copy `descriptor.value` into a fresh ordinary Object-prototype target as an
-   own writable, enumerable, configurable data property, using a descriptor so
-   `"__proto__"` remains data. Never call `Reflect.get` and never invoke an
-   accessor getter.
-
-Every reflection/proxy trap is caught independently. A trap exception becomes
-`OptionValidationError` with that exact cause and no later key is inspected.
-Accessor, symbol, non-enumerable, oversized, cross-realm/custom-prototype, array,
-function, and class-instance inputs are rejected before IDs, events, or callbacks
-exist. The target is exposed through one stable runtime-owned Proxy for the whole
-run; the normalized copy safely preserves keys such as `"__proto__"` as data.
+`{}`. Python accepts a `Mapping`, copies it with `dict(...)`, and requires the
+copied keys to be exact strings. TypeScript accepts a non-null, non-array object,
+copies its enumerable properties with ordinary object-spread semantics, and
+rejects copied symbol keys. A failed shallow copy or invalid key raises
+`OptionValidationError` before callbacks start.
 
 That one run-owned map is shared by every activation and Flow. There is no
 automatic branch copy, overlay, merge, last-writer rule, or hidden local memory.
@@ -2527,33 +2499,11 @@ as timing-dependent as shared-state mutation. Treat payloads as immutable, or
 construct/copy a distinct application value for each branch when isolation is
 required.
 
-Every callback receives the same persistent run-owned state carrier. Python uses
-one private `dict` subclass backed by its own native dictionary storage; it
-supports the complete normal instance API, including `copy`, views, `update`,
-`setdefault`, `pop`, union, reverse iteration, and JSON/mapping consumers.
-TypeScript uses one stable Proxy over the ordinary data target; normal property
-reads/assignments, `delete`, Object-prototype read methods, own-key reflection,
-spread as a source, and `Object.assign` work. It rejects symbol keys,
-accessor/prototype mutation, and extensibility/freeze/seal operations. Every
-stored binding remains an own configurable data property.
-
-Python requires `type(key) is str` before every supported read, write, delete,
-membership test, or multi-key source lookup; a `str` subclass is rejected before
-its hash or equality can run. TypeScript admits primitive string property keys
-and rejects symbols. State operations are immediate and incremental in their
-host-specified order: earlier writes remain if a later source read or operation
-fails. There is no state-width budget, batch rollback, or framework scan on every
-callback settlement. Deliberately bypassing the supported carrier API with
-Python C-level/unbound base-class mutation or Proxy internals is outside the
-contract, like mutating any framework private object.
-
-A prohibited key or record meta-operation raises a native `TypeError` at that
-call site before changing the targeted binding or record shape. Application code
-may catch it; doing so does not fence the run. If it escapes a live lifecycle
-callback, the wrapper normalizes it to that phase's
-`state_record_misuse` invalid outcome/combination with `cause=null`, rather than
-exposing a port-private guard object. An application getter/source operation
-that itself throws remains the ordinary callback failure with that exact cause.
+Every callback receives the same persistent run-owned native `dict` or object.
+After start-boundary capture, state reads and mutations follow ordinary Python or
+JavaScript rules. There is no state-width budget, batch rollback, Proxy policy,
+or framework scan on callback settlement. An application state operation that
+throws becomes the ordinary callback failure with that exact cause.
 
 The Context capability still closes at callback settlement, so a later
 `context.state` property lookup fails with the other Context operations. A state
@@ -2755,9 +2705,8 @@ cardinality.
 Terminal and ScopeResult objects are immutable framework records, including the
 single retained `outputs` projection, but their present output values are borrowed
 application references. They may be retained after callbacks; the runtime
-neither clones nor later mutates them. Failure suppression uses persistent
-ordered chunks so retaining a ScopeFailure does not force quadratic flattening
-across nested boundaries.
+neither clones nor later mutates them. Failure suppression uses ordinary
+immutable tuples/arrays that may likewise be retained after recovery.
 
 Node recovery receives the failed activation's input. Flow recovery receives the
 active packet's controlling input: a child failure contributes that child's
@@ -3319,33 +3268,32 @@ that acquired the resource.
 
 `FailureKind` has one exact producer contract:
 
-| Kind                  | Produced by                                                                                                             |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `handler`             | A node handler throws before its attempt timeout wins, or produces a pre-signal application error.                      |
-| `handler_timeout`     | A node attempt deadline wins.                                                                                           |
-| `retry_policy`        | `should_retry` or a `delay_ms` callback throws or returns an invalid value.                                             |
-| `node_recovery`       | A configured Node recovery callback throws.                                                                             |
-| `flow_combine`        | A configured Flow combine callback throws.                                                                              |
-| `flow_recovery`       | A configured Flow recovery callback throws.                                                                             |
-| `invalid_outcome`     | A handler/Node-recovery return is non-null, or Context/state/emission/report use is semantically invalid.               |
-| `invalid_combination` | A Flow combine/recovery return is non-null, or Context/state/emission/report use is semantically invalid in that phase. |
-| `unknown_action`      | A buffered emission cannot resolve to a matching link or declared scope exit during preflight.                          |
-| `limit`               | A run/scope budget, depth, portable collection, or safe-integer bound would be exceeded.                                |
-| `internal`            | A scheduler invariant fails after a valid run has started.                                                              |
+| Kind                  | Produced by                                                                                                       |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `handler`             | A node handler throws before its attempt timeout wins, or produces a pre-signal application error.                |
+| `handler_timeout`     | A node attempt deadline wins.                                                                                     |
+| `retry_policy`        | `should_retry` or a `delay_ms` callback throws or returns an invalid value.                                       |
+| `node_recovery`       | A configured Node recovery callback throws.                                                                       |
+| `flow_combine`        | A configured Flow combine callback throws.                                                                        |
+| `flow_recovery`       | A configured Flow recovery callback throws.                                                                       |
+| `invalid_outcome`     | A handler/Node-recovery return is non-null, or Context/emission/report use is semantically invalid.               |
+| `invalid_combination` | A Flow combine/recovery return is non-null, or Context/emission/report use is semantically invalid in that phase. |
+| `unknown_action`      | A buffered emission cannot resolve to a matching link or declared scope exit during preflight.                    |
+| `limit`               | A run/scope budget, depth, portable collection, or safe-integer bound would be exceeded.                          |
+| `internal`            | A scheduler invariant fails after a valid run has started.                                                        |
 
 Every `Failure` carries a nullable structured `detail`. Invalid outcome detail
 uses one of these exhaustive reasons:
 
-| Reason                      | Meaning                                                                                                                                       |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `wrong_return_type`         | A lifecycle callback returned anything other than `None` / `undefined`.                                                                       |
-| `invalid_action`            | An emission action is empty or not a string.                                                                                                  |
-| `invalid_control_arguments` | A control overload, unlabelled-input wrapper, argument count, or captured bound is invalid.                                                   |
-| `state_record_misuse`       | Context state is replaced, a state operation uses a nonprimitive key, or TypeScript state is subjected to a prohibited record meta-operation. |
-| `report_name`               | A report name is empty or not a string.                                                                                                       |
+| Reason                      | Meaning                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| `wrong_return_type`         | A lifecycle callback returned anything other than `None` / `undefined`.                     |
+| `invalid_action`            | An emission action is empty or not a string.                                                |
+| `invalid_control_arguments` | A control overload, unlabelled-input wrapper, argument count, or captured bound is invalid. |
+| `report_name`               | A report name is empty or not a string.                                                     |
 
 `invalid_combination` uses the same reason vocabulary for a Flow callback.
-Emission, state, or report misuse inside a Flow callback is
+Emission or report misuse inside a Flow callback is
 `invalid_combination`; the same misuse inside a handler or Node recovery is
 `invalid_outcome`.
 
@@ -3562,17 +3510,11 @@ active runtime owner. It stores private `Failure` and input references only;
 the run state is singular and remains invocation-owned independently of packet
 movement.
 
-Suppression is stored as an immutable, O(1)-concatenable sequence of chunks, not
-as an array copied at every boundary. Each appended Failure reference is stored
-once; replacement/pass-through retains the sequence root, and sibling merge
-links ordered sequences without flattening either. A `ScopeFailure` exposes an
-epoch-guarded read-only sequence view over those chunks. Python types it as
-`Sequence[Failure]`; TypeScript presents the familiar `readonly Failure[]`
-surface through a guarded array-like facade. Iteration preserves logical order;
-an author's explicit spread, slice, tuple/list conversion, or indexing work is
-application work. Retaining the view after recovery closes raises just like the
-other scoped facades. A final `RunResult.suppressed` tuple/readonly array is
-materialized exactly once when terminal status commits.
+Suppression is stored in observation-order immutable tuples/arrays. Replacing or
+merging a packet copies that normally short sequence. `ScopeFailure.suppressed`
+may be retained after recovery, and the final `RunResult.suppressed` uses the
+same ordinary immutable representation. A persistent rope is not justified
+without evidence of real workflows producing deep suppression chains.
 
 Every packet follows this closed state machine:
 
@@ -3967,17 +3909,15 @@ the workflow state.
 TypeScript `run()` must be a hand-written non-`async` function that creates the
 final returned native Promise capability; it must not return state through an
 intermediate `.then` chain. Before resolving a Completed run, it directly
-installs an own configurable data property `then: undefined` on the carrier's
-hidden target, retaining any prior own descriptor. It synchronously calls that
-final Promise's native resolver with the exact public carrier, then restores the
+installs an own configurable data property `then: undefined` on the state
+object, retaining any prior own descriptor. It synchronously calls that final
+Promise's native resolver with the exact state object, then restores the
 prior descriptor or deletes the temporary property in `finally`, before any
 reaction can run. The Promise resolution algorithm performs its `Get("then")`
 synchronously, so callable state data named `then` is never invoked or awaited,
 the exact carrier becomes the fulfillment value, and the exact descriptor is
 visible again when user code resumes. Always masking also defeats an inherited
-`Object.prototype.then`. The hidden target never escapes; its bindings remain
-configurable data properties and the Proxy blocks prototype, accessor, symbol,
-and extensibility mutation. `Promise.resolve(state)`, `async return state`, or
+`Object.prototype.then`. `Promise.resolve(state)`, `async return state`, or
 `return state` from another Promise reaction are explicitly nonconforming
 implementations because they can assimilate the restored application value.
 
@@ -4451,8 +4391,7 @@ Let:
   output-bearing retained terminal;
 - `F` be the peak retained `Failure` records plus packet, registry, previous, and
   suppression-reference slots;
-- `L` be total Failure-record allocations, O(1) suppression-chunk link
-  operations, and references written by the one final suppression flatten;
+- `L` be total Failure-record allocations and suppression references copied;
 - `H` be all timer-heap operations (deadline, attempt, grace, and retry);
 - `Q` be accepted application report events;
 
@@ -4475,18 +4414,16 @@ eligibility scan is used.
 Computing `auto_max_concurrency` folds one maximum through the existing
 compilation traversal with one constant-size accumulator, so it adds no
 asymptotic term.
-The timer heap contains only live timers; indexed removal prevents completed
-timer history from accumulating. Publication control retains exactly the current,
+Timer storage removes expired entries and may lazily discard cancelled entries.
+Publication control retains exactly the current,
 optional local-fence, optional run-fence, and optional terminal fact slots. Their
 event records are bounded by the current atomic emission/forwarding batch plus
 the scopes closed by one terminal commit and a constant number of callback/fence
 events; no delivered event history is retained.
 
-Packet replacement and pass-through retain one suppression-sequence root;
-append/merge creates only O(1) chunk links. Scoped recovery iterates that logical
-sequence without framework flattening, and final status flattens it once. Thus
-`N` failures propagated through `D` nested Flow boundaries do not introduce an
-`O(N*D)` framework term.
+Packet replacement and pass-through copy ordinary suppression tuples/arrays.
+`L` already counts those copied references; no separate asymptotic promise is
+needed for failure chains that normal workflows keep short.
 
 A scalar emission, Flow entry, and individual terminal commit are `O(1)` in
 state width. A fan-out of `N` emissions costs `Theta(N)` framework time and
@@ -4498,12 +4435,9 @@ references; there are no separate end/exit projections. Initial state capture
 costs `Theta(S0)`; successful `run()` publishes the same carrier in `O(1)`. There is no
 `O(A*S)`, `O(N*S)`, branch merge, or final-state copy term.
 
-The persistent state carrier validates each supported Python key or TypeScript
-property operation incrementally; an enumeration/spread is charged once per
-visited key in `K` and requires no settlement rescan. State width contributes
-to `S` but is deliberately not a run budget. A rejected Context or state call is
-still charged to `X`, so an application cannot perform unbounded caught misuse
-outside the formula. An
+The persistent native state map requires no settlement rescan. State width
+contributes to `S` but is deliberately not a run budget. A rejected Context call
+is still charged to `X`. An
 oversized emission buffer is rejected before an append exceeds its portable or
 run budget. Each accepted `emit`/`end` stores
 only a fixed-size intent plus one borrowed input/output reference, even if the
@@ -5873,26 +5807,16 @@ Python and TypeScript must run equivalent fixtures for:
 - every callback in one invocation observes the exact same run-owned top-level
   state map; fan-out allocates tokens and input references but performs no state
   copy, overlay, patch, merge, or hidden local-memory operation;
-- caller top-level state is copied exactly once before handle creation; malformed
-  or throwing mappings fail pre-start, nested/two-key/self references retain
-  ordinary shallow-copy alias behavior, and the caller's top-level mapping is
-  not mutated;
+- caller top-level state is copied exactly once before handle creation;
+  malformed or throwing sources fail pre-start, nested and self references retain
+  ordinary shallow-copy alias behavior, and the caller's top-level map is not
+  mutated;
 - linked offline/online phases under one root observe one state identity and one
   invocation, while intentionally passing a returned state as a later
   `initial_state` creates a separate shallow copy, run ID, budgets, and event
   lifecycle; no borrow-mode path exists;
-- TypeScript accepts ordinary interfaces backed by object/null-prototype data
-  records and rejects arrays, functions, dates, class instances, cross-realm
-  prototypes, symbols, non-enumerable properties, and accessor failures before
-  start;
-- the Python carrier has the normal dict instance API, exact-`str` live keys,
-  durable views/iterators, and stable identity across callbacks/results;
-  TypeScript assignment, delete, Object methods, reflection, spread, and
-  `Object.assign` work through one stable Proxy, while prototype/accessor/symbol/
-  extensibility/freeze/seal mutations fail atomically;
-- Python rejects a `str` subclass before its hash/equality can run; multi-key
-  operations preserve valid earlier assignments, stop at the first invalid key
-  or source failure, and promise no rollback;
+- Python state is a normal `dict`; TypeScript state is a normal object. Their
+  reads and mutations follow host-language behavior after the shallow copy;
 - retained state aliases, Python iterators/views, and TypeScript references stay
   usable after callback settlement; retained Context capabilities fail. An
   alias may mutate the same top-level map even after a final result, while
@@ -5923,8 +5847,8 @@ Python and TypeScript must run equivalent fixtures for:
   failed/cancelled state is partial, and an escaped top-level or nested reference
   may still be changed by uncooperative work after abandonment;
 - TypeScript `run()` uses the specified final native-Promise capability and
-  synchronous hidden-target `then: undefined` mask; own callable/noncallable/
-  absent `then`, polluted `Object.prototype.then`, exact descriptor/key-order
+  synchronous `then: undefined` mask; own callable/noncallable/absent `then`,
+  polluted `Object.prototype.then`, exact descriptor
   restoration, multiple waiters, and exact fulfillment identity are covered,
   while a negative fixture proves that an async or intermediate chained return
   would assimilate application state;
@@ -6171,10 +6095,10 @@ Python and TypeScript must run equivalent fixtures for:
 - nested flow waiting without a callback permit;
 - FIFO order within one scope and round-robin readiness across scopes;
 - retry timers retaining live tokens and scope slots;
-- live attempt/grace/deadline timers, indexed removal, and every tie priority;
+- live attempt/grace/deadline timers, removal, and every tie priority;
 - fake-clock durations near `MAX_SAFE_INTEGER` prove overflow-safe ordering and
   equality, public duration saturation at `MAX_SAFE_INTEGER`, and a host with a
-  small maximum wake delay that chunks rather than clamps a long timer;
+  small maximum wake delay does not shorten a long timer;
 - activation, transition, ready, depth, and safe-integer bounds;
 - a scope-local cap counts its entry, counts nested Flow owners only in the parent,
   excludes descendants/retries/callbacks/transitions, resets for every scope

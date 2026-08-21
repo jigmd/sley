@@ -109,7 +109,7 @@ describe('v3 portable failure normalization', () => {
     assert.equal(combineResult.failure.attempt, null)
   })
 
-  it('normalizes uncaught control and state misuse without a private cause', async () => {
+  it('normalizes uncaught control misuse without a private cause', async () => {
     const invalidAction = node<State>(((context: Context<State>) => context.emit(0 as never)) as (context: Context<State>) => void)
     const actionResult = await new Flow(invalidAction).start({}).result
 
@@ -118,17 +118,6 @@ describe('v3 portable failure normalization', () => {
     assert.equal(actionResult.failure.kind, 'invalid_outcome')
     assert.deepEqual(actionResult.failure.detail, { type: 'invalid_outcome', reason: 'invalid_action' })
     assert.equal(actionResult.failure.cause, null)
-
-    const key = Symbol('bad')
-    const invalidState = node<State>((context) => {
-      Reflect.set(context.state, key, 1)
-    })
-    const stateResult = await new Flow(invalidState).start({}).result
-
-    assert.equal(stateResult.status, 'failed')
-    if (stateResult.status !== 'failed') throw new Error('invalid state operation must fail')
-    assert.deepEqual(stateResult.failure.detail, { type: 'invalid_outcome', reason: 'state_record_misuse' })
-    assert.equal(stateResult.failure.cause, null)
   })
 
   it('retains exact capture-trap errors as ordinary handler causes', async () => {

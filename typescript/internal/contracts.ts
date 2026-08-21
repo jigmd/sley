@@ -112,8 +112,7 @@ export type FailureKind =
   | 'limit'
   | 'internal'
 
-export type InvalidOutcomeReason =
-  'wrong_return_type' | 'invalid_action' | 'invalid_control_arguments' | 'state_record_misuse' | 'report_name'
+export type InvalidOutcomeReason = 'wrong_return_type' | 'invalid_action' | 'invalid_control_arguments' | 'report_name'
 
 export type InvalidCombinationReason = InvalidOutcomeReason
 

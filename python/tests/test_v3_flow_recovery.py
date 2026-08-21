@@ -37,8 +37,7 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
         scoped = seen[0]
         self.assertEqual(scoped.primary.kind, "handler")
         self.assertEqual(suppressed_inside, [()])
-        with self.assertRaisesRegex(RuntimeError, "closed"):
-            len(scoped.suppressed)
+        self.assertEqual(scoped.suppressed, ())
         self.assertEqual(scoped.settled_before_fence, ())
         self.assertIsNone(scoped.result)
         self.assertEqual(scoped.failing_activation_id, 2)
@@ -143,8 +142,7 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
             self.fail("zero-emission Flow recovery must propagate")
         self.assertIs(result.failure, seen[0].primary)
         self.assertEqual(result.suppressed, suppressed_inside[0])
-        with self.assertRaisesRegex(RuntimeError, "closed"):
-            tuple(seen[0].suppressed)
+        self.assertEqual(tuple(seen[0].suppressed), suppressed_inside[0])
         self.assertEqual(result.terminals, seen[0].settled_before_fence)
 
     async def test_recovery_throw_replaces_primary_and_retains_previous(self) -> None:

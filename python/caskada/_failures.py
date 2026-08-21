@@ -3,10 +3,8 @@
 # Failure construction, packets, and retry-policy evaluation.
 from __future__ import annotations
 
-from collections import OrderedDict
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import overload
 
 from ._contracts import (
     _FAILURE_MESSAGES,
@@ -21,149 +19,6 @@ class _SemanticMisuse(TypeError):
     def __init__(self, reason: InvalidOutcomeReason, message: str) -> None:
         super().__init__(message)
         self.reason = reason
-
-
-@dataclass(frozen=True, slots=True)
-class _FailureLeaf:
-    failures: tuple[Failure, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class _FailureConcat:
-    left: _FailureTree
-    right: _FailureTree
-    size: int
-
-
-_FailureTree = _FailureLeaf | _FailureConcat
-
-
-class _FailureSequence(Sequence[Failure]):
-    """Immutable failure rope; concatenation never copies Failure references."""
-
-    __slots__ = ("_root", "_size")
-
-    def __init__(self, root: _FailureTree | None = None, size: int = 0) -> None:
-        self._root = root
-        self._size = size
-
-    @classmethod
-    def one(cls, failure: Failure) -> _FailureSequence:
-        return cls(_FailureLeaf((failure,)), 1)
-
-    @classmethod
-    def from_sequence(cls, failures: Sequence[Failure]) -> _FailureSequence:
-        if isinstance(failures, cls):
-            return failures
-        items = tuple(failures)
-        return cls() if not items else cls(_FailureLeaf(items), len(items))
-
-    def append(self, failure: Failure) -> _FailureSequence:
-        return self.concat(self.one(failure))
-
-    def concat(self, other: _FailureSequence) -> _FailureSequence:
-        if not self:
-            return other
-        if not other:
-            return self
-        return _FailureSequence(
-            _FailureConcat(
-                self._require_root(), other._require_root(), len(self) + len(other)
-            ),
-            len(self) + len(other),
-        )
-
-    def materialize(self) -> tuple[Failure, ...]:
-        return tuple(self)
-
-    def __len__(self) -> int:
-        return self._size
-
-    def __iter__(self) -> Iterator[Failure]:
-        if self._root is None:
-            return
-        stack = [self._root]
-        while stack:
-            node = stack.pop()
-            if isinstance(node, _FailureLeaf):
-                yield from node.failures
-            else:
-                stack.append(node.right)
-                stack.append(node.left)
-
-    @overload
-    def __getitem__(self, index: int) -> Failure: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> tuple[Failure, ...]: ...
-
-    def __getitem__(self, index: int | slice) -> Failure | tuple[Failure, ...]:
-        if isinstance(index, slice):
-            return self.materialize()[index]
-        normalized = index + self._size if index < 0 else index
-        if normalized < 0 or normalized >= self._size:
-            raise IndexError("failure sequence index out of range")
-        for position, failure in enumerate(self):
-            if position == normalized:
-                return failure
-        raise RuntimeError("failure sequence size invariant violated")
-
-    def _require_root(self) -> _FailureTree:
-        if self._root is None:
-            raise RuntimeError("empty failure sequence has no root")
-        return self._root
-
-
-class _ScopeEpoch:
-    __slots__ = ("_live",)
-
-    def __init__(self) -> None:
-        self._live = True
-
-    def close(self) -> None:
-        self._live = False
-
-    def require_live(self) -> None:
-        if not self._live:
-            raise RuntimeError("ScopeFailure suppression view is closed")
-
-
-class _ScopedFailureIterator(Iterator[Failure]):
-    __slots__ = ("_epoch", "_iterator")
-
-    def __init__(self, epoch: _ScopeEpoch, failures: _FailureSequence) -> None:
-        self._epoch = epoch
-        self._iterator = iter(failures)
-
-    def __next__(self) -> Failure:
-        self._epoch.require_live()
-        return next(self._iterator)
-
-
-class _ScopedFailureView(Sequence[Failure]):
-    __slots__ = ("_epoch", "_failures")
-
-    def __init__(self, epoch: _ScopeEpoch, failures: _FailureSequence) -> None:
-        self._epoch = epoch
-        self._failures = failures
-
-    def __len__(self) -> int:
-        self._epoch.require_live()
-        return len(self._failures)
-
-    def __iter__(self) -> Iterator[Failure]:
-        self._epoch.require_live()
-        return _ScopedFailureIterator(self._epoch, self._failures)
-
-    @overload
-    def __getitem__(self, index: int) -> Failure: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> tuple[Failure, ...]: ...
-
-    def __getitem__(self, index: int | slice) -> Failure | tuple[Failure, ...]:
-        self._epoch.require_live()
-        return self._failures[index]
 
 
 class _FailureFactory:
@@ -207,7 +62,7 @@ class _FailurePacket:
     packet_id: int
     sequence: int
     primary: Failure
-    suppressed: _FailureSequence
+    suppressed: tuple[Failure, ...]
     input: object
     owner: _PacketOwner
     state: str = "active"
@@ -222,7 +77,7 @@ class _PacketOwner:
 @dataclass(frozen=True, slots=True)
 class _PacketDrain:
     primary: Failure | None
-    suppressed: _FailureSequence
+    suppressed: tuple[Failure, ...]
 
 
 class _PacketRegistry:
@@ -231,7 +86,7 @@ class _PacketRegistry:
     __slots__ = ("_active", "_next_id", "_next_sequence")
 
     def __init__(self) -> None:
-        self._active: OrderedDict[int, _FailurePacket] = OrderedDict()
+        self._active: dict[int, _FailurePacket] = {}
         self._next_id = 1
         self._next_sequence = 1
 
@@ -249,7 +104,7 @@ class _PacketRegistry:
             packet_id,
             self._next_sequence,
             primary,
-            _FailureSequence.from_sequence(suppressed),
+            tuple(suppressed),
             input,
             owner,
         )
@@ -278,7 +133,8 @@ class _PacketRegistry:
 
     def append(self, packet_id: int, failure: Failure) -> None:
         packet = self.get(packet_id)
-        packet.suppressed = packet.suppressed.append(failure)
+        # ponytail: copy short suppression tuples; revisit only with measured depth.
+        packet.suppressed += (failure,)
 
     def transfer(self, packet_id: int, owner: _PacketOwner) -> None:
         self.get(packet_id).owner = owner
@@ -288,9 +144,7 @@ class _PacketRegistry:
             raise RuntimeError("failure packet cannot merge into itself")
         target = self.get(target_id)
         source = self.get(source_id)
-        target.suppressed = target.suppressed.append(source.primary).concat(
-            source.suppressed
-        )
+        target.suppressed += (source.primary, *source.suppressed)
         source.state = "merged"
         del self._active[source_id]
 
@@ -307,12 +161,12 @@ class _PacketRegistry:
             ordered.insert(0, controlling)
 
         primary = None if controlling is None else controlling.primary
-        suppressed = _FailureSequence()
+        suppressed: tuple[Failure, ...] = ()
         for packet in ordered:
             if packet is controlling:
-                suppressed = suppressed.concat(packet.suppressed)
+                suppressed += packet.suppressed
             else:
-                suppressed = suppressed.append(packet.primary).concat(packet.suppressed)
+                suppressed += (packet.primary, *packet.suppressed)
             packet.state = "drained"
         self._active.clear()
         return _PacketDrain(primary, suppressed)

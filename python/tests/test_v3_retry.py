@@ -3,7 +3,6 @@ from __future__ import annotations
 import time
 import unittest
 from typing import Any, cast
-from unittest.mock import patch
 
 from caskada import (
     Context,
@@ -279,39 +278,6 @@ class RetryAndRecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.status, "completed")
         self.assertGreaterEqual(elapsed, 0.005)
         self.assertEqual(result.stats.retries, 1)
-
-    async def test_large_delay_is_chunked_without_shortening(self) -> None:
-        calls = 0
-
-        def handle(context: Context[dict[str, Any]]) -> None:
-            nonlocal calls
-            calls += 1
-            if calls == 1:
-                raise RuntimeError("retry")
-            context.end()
-
-        timeouts: list[float] = []
-
-        async def expire(awaitable: Any, *, timeout: float) -> None:
-            awaitable.close()
-            timeouts.append(timeout)
-            raise TimeoutError
-
-        worker = node(
-            handle,
-            retry=RetryPolicy(
-                max_attempts=2,
-                delay_ms=lambda _attempt, _failure: 4_294_967_295,
-            ),
-        )
-        with patch("caskada._timing.asyncio.wait_for", new=expire):
-            result = await Flow(worker).start({}).result()
-
-        self.assertEqual(result.status, "completed")
-        self.assertEqual(
-            timeouts,
-            [2_147_483.647, 2_147_483.647, 0.001],
-        )
 
     async def test_recovery_failures_replace_the_handler_packet(self) -> None:
         recovery_cause = RuntimeError("recovery")

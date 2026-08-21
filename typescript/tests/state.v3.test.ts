@@ -7,7 +7,7 @@ import type { Context, ScopeResult } from '../caskada'
 type State = { [key: string]: unknown }
 
 describe('v3 persistent state carrier', () => {
-  it('supports ordinary record operations through one stable Proxy', async () => {
+  it('uses one ordinary mutable record per run', async () => {
     let alias: State | undefined
     const mutate = node<State>((context) => {
       alias = context.state
@@ -16,15 +16,12 @@ describe('v3 persistent state carrier', () => {
       Object.defineProperty(context.state, 'defined', { value: 3, enumerable: true, configurable: true, writable: true })
       context.state.temporary = 4
       delete context.state.temporary
-      context.state.__proto__ = 'data'
-      assert.deepEqual(Object.keys(context.state), ['initial', 'assigned', 'defined', '__proto__'])
+      assert.deepEqual(Object.keys(context.state), ['initial', 'assigned', 'defined'])
       assert.deepEqual(Object.entries(context.state), [
         ['initial', 1],
         ['assigned', 2],
         ['defined', 3],
-        ['__proto__', 'data'],
       ])
-      assert.equal(Object.prototype.hasOwnProperty.call(context.state, '__proto__'), true)
       const serialized = JSON.parse(JSON.stringify(context.state)) as Record<string, unknown>
       assert.equal(serialized.assigned, 2)
     })
@@ -37,54 +34,7 @@ describe('v3 persistent state carrier', () => {
     assert.equal(Object.getPrototypeOf(state), Object.prototype)
   })
 
-  it('rejects symbol, accessor, prototype, and extensibility mutations atomically', async () => {
-    const symbol = Symbol('state')
-    const mutate = node<State>((context) => {
-      context.state.kept = 1
-      assert.throws(() => Reflect.set(context.state, symbol, 2), TypeError)
-      assert.throws(
-        () => Object.defineProperty(context.state, 'accessor', { get: () => 3, configurable: true, enumerable: true }),
-        TypeError,
-      )
-      assert.throws(() => Object.setPrototypeOf(context.state, null), TypeError)
-      assert.throws(() => Object.preventExtensions(context.state), TypeError)
-      assert.throws(() => Object.seal(context.state), TypeError)
-      assert.throws(() => Object.freeze(context.state), TypeError)
-    })
-
-    const state = await new Flow(mutate).run({})
-
-    assert.deepEqual({ ...state }, { kept: 1 })
-    assert.equal(Object.isExtensible(state), true)
-    assert.deepEqual(Object.getOwnPropertySymbols(state), [])
-  })
-
-  it('captures initial data descriptors in exact reflection order without getters', async () => {
-    const operations: string[] = []
-    const sourceTarget = { first: 1, second: 2 }
-    const source = new Proxy(sourceTarget, {
-      getPrototypeOf(target) {
-        operations.push('prototype')
-        return Reflect.getPrototypeOf(target)
-      },
-      ownKeys(target) {
-        operations.push('keys')
-        return Reflect.ownKeys(target)
-      },
-      getOwnPropertyDescriptor(target, property) {
-        operations.push(`descriptor:${String(property)}`)
-        return Reflect.getOwnPropertyDescriptor(target, property)
-      },
-      get() {
-        throw new Error('initial capture must not read property values through get')
-      },
-    })
-
-    const state = await new Flow(node<State>(() => {})).run(source)
-
-    assert.deepEqual(operations, ['prototype', 'keys', 'descriptor:first', 'descriptor:second'])
-    assert.deepEqual({ ...state }, sourceTarget)
-
+  it('uses native shallow-copy semantics for enumerable properties', async () => {
     let getterCalls = 0
     const accessor = {}
     Object.defineProperty(accessor, 'bad', {
@@ -94,8 +44,10 @@ describe('v3 persistent state carrier', () => {
         return 1
       },
     })
-    assert.throws(() => new Flow(node<State>(() => {})).run(accessor), OptionValidationError)
-    assert.equal(getterCalls, 0)
+    const state = await new Flow(node<State>(() => {})).run(accessor)
+    assert.equal(getterCalls, 1)
+    assert.deepEqual(state, { bad: 1 })
+    assert.throws(() => new Flow(node<State>(() => {})).run([] as never), OptionValidationError)
   })
 
   it('shallow-copies once and preserves nested and self aliases', async () => {

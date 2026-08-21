@@ -2,35 +2,9 @@ from __future__ import annotations
 
 import json
 import unittest
-from collections.abc import Iterator, Mapping
 from typing import Any
 
 from caskada import Context, Flow, OptionValidationError, ScopeResult, node
-
-
-class ExplodingStr(str):
-    hash_calls = 0
-
-    def __hash__(self) -> int:
-        type(self).hash_calls += 1
-        raise AssertionError("a rejected str subclass must not be hashed")
-
-
-class RecordingMapping(Mapping[object, object]):
-    def __init__(self, keys: list[object], values: dict[str, object]) -> None:
-        self._keys = keys
-        self._values = values
-        self.reads: list[object] = []
-
-    def __len__(self) -> int:
-        return len(self._keys)
-
-    def __iter__(self) -> Iterator[object]:
-        return iter(self._keys)
-
-    def __getitem__(self, key: object) -> object:
-        self.reads.append(key)
-        return self._values[str(key)]
 
 
 class StateCarrierTests(unittest.IsolatedAsyncioTestCase):
@@ -57,6 +31,7 @@ class StateCarrierTests(unittest.IsolatedAsyncioTestCase):
 
         state = await Flow(node(mutate)).run({"initial": 1})
 
+        self.assertIs(type(state), dict)
         self.assertEqual(
             state,
             {
@@ -76,52 +51,13 @@ class StateCarrierTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(RuntimeError):
             list(retained["iterator"])  # type: ignore[arg-type]
 
-    async def test_nonexact_keys_fail_before_hash_and_update_is_incremental(
-        self,
-    ) -> None:
-        bad = ExplodingStr("bad")
-        ExplodingStr.hash_calls = 0
-
-        def misuse(context: Context[dict[str, Any]]) -> None:
-            state = context.state
-            operations = (
-                lambda: state[bad],
-                lambda: state.get(bad),
-                lambda: bad in state,
-                lambda: state.setdefault(bad, 1),
-                lambda: state.pop(bad, None),
-                lambda: state.__setitem__(bad, 1),
-                lambda: state.__delitem__(bad),
-            )
-            for operation in operations:
-                with self.assertRaises(TypeError):
-                    operation()
-            with self.assertRaises(TypeError):
-                state.update([("kept", 1), (bad, 2), ("unreached", 3)])
-
-        state = await Flow(node(misuse)).run({})
-
-        self.assertEqual(ExplodingStr.hash_calls, 0)
-        self.assertEqual(state, {"kept": 1})
-
-    async def test_initial_mapping_capture_checks_keys_before_values(self) -> None:
-        bad = ExplodingStr("bad")
-        invalid = RecordingMapping(["first", bad, "later"], {"first": 1})
+    async def test_initial_state_requires_a_mapping_with_string_keys(self) -> None:
         flow = Flow(node(lambda _context: None))
 
         with self.assertRaises(OptionValidationError):
-            await flow.run(invalid)  # type: ignore[arg-type]
-
-        self.assertEqual(invalid.reads, ["first"])
-        self.assertEqual(ExplodingStr.hash_calls, 0)
-
-        duplicate = RecordingMapping(
-            ["same", "same"],
-            {"same": 1},
-        )
+            await flow.run([])  # type: ignore[arg-type]
         with self.assertRaises(OptionValidationError):
-            await flow.run(duplicate)  # type: ignore[arg-type]
-        self.assertEqual(duplicate.reads, ["same"])
+            await flow.run({1: "invalid"})  # type: ignore[dict-item]
 
     async def test_copy_is_shallow_and_preserves_source_self_reference(self) -> None:
         nested: list[str] = []

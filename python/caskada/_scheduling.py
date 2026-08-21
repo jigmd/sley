@@ -12,7 +12,6 @@ from dataclasses import dataclass, field
 from typing import Any, Generic, Literal, cast
 
 from ._contracts import (
-    _MAX_HOST_TIMER_DELAY_MS,
     MAX_PORTABLE_COLLECTION_LENGTH,
     MAX_SAFE_INTEGER,
     Abandoned,
@@ -85,11 +84,8 @@ from ._contracts import (
 from ._definition import Node, _CompiledPlacement, _CompiledScope, _CompiledSnapshot
 from ._failures import (
     _FailureFactory,
-    _FailureSequence,
     _PacketOwner,
     _PacketRegistry,
-    _ScopedFailureView,
-    _ScopeEpoch,
     _SemanticMisuse,
 )
 from ._observation import _EventPublisher, _EventSpec, _RunAccounting
@@ -226,7 +222,6 @@ class _CallbackWrapper:
     settled_at_ns: int | None = None
     lifecycle_done_at_ns: int | None = None
     drained_packet_primary: Failure | None = None
-    failure_epoch: _ScopeEpoch | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -501,7 +496,7 @@ class _RuntimeKernel:
             Literal["completed", "failed", "cancelled", "abandoned"] | None
         ) = None
         self.final_failure: Failure | None = None
-        self.final_suppressed = _FailureSequence()
+        self.final_suppressed: tuple[Failure, ...] = ()
         self.final_cancellation: CancellationInfo | None = None
         self.final_abandonment: Failure | CancellationInfo | None = None
         self._terminal_result: RunResult[Any] | None = None
@@ -676,22 +671,16 @@ class _RuntimeKernel:
             0,
             (timer.due_ns - time.monotonic_ns() + 999_999) // 1_000_000,
         )
-        while remaining_ms:
-            chunk_ms = min(remaining_ms, _MAX_HOST_TIMER_DELAY_MS)
+        if remaining_ms:
             try:
                 item = await asyncio.wait_for(
-                    self.inbox.get(),
-                    timeout=chunk_ms / 1_000,
+                    self.inbox.get(), timeout=remaining_ms / 1_000
                 )
             except TimeoutError:
-                clock_remaining = max(
-                    0,
-                    (timer.due_ns - time.monotonic_ns() + 999_999) // 1_000_000,
-                )
-                remaining_ms = min(remaining_ms - chunk_ms, clock_remaining)
-                continue
-            self.inbox.put_nowait(item)
-            return
+                pass
+            else:
+                self.inbox.put_nowait(item)
+                return
         current = self.timers.peek()
         if current is not None and current.timer_id == timer.timer_id:
             self._process_timers((self.timers.remove(timer.timer_id),))
@@ -1197,11 +1186,9 @@ class _RuntimeKernel:
         if callback is None or scope.packet_id is None:
             raise RuntimeError("Flow recovery work is incomplete")
         packet = self.packets.get(scope.packet_id)
-        epoch = _ScopeEpoch()
-        wrapper.failure_epoch = epoch
         failure_view = ScopeFailure(
             primary=packet.primary,
-            suppressed=_ScopedFailureView(epoch, packet.suppressed),
+            suppressed=packet.suppressed,
             settled_before_fence=scope.settled_before_fence,
             result=scope.combine_result,
             failing_activation_id=scope.failing_activation_id,
@@ -1313,7 +1300,7 @@ class _RuntimeKernel:
             if packet_id is not None:
                 self.packets.append(packet_id, failure)
             else:
-                self.final_suppressed = self.final_suppressed.append(failure)
+                self.final_suppressed += (failure,)
             self._publish_failure_recorded(failure)
 
         if attempt_timeout and packet_id is not None:
@@ -1685,8 +1672,6 @@ class _RuntimeKernel:
                 self.timers.discard(grace.timer_id)
                 del self.graces[grace_id]
         wrapper.grace_timer_ids.clear()
-        if wrapper.failure_epoch is not None:
-            wrapper.failure_epoch.close()
         if self.active_callbacks <= 0:
             raise RuntimeError("callback permit released without ownership")
         self.active_callbacks -= 1
@@ -2475,11 +2460,7 @@ class _RuntimeKernel:
         self.flow_scope_ready.clear()
         self.node_scope_ready.clear()
         self.callback_ready.clear()
-        retry_ids = [
-            timer.timer_id
-            for timer in tuple(self.timers._heap)
-            if timer.kind == "retry"
-        ]
+        retry_ids = [timer.timer_id for timer in self.timers if timer.kind == "retry"]
         for timer_id in retry_ids:
             self.timers.discard(timer_id)
         for scope in self.scopes.values():
@@ -2514,7 +2495,7 @@ class _RuntimeKernel:
         root = self.root
         if root.status != "completed" or self.active_callbacks or self.callback_ready:
             return
-        if any(timer.kind != "run_deadline" for timer in self.timers._heap):
+        if any(timer.kind != "run_deadline" for timer in self.timers):
             return
         self._checkpoint()
         if self.run_fence is not None or self.final_status is not None:
@@ -2552,7 +2533,7 @@ class _RuntimeKernel:
         self.publisher.publish_bundle(specs)
         diagnostics = self.publisher.diagnostics
         terminals = tuple(self.root.terminals)
-        suppressed = self.final_suppressed.materialize()
+        suppressed = self.final_suppressed
         if status == "completed":
             result: RunResult[Any] = Completed(
                 "completed",

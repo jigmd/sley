@@ -7,7 +7,7 @@
   "authority": [
     {
       "path": "internal/rfcs/0001-caskada-v3-runtime.md",
-      "sha256": "0cd4f4b803d7f78690dc4145a42f6a51849ad68d263df14e41853cc6a13aa152"
+      "sha256": "55545dbf08a28a187dd31a19eabe15e258af193825c213f4210b3cc16a05462b"
     },
     {
       "path": "internal/v3-architecture-verdict.md",
@@ -59,7 +59,7 @@
     },
     {
       "path": "conformance/coverage.md",
-      "sha256": "65859a4b06293cfcdb55bd4d050cb32dda4411a42bf7e38892f6610c0d86adf3"
+      "sha256": "1bb0e0be8f91c1727ee7729bc4c608fb354fa0da16b01dee34c707f78b279902"
     }
   ],
   "verification_tools": [
