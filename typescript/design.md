@@ -1,48 +1,36 @@
 # TypeScript Runtime Design
 
-The TypeScript port implements the language-neutral v3 contract in the public
-`caskada.ts` entry point. `caskada-logging.ts` is an optional browser-safe event
-adapter.
+The TypeScript port is five production files:
 
-## Definition Layer
+- `caskada.ts` declares the public facade;
+- `internal/contracts.ts` holds public values and callback types;
+- `internal/definition.ts` builds and snapshots graphs;
+- `internal/state.ts` validates and shallow-copies initial state;
+- `internal/scheduling.ts` executes activations and Flow scopes.
 
-`node(...)`, `Node`, `Flow`, and `GraphElement.link(...)` capture callback
-configuration and topology without host-framework dependencies. Node and Flow
-state generics describe application record shapes; they do not preserve the
-caller container's concrete class.
+Definitions contain callbacks, policies, and links but no run state. Compilation
+assigns placement ids and snapshots every reachable scope. Each invocation owns
+one state object plus simple counters for scopes, activations, failures, and
+terminal order.
 
-`compile()` validates definitions and creates a reusable deterministic snapshot.
-WeakMap-owned private data prevents invalid public construction from becoming a
-partially initialized runtime object.
+The scheduler uses native Promises and `Promise.all` batches bounded by the
+current Flow's `concurrency`. Serial Flows use the same path as concurrent ones.
+Nested Flows call the same scope executor with their compiled scope id. Cyclic
+node links remain iterative; only Flow nesting consumes the JavaScript stack.
 
-## State Carrier
+A callback-local Context buffers `emit` and `end` intents. The runner validates
+the complete buffer before routing it, so a throw or one unknown action commits
+no partial fan-out. State writes and external effects are ordinary application
+effects and are not rolled back.
 
-Each run shallow-copies initial state into one ordinary object. Every callback
-and result sees that same object, whose reads and mutations follow JavaScript
-rules.
+`run()` briefly masks a state object's own `then` property while resolving its
+Promise. This preserves state identity without turning application state into a
+thenable. No Proxy wraps normal object behavior.
 
-`run()` uses a final native Promise capability and briefly masks the private
-state object's `then` binding while resolving. This preserves exact state identity
-even when application state legitimately contains a callable `then` property.
+Application throws are caught only at handler, policy, combine, and recovery
+boundaries. Impossible compiled states reject immediately instead of becoming
+fallback workflow outcomes. The core has no Node.js imports and remains browser
+compatible.
 
-## Scheduler
-
-The runtime uses iterative scope and callback queues. Scope-local concurrency
-limits direct activations; a run-wide permit ceiling controls callbacks across
-scopes. Callback admission, timer checkpoints, result settlement, control
-linearization, and event publication follow the same ordering as the Python
-port.
-
-Callbacks may return `undefined` or `Promise<void>`. Synchronous work remains
-synchronous and cannot be preempted by timers or `AbortSignal` cancellation.
-
-## Portability
-
-The core and logging adapter avoid Node.js runtime imports and are browser
-compatible. Public integer and collection bounds are chosen for exact Python/
-JavaScript representation. Host-specific naming follows language convention;
-schemas and behavior remain equivalent.
-
-The authoritative algorithm, failure provenance, timer tie rules, event order,
-and complexity bounds live in
+The authoritative behavior is
 [RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).

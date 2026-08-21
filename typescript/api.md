@@ -1,49 +1,51 @@
 # TypeScript API
 
-The package provides ESM, CommonJS, and declaration exports. The normative
-cross-language contract is
+The package provides ESM, CommonJS, and declarations. The normative contract is
 [RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).
 
-## Graph Definition
+## Graphs
 
 ```typescript
 function node<State extends object, Input = unknown>(
   handler: NodeHandler<State, Input>,
   options?: NodeOptions<State, Input>,
-): Node<State>
+): Node<State, Input>
 ```
 
+`NodeOptions` contains only `name`, `retry`, and `recover`. Handlers and recovery
+callbacks may be synchronous or asynchronous and return `undefined`.
+
 ```typescript
-interface NodeOptions<State extends object, Input> {
-  readonly name?: string | undefined
-  readonly retry?: RetryOptions | undefined
-  readonly timeoutMs?: number | undefined
-  readonly recover?: NodeRecoveryHandler<State, Input> | undefined
+interface RetryPolicy {
+  readonly maxAttempts?: number
+  readonly shouldRetry?: (failure: Failure) => boolean
+  readonly delayMs?: number | ((attempt: number, failure: Failure) => number)
 }
 ```
 
-Handlers and recovery callbacks may be synchronous or asynchronous and must
-return `undefined`. `Node` is final and created only through `node(...)`.
+Every Node and Flow is a `GraphElement`:
 
 ```typescript
-abstract class GraphElement<State extends object> {
-  readonly name: string
-  link(target: GraphElement<State>, action?: Action): void
-  links(): readonly Link<State>[]
-}
+source.link(target)
+source.link(target, 'review')
+source.links()
 ```
+
+A source has at most one unlabelled link and one link per named action.
 
 ```typescript
-class Flow<State extends object> extends GraphElement<State> {
-  constructor(entry: GraphElement<State>, options?: FlowOptions<State>)
-  compile(): CompiledFlow<State>
-  start(initialState: Readonly<State>, options?: RunOptions): RunHandle<State>
-  run(initialState: Readonly<State>, options?: RunOptions): Promise<State>
-}
+new Flow(entry, {
+  name?: string,
+  exits?: readonly string[],
+  concurrency?: number,
+  maxActivations?: number,
+  combine?: FlowCombineHandler,
+  recover?: FlowRecoveryHandler,
+})
 ```
 
-`FlowOptions` provides `name`, declared `exits`, local `concurrency`, local
-`maxActivations`, `combine`, and `recover`.
+Flows may be nested and linked like Nodes. `compile()` snapshots reachable
+topology. `CompiledFlow.describe()` returns plain topology and policy records.
 
 ## Context
 
@@ -51,101 +53,52 @@ class Flow<State extends object> extends GraphElement<State> {
 interface Context<State extends object, Input = unknown> {
   readonly state: State
   readonly input: Input
-  readonly runId: string
-  readonly scopeId: number
-  readonly activationId: number
-  readonly parentActivationId: number | null
-  readonly attempt: number | null
-  readonly phase: Phase
-  readonly cancellation: Cancellation
 
-  remainingMs(): number | undefined
   emit(): void
-  emit(replacement: { readonly input: unknown }): void
-  emit(action: Action): void
-  emit(action: Action, input: unknown): void
+  emit(action: undefined, input: unknown): void
+  emit(action: string): void
+  emit(action: string, input: unknown): void
   end(): void
   end(output: unknown): void
-  report(name: string): void
-  report(name: string, data: unknown): void
 }
 ```
 
-Arity matters: omitted input/output/data differs from explicit `undefined`.
-Unlabelled input replacement uses `emit({ input: value })`; named input is
-direct: `emit('work', value)`.
-
-`Cancellation` exposes `cancelled`, `reason`, an `AbortSignal`, and
-`throwIfCancelled()`.
+`state` is one shallow-copied object shared by the run. `input` is one branch
+message. Omitted emission input forwards the current input. Use
+`emit(undefined, value)` to replace input on an unlabelled route. `end()` and
+`end(undefined)` differ: the first has no output and the second outputs
+`undefined`.
 
 ## Execution
 
 ```typescript
-interface RunHandle<State extends object> {
-  readonly done: boolean
-  readonly result: Promise<RunResult<State>>
-  cancel(reason?: unknown): void
-}
+const compiled = flow.compile()
+const handle = compiled.start(initialState)
+const result = await handle.result()
+const state = await compiled.run(initialState)
 ```
 
-```typescript
-interface RunOptions {
-  readonly maxConcurrency?: number | undefined
-  readonly maxActivations?: number | undefined
-  readonly maxAttempts?: number | undefined
-  readonly maxTransitions?: number | undefined
-  readonly maxReady?: number | undefined
-  readonly maxReports?: number | undefined
-  readonly maxDepth?: number | undefined
-  readonly deadlineMs?: number | undefined
-  readonly cancelGraceMs?: number | undefined
-  readonly observer?: Observer | undefined
-  readonly runId?: string | undefined
-}
+A handle has only `done()` and `result()`. `run()` returns state for `Completed`
+and rejects with `RunError` containing the exact `Failed` result otherwise.
+
+`RunResult<State>` has two variants:
+
+```text
+Completed { status: 'completed', state, terminals }
+Failed    { status: 'failed', state, terminals, failure }
 ```
 
-Omitted numeric fields use the portable defaults. Omitted `maxConcurrency`
-selects the topology-derived automatic ceiling.
-
-`CompiledFlow.describe()` returns the portable compiled graph description.
-`CompiledFlow.start()` and `.run()` reuse the snapshot.
-
-## Results And Failures
-
-`RunResult<State>` is a discriminated union of `CompletedResult`,
-`FailedResult`, `CancelledResult`, and `AbandonedResult`. Every variant exposes
-`state`, terminals, statistics, and observer diagnostics. Failure-like variants
-add their structured cause and suppressed failures.
-
-`RunError.result` retains the exact non-completed result raised by `run()`. If a
-native thrown value caused the controlling Failure, `RunError.cause` is that
-exact value.
-
-`ScopeResult` exposes `terminals` and `outputs`. `ScopeFailure` provides boundary
-recovery information. `Failure` carries identity, kind, canonical message,
-cause, provenance, detail, and previous replacement.
-
-## Events And Logging
-
-`Observer` synchronously receives the `RunEvent` discriminated union. The event
-kinds and schema match the [Python API](../python/api.md). Application values in
-causes, reasons, inputs, outputs, state, and reports remain borrowed values.
-
-The browser-safe logging adapter is a separate export:
-
-```typescript
-import { createLoggingObserver } from 'caskada/logging'
-```
+`ScopeResult.terminals` contains all settled branch terminals.
+`ScopeResult.outputs` projects only output-bearing values for `combine`.
+`ScopeFailure` gives Flow recovery the primary Failure, settled terminals, an
+optional failed combine result, and the failing activation id.
 
 ## Errors
 
-- `GraphDefinitionError`: invalid graph definition or callback configuration
+- `GraphDefinitionError`: invalid definition or callback policy
 - `DuplicateLinkError`: duplicate unlabelled or named link
-- `OptionValidationError`: invalid run options or initial state capture
-- `RunError`: a completed handle whose result is not `Completed`
+- `RunError`: unhandled workflow failure projected by `run()`
+- `TypeError`: invalid initial state carrier
 
-## Constants
-
-- `MAX_SAFE_INTEGER`
-- `MAX_PORTABLE_COLLECTION_LENGTH`
-- `RUN_EVENT_SCHEMA_VERSION`
+Application throws become `Failure` records for retry and recovery. Their
+original values remain available as `failure.cause`.

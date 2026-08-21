@@ -1,6 +1,6 @@
 import { Flow, node } from '../caskada'
 
-import type { Context, RunEvent, ScopeResult } from '../caskada'
+import type { Context, ScopeResult } from '../caskada'
 
 type State = { total?: number; value?: number }
 
@@ -10,7 +10,6 @@ type BrowserGlobals = typeof globalThis & {
 }
 
 void (async () => {
-  const reportNames: string[] = []
   const dispatch = node<State>((context) => {
     context.emit('work', 1)
     context.emit('work', 2)
@@ -23,19 +22,9 @@ void (async () => {
 
   function combine(context: Context<State>, result: ScopeResult): void {
     context.state.total = result.outputs.reduce<number>((sum, output) => sum + Number(output), 0)
-    context.report('combined')
   }
 
-  const events: RunEvent[] = []
-  const result = await new Flow(dispatch, { combine, concurrency: 2 }).start(
-    {},
-    {
-      observer(event) {
-        events.push(event)
-        if (event.kind === 'report') reportNames.push(event.payload.name)
-      },
-    },
-  ).result
+  const result = await new Flow(dispatch, { combine, concurrency: 2 }).start({}).result()
 
   const projected = await new Flow(
     node<State>((context) => {
@@ -48,7 +37,6 @@ void (async () => {
     total: result.state.total,
     outputs: result.terminals.filter((terminal) => terminal.hasOutput).map((terminal) => terminal.output),
     terminalCount: result.terminals.length,
-    reportNames,
     projectedValue: projected.value,
     processType: typeof (globalThis as { process?: unknown }).process,
   }

@@ -9,15 +9,18 @@ for shipped runtime source because that is the code every maintainer must carry.
 | Port       | Production files | Physical lines | Status            |
 | ---------- | ---------------: | -------------: | ----------------- |
 | Python     |                5 |          1,349 | Lean rewrite done |
-| TypeScript |                9 |          4,941 | Rewrite pending   |
+| TypeScript |                5 |          1,245 | Lean rewrite done |
 
 Python previously used nine files and 5,415 physical lines. Its public facade
 now exports 24 names instead of roughly 100. The runner uses ordinary
 `asyncio`, lists, tuples, and dictionaries; timing, observation, cancellation,
 logging-adapter, and failure-collection modules were deleted.
 
-The TypeScript count remains the next blocker. Completion requires equivalent
-removal there, not a waiver based on passing tests.
+TypeScript previously used nine files and 4,941 physical lines. Its runtime
+facade now exports eight values; `CompiledFlow` is a type-only interface so
+compiled scheduler records do not leak through declarations. Timing,
+observation, cancellation, logging-adapter, and failure helper modules were
+deleted.
 
 ## Budget Rule
 

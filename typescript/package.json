@@ -11,14 +11,6 @@
       },
       "import": "./dist/caskada.js",
       "require": "./dist/caskada.cjs"
-    },
-    "./logging": {
-      "types": {
-        "import": "./dist/caskada-logging.d.ts",
-        "require": "./dist/caskada-logging.d.cts"
-      },
-      "import": "./dist/caskada-logging.js",
-      "require": "./dist/caskada-logging.cjs"
     }
   },
   "files": [
@@ -44,7 +36,7 @@
     "url": "https://github.com/zvictor"
   },
   "scripts": {
-    "build": "tsup && tsup --no-config caskada-logging.ts --format cjs,esm --dts --minify --target es2024 --out-dir dist && cp ../README.md ./README.md",
+    "build": "tsup && cp ../README.md ./README.md",
     "prepack": "pnpm run build",
     "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx' node --test tests/*.v3.test.ts",
     "release": "pnpm run build && changeset publish"

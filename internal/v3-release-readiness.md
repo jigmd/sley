@@ -10,11 +10,11 @@
 | ---- | ------- | -------- |
 | Lean normative contract | Pass | RFC 0001 contains only retained v3 behavior and explicit non-goals. |
 | Python runtime | Pass | 36 runtime tests, Ruff, strict mypy, Pyright, sdist, and wheel pass. |
-| TypeScript runtime | Pending | The port still implements the superseded scheduler contract. |
+| TypeScript runtime | Pass | 32 runtime tests, strict `tsc`, ESM, CommonJS, declarations, and package build pass. |
 | Cross-port conformance | Pending | Fixtures and adapters still contain deleted feature groups. |
 | Author documentation | Pending | Repository guides still describe removed features. |
 | Cookbook execution | Pending | Examples require verification against both final packages. |
-| Package checks | Pending | Final ESM, CommonJS, browser, wheel, and installed typing checks remain. |
+| Package checks | Partial | ESM, CommonJS, declarations, tarball, sdist, and wheel pass. The browser bundle builds without Node.js imports, but Chromium cannot launch on this host because `libglib-2.0.so.0` is unavailable. |
 | Independent review | Pending | Review the completed lean kernel and cross-port behavior. |
 
 The implementation is not ready for release or API freeze until every pending

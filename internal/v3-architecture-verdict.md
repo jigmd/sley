@@ -42,7 +42,8 @@ states fail immediately.
 
 ## Current Evidence
 
-The Python port implements the lean contract in five files and passes runtime,
-Ruff, strict mypy, Pyright, sdist, and wheel checks. TypeScript and shared
-conformance still target the superseded contract and remain implementation
-work, so v3 is not release-ready.
+Both ports implement the lean contract in five files. Python passes runtime,
+Ruff, strict mypy, Pyright, sdist, and wheel checks. TypeScript passes runtime,
+strict declarations, ESM, CommonJS, and package-build checks. Shared conformance
+and repository author documentation still target parts of the superseded
+contract, so v3 is not release-ready.

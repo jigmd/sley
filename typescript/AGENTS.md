@@ -6,84 +6,43 @@
 
 ## Ownership
 
-- Owns the TypeScript public API, runtime internals, package output, and
-  TypeScript-specific tests.
-- `caskada.ts` is the explicit public facade. `internal/contracts.ts`,
-  `definition.ts`, `execution.ts`, `state.ts`, `failures.ts`, `timing.ts`,
-  `observation.ts`, and `scheduling.ts` own the corresponding runtime
-  responsibilities.
-- `caskada-logging.ts` is a non-core browser-safe logging adapter; it must remain
-  a synchronous `RunEvent` projection with no Node.js runtime dependency,
-  buffering, or delivery policy.
+- Owns the TypeScript public API, runtime internals, package output,
+  browser-compatibility checks, and TypeScript-specific tests.
+- `caskada.ts` is the public facade. `internal/contracts.ts` owns public values,
+  `definition.ts` graph definitions and compilation, `state.ts` state capture,
+  and `scheduling.ts` graph execution.
 
 ## Local Contracts
 
-- `internal/rfcs/0001-caskada-v3-runtime.md` is the normative behavior source.
-- Shared semantics must consume the language-neutral conformance fixtures;
-  TypeScript-specific tests may add only host-language construction, dynamic
-  JavaScript, and static typing assertions.
-- Public option records are captured and validated exactly as specified; JavaScript
-  coercion must not silently widen the contract.
-- Implementation phases land in RFC order. A later scheduler phase must not be
-  used to conceal an incomplete earlier layer.
+- `internal/rfcs/0001-caskada-v3-runtime.md` is normative.
+- Shared semantics consume language-neutral conformance fixtures. TypeScript
+  tests add dynamic JavaScript, Promise, browser, and static typing coverage.
+- Invalid public options fail immediately. Application throws become runtime
+  `Failure` records only where retry or recovery can act on them.
 
 ## Work Guidance
 
-- Keep `caskada.ts` as the stable public entry point. Split runtime internals into
-  focused modules when doing so makes ownership and control flow easier to
-  understand.
-- `internal/definition.ts` is inert graph data and compilation.
-  `internal/execution.ts` composes the public `Flow` lifecycle with state capture
-  and `internal/scheduling.ts`, the sole activation and scope orchestrator.
-  Definition and leaf modules must not import or call back into the scheduler.
+- Keep `caskada.ts` to intentional exports; scheduler logic is private.
+- Keep the shipped runner smaller than its verification. Use native objects,
+  arrays, Maps, Promises, and timers before custom runtime machinery.
+- Definitions store no invocation state. `internal/scheduling.ts` is the only
+  activation and scope orchestrator.
 - `internal/state.ts` performs only start-boundary validation, native shallow
-  copy, and Promise thenable masking; do not wrap normal object mutation in a
-  framework Proxy.
-- Preserve browser compatibility and avoid Node.js runtime dependencies.
-- Throw immediately on invalid public input and impossible kernel states; do not
-  conceal defects with fallback behavior.
+  copy, and temporary Promise-thenable masking.
+- Preserve browser compatibility and avoid Node.js runtime imports.
+- Catch application values only at callbacks and declared policy boundaries.
+  Reject impossible compiled states instead of hiding defects.
 
 ## Verification
 
-- Run `tests/definitions.v3.test.ts`, `tests/compile.v3.test.ts`,
-  `tests/serial.v3.test.ts`, `tests/state.v3.test.ts`, and
-  `tests/results.v3.test.ts`, `tests/failures.v3.test.ts`, and
-  `tests/atomic.v3.test.ts`, `tests/retry.v3.test.ts`, and
-  `tests/flow-recovery.v3.test.ts`, `tests/cancellation.v3.test.ts`,
-  `tests/timers.v3.test.ts`, `tests/limits.v3.test.ts`, and
-  `tests/concurrency.v3.test.ts`, `tests/stats.v3.test.ts`, and
-  `tests/events.v3.test.ts`, `tests/reports.v3.test.ts`, and
-  `tests/logging.v3.test.ts`, `tests/scale.v3.test.ts`, plus strict type checking of
-  `tests/definitions.v3.types.ts`, `tests/serial.v3.types.ts`,
-  `tests/results.v3.types.ts`, `tests/retry.v3.types.ts`, and
-  `tests/flow-recovery.v3.types.ts`, and `tests/cancellation.v3.types.ts`.
-  Include `tests/timers.v3.types.ts`, `tests/limits.v3.types.ts`, and
-  `tests/events.v3.types.ts`, `tests/reports.v3.types.ts`, and
-  `tests/logging.v3.types.ts` in the same strict check.
-  Concurrency tests must cover topology-auto and explicit global ceilings,
-  local scope slots, retry permit release and priority, cross-scope rotation,
-  and sibling fencing before Flow recovery.
-  Stats tests must cover committed counters and frozen terminal duration across
-  every result status.
-  Event tests must cover the public schema and sequence, contiguous bundles,
-  callback/transition/terminal payloads, nested closure, failure/retry
-  references, synchronous cancellation publication, observer diagnostics, and
-  terminal-time exclusion.
-  Report tests must cover data presence, observer-independent accounting, name
-  and capacity precedence, reentrant observer disablement, every callback
-  phase, cancellation and deadline checkpoints, and closed Context rejection.
-  Logging-adapter tests must cover fixed severity mapping, exact event retention
-  without application-data coercion, synchronous delivery, and nonfatal logger
-  failure.
-- Run `python3 tests/run-browser-v3.py` from the repository root in a Python
-  environment containing Playwright after installing Chromium with
-  `playwright install --with-deps chromium`. The harness must bundle the public
-  runtime for a browser, reject Node.js built-in imports, and compare its exact
-  fan-out/combine/report and `run()` snapshot. On hosts that provision Chromium
-  separately, set `CASKADA_BROWSER_EXECUTABLE` to its executable path.
-- Scale coverage must include the shared 100,000-node, 10,000-scope, and
-  20,000-arm execution fixtures, concurrent compiled-graph reuse, and bounded
-  reference-identity behavior for a 10,000-Failure replacement chain.
+- Run `pnpm --dir typescript test` for definition, routing, state/input,
+  terminals, nested Flow, combine, atomic control, results, retry, recovery,
+  concurrency, and cycle limits.
+- Run strict `tsc` over `typescript/tsconfig.json`, including
+  `tests/runtime.v3.types.ts`.
+- Build ESM, CommonJS, and declarations with `pnpm --dir typescript build`.
+- Run `typescript/tests/run-browser-v3.py` when Playwright Chromium is available;
+  the bundle must contain no Node.js built-in import.
 - Run `python3 conformance/run-all.py` after shared semantic changes.
 
 ## Child DOX Index

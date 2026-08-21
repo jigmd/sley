@@ -15,7 +15,6 @@ EXPECTED = {
     "outputs": [2, 4],
     "processType": "undefined",
     "projectedValue": 7,
-    "reportNames": ["combined"],
     "status": "completed",
     "terminalCount": 2,
     "total": 6,
