@@ -1,6 +1,6 @@
 {
   "name": "caskada",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "type": "module",
   "types": "./dist/caskada.d.ts",
   "exports": {
@@ -11,6 +11,14 @@
       },
       "import": "./dist/caskada.js",
       "require": "./dist/caskada.cjs"
+    },
+    "./logging": {
+      "types": {
+        "import": "./dist/caskada-logging.d.ts",
+        "require": "./dist/caskada-logging.d.cts"
+      },
+      "import": "./dist/caskada-logging.js",
+      "require": "./dist/caskada-logging.cjs"
     }
   },
   "files": [
@@ -22,12 +30,12 @@
   "bugs": {
     "url": "https://github.com/skadaai/caskada/issues"
   },
-  "description": "Minimalist AI framework in 300 Lines. Enable LLMs to Program Themselves.",
+  "description": "Structured workflow runtime for Python and TypeScript.",
   "keywords": [
     "AI",
-    "brainy",
-    "Flow",
-    "Workflow",
+    "workflow",
+    "graph",
+    "runtime",
     "LLM"
   ],
   "license": "MPL-2.0",
@@ -36,9 +44,9 @@
     "url": "https://github.com/zvictor"
   },
   "scripts": {
-    "build": "tsup && cp ../README.md ./README.md",
+    "build": "tsup && tsup --no-config caskada-logging.ts --format cjs,esm --dts --minify --target es2024 --out-dir dist && cp ../README.md ./README.md",
     "prepack": "pnpm run build",
-    "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx node' node --test **/*.test.ts",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx' node --test tests/*.v3.test.ts",
     "release": "pnpm run build && changeset publish"
   },
   "devDependencies": {

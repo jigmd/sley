@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "D00_definition_defaults",
+      "nodes": [
+        {
+          "id": "entry",
+          "handler_name": "entry"
+        }
+      ],
+      "flow": {
+        "entry": "entry"
+      },
+      "links": [],
+      "expect": {
+        "nodes": [
+          {
+            "id": "entry",
+            "name": "entry",
+            "retry": {
+              "max_attempts": 1,
+              "delay_ms": 0
+            },
+            "timeout_ms": null,
+            "links": []
+          }
+        ],
+        "flow": {
+          "name": "Flow",
+          "entry": "entry",
+          "exits": [],
+          "concurrency": 1,
+          "max_activations": null,
+          "links": []
+        }
+      }
+    },
+    {
+      "id": "D01_configured_topology",
+      "nodes": [
+        {
+          "id": "source",
+          "handler_name": "step",
+          "options": {
+            "name": "source",
+            "retry": {
+              "max_attempts": 3,
+              "delay_ms": 25
+            },
+            "timeout_ms": 50
+          }
+        },
+        {
+          "id": "default_target",
+          "handler_name": "step",
+          "options": {
+            "name": "default-target"
+          }
+        },
+        {
+          "id": "named_target",
+          "handler_name": "step",
+          "options": {
+            "name": "named-target"
+          }
+        }
+      ],
+      "flow": {
+        "entry": "source",
+        "name": "configured",
+        "exits": ["approved", "rejected"],
+        "concurrency": 4,
+        "max_activations": 20
+      },
+      "links": [
+        {
+          "source": "source",
+          "target": "default_target"
+        },
+        {
+          "source": "source",
+          "target": "named_target",
+          "action": "default"
+        },
+        {
+          "source": "named_target",
+          "target": "default_target",
+          "action": "review"
+        }
+      ],
+      "expect": {
+        "nodes": [
+          {
+            "id": "source",
+            "name": "source",
+            "retry": {
+              "max_attempts": 3,
+              "delay_ms": 25
+            },
+            "timeout_ms": 50,
+            "links": [
+              {
+                "action": null,
+                "target": "default_target"
+              },
+              {
+                "action": "default",
+                "target": "named_target"
+              }
+            ]
+          },
+          {
+            "id": "default_target",
+            "name": "default-target",
+            "retry": {
+              "max_attempts": 1,
+              "delay_ms": 0
+            },
+            "timeout_ms": null,
+            "links": []
+          },
+          {
+            "id": "named_target",
+            "name": "named-target",
+            "retry": {
+              "max_attempts": 1,
+              "delay_ms": 0
+            },
+            "timeout_ms": null,
+            "links": [
+              {
+                "action": "review",
+                "target": "default_target"
+              }
+            ]
+          }
+        ],
+        "flow": {
+          "name": "configured",
+          "entry": "source",
+          "exits": ["approved", "rejected"],
+          "concurrency": 4,
+          "max_activations": 20,
+          "links": []
+        }
+      }
+    }
+  ]
+}

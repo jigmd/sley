@@ -15,7 +15,8 @@ not acquired production users. That changes the admissible solution, not the
 standard: every feature must still improve Caskada as a general-purpose graph
 runtime and preserve its small mental model.
 
-RFC 0001 is the normative specification. The A1-A12 table below summarizes its
+RFC 0001 D9 is the accepted implementation baseline and normative specification.
+The A1-A12 table below summarizes its
 actionable architectural calls; RFC 0001's D1-D15 ledger is the binding index.
 RFC 0001 is also the sole authority for release gates. The current boundary and
 decision record appear before one explicit historical appendix; everything in
@@ -309,8 +310,7 @@ cardinality.
 
 ### Cookbook cross-examination
 
-The public grammar was then applied, as a design simulation rather than an
-executable port, to five demanding Python cookbooks: [nested batch
+The public grammar was then applied to five demanding Python cookbooks: [nested batch
 processing](../cookbook/python-nested-batch/README.md), [RAG
 map/reduce](../cookbook/python-rag/README.md), an [agent
 supervisor](../cookbook/python-supervisor/README.md), and [iterative
@@ -391,16 +391,19 @@ weaken lossless behavior:
 - no new synonym for `end`; it appends one hard terminal arm and does not stop
   the callback, sibling arms, or the run.
 
-These cookbook files remain proposal fixtures until v3 exists. Their purpose is
-to expose the author model in readable programs that can be compared directly
-with v2, not to claim an implementation or production template. Independent
-readability review closed with no blocker or major. The remaining friction --
+These cookbook files remain readability-first teaching programs rather than
+production templates. The implementation pass extended the migration to all 36
+Python cookbook projects and both TypeScript projects. Deterministic verification
+executes every Python graph and both TypeScript graphs with external services
+replaced only at the test boundary; the TypeScript projects also pass strict
+type checking against the workspace package. Independent readability review of
+the original eight ports closed with no blocker or major. The remaining friction --
 dynamic aggregate outputs, the explicit state handoff between separate runs,
 whole-handler retry discipline, empty fan-out needing no-output `end()`, and
 `end(value)` naming a branch terminal rather than whole-run termination -- is
 design evidence rather than a reason by itself to add another core verb or state
-mode. Executable conformance and cross-port runtime evidence remain release
-gates.
+mode. Shared conformance, browser parity, and fresh release review remain
+separate gates.
 
 ## Features that remain above Caskada
 
@@ -456,8 +459,9 @@ execution model need.
 RFC 0001 is the sole normative authority for release readiness. Its
 [release gates](rfcs/0001-caskada-v3-runtime.md#release-gates) apply as written;
 this verdict intentionally does not maintain a second list that could drift.
-The cookbook simulations and their independent diff reviews are supporting
-design evidence, not substitutes for executable conformance.
+The cookbook examples and their Python/TypeScript smoke checks are supporting
+authoring and integration evidence, not substitutes for shared conformance or
+fresh release review.
 
 No semantic-router package is a Caskada v3 release gate.
 
@@ -510,10 +514,10 @@ Each candidate had to pass these gates:
 
 The controlling principles come from Caskada's own documentation: modularity,
 explicitness, separation of concerns, minimalism, and resilience
-([core principles](core_abstraction/index.md#core-philosophy)). The repository
+([core principles](../docs/core_abstraction/index.md#core-philosophy)). The repository
 also explicitly positions application patterns and vendor integrations outside
 the core ([README](../README.md#how-does-caskada-work),
-[utility policy](utility_function/index.md#why-not-built-in)).
+[utility policy](../docs/utility_function/index.md#why-utilities-stay-outside-core)).
 
 ## Court docket
 
@@ -541,12 +545,12 @@ Adopt a narrow snapshot API on `BaseNode` in both implementations. As part of
 that new public surface, export the TypeScript `Action` type.
 
 Today Python exposes a mutable `successors` dictionary
-([Python core](../python/caskada.py#L97)), while TypeScript keeps the equivalent
+([Python core](../python/caskada/__init__.py#L97)), while TypeScript keeps the equivalent
 map private and only permits lookup when the action is already known
 ([TypeScript core](../typescript/caskada.ts#L97)). Official visualization
 guidance nevertheless reaches into `node.successors`, and its TypeScript example
 treats the private `Map` as an ordinary object
-([visualization guide](guides/visualization_logging.md#1-visualizing-the-static-flow-definition)).
+([inspection guide](../docs/guides/visualization_logging.md#inspect-a-compiled-graph)).
 
 This is independently useful for:
 
@@ -697,7 +701,7 @@ No Caskada change is needed.
 Candidate extraction, retrieval, permission filtering, selection, and validation
 are already ordinary nodes that can be composed into a nested `Flow`. Terminal
 actions and branch-local data already propagate through nested flows
-([Python flow execution](../python/caskada.py#L271),
+([Python flow execution](../python/caskada/__init__.py#L271),
 [TypeScript flow execution](../typescript/caskada.ts#L271)).
 
 Catalogue retrieval and dynamic registry behavior remain control-plane policy.
@@ -763,13 +767,13 @@ The current runtime stores framework execution state on reusable objects:
 - visit counts live on `Flow`.
 
 Those fields are reset and mutated during execution
-([Python lifecycle](../python/caskada.py#L84),
+([Python lifecycle](../python/caskada/__init__.py#L84),
 [TypeScript lifecycle](../typescript/caskada.ts#L91)). Concurrent calls using one
 flow definition can therefore interfere.
 
 Clone behavior also differs by language. Python deep-copies only list, dictionary,
 and set attributes while sharing other objects
-([Python clone](../python/caskada.py#L103)). TypeScript shallow-copies every
+([Python clone](../python/caskada/__init__.py#L103)). TypeScript shallow-copies every
 ordinary custom field before separately cloning successors
 ([TypeScript clone](../typescript/caskada.ts#L103)). In TypeScript, a cloned nested
 flow consequently shares its mutable `visitCounts` `Map`.
@@ -855,7 +859,7 @@ and were not counted as additions under that compatibility-constrained brief:
 
 The `Flow extends Node` premise was factually incorrect for v2. `Node` and `Flow`
 were sibling subclasses of `BaseNode`; `ParallelFlow` extended `Flow`
-([Python hierarchy](../python/caskada.py#L200),
+([Python hierarchy](../python/caskada/__init__.py#L200),
 [TypeScript hierarchy](../typescript/caskada.ts#L190)). Making `Flow` inherit the
 retrying `Node` would have added irrelevant retry state and encouraged retrying a
 partially completed flow whose global memory already contained side effects.

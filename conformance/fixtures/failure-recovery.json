@@ -1,0 +1,466 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "F00_unhandled_handler",
+      "purpose": "An unrecovered handler failure becomes the root packet.",
+      "requirements": ["D13 handler normalization", "D10 exact root packet"],
+      "program": {
+        "topology": "root_node",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "none",
+        "flow_recovery": "none"
+      },
+      "expect": {
+        "result": {
+          "status": "failed",
+          "state": { "handler_attempts": 1 },
+          "terminals": [],
+          "failure": {
+            "failure_id": 1,
+            "kind": "handler",
+            "message": "Node handler raised",
+            "source": "worker",
+            "attempt": 1,
+            "previous_failure_id": null
+          },
+          "suppressed": []
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 2, "attempts": 1, "transitions": 0, "retries": 0, "scopes": 1 }
+      }
+    },
+    {
+      "id": "F01_retry_success",
+      "purpose": "A retry references the first failure and the second attempt succeeds.",
+      "requirements": ["D8 retry admission", "D13 failure identity"],
+      "program": {
+        "topology": "root_node",
+        "handler": "fail_once_then_end",
+        "retry_max_attempts": 2,
+        "node_recovery": "none",
+        "flow_recovery": "none",
+        "output": "done"
+      },
+      "expect": {
+        "result": {
+          "status": "completed",
+          "state": { "handler_attempts": 2 },
+          "terminals": [{ "type": "end", "has_output": true, "output": "done" }]
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": [{ "failure_id": 1, "failed_attempt": 1, "next_attempt": 2, "delay_ms": 0 }]
+        },
+        "stats": { "activations": 2, "attempts": 2, "transitions": 1, "retries": 1, "scopes": 1 }
+      }
+    },
+    {
+      "id": "F02_node_recovery_consumes",
+      "purpose": "Node recovery observes the exact packet and consumes it with one End.",
+      "requirements": ["D8 Node recovery input", "D10 packet consumption"],
+      "program": {
+        "topology": "node_after_source",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "end",
+        "flow_recovery": "none",
+        "input": { "job": 7 },
+        "output": "recovered"
+      },
+      "expect": {
+        "result": {
+          "status": "completed",
+          "state": {
+            "handler_attempts": 1,
+            "node_recovery": { "failure_id": 1, "kind": "handler", "input": { "job": 7 } }
+          },
+          "terminals": [{ "type": "end", "has_output": true, "output": "recovered" }]
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 3, "attempts": 2, "transitions": 2, "retries": 0, "scopes": 1 }
+      }
+    },
+    {
+      "id": "F03_node_recovery_passes",
+      "purpose": "Zero-emission Node recovery propagates the exact original failure.",
+      "requirements": ["D5 Node-recovery zero rule", "D10 exact pass-through"],
+      "program": {
+        "topology": "root_node",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "pass",
+        "flow_recovery": "none"
+      },
+      "expect": {
+        "result": {
+          "status": "failed",
+          "state": { "handler_attempts": 1, "node_recovery": { "failure_id": 1, "kind": "handler" } },
+          "terminals": [],
+          "failure": {
+            "failure_id": 1,
+            "kind": "handler",
+            "message": "Node handler raised",
+            "source": "worker",
+            "attempt": 1,
+            "previous_failure_id": null
+          },
+          "suppressed": []
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 2, "attempts": 1, "transitions": 0, "retries": 0, "scopes": 1 }
+      }
+    },
+    {
+      "id": "F04_node_recovery_replaces",
+      "purpose": "A throwing Node recovery replaces the packet and points previous at the handler failure.",
+      "requirements": ["D13 universal replacement", "D10 previous identity"],
+      "program": {
+        "topology": "root_node",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "throw",
+        "flow_recovery": "none"
+      },
+      "expect": {
+        "result": {
+          "status": "failed",
+          "state": { "handler_attempts": 1, "node_recovery": { "failure_id": 1, "kind": "handler" } },
+          "terminals": [],
+          "failure": {
+            "failure_id": 2,
+            "kind": "node_recovery",
+            "message": "Node recovery raised",
+            "source": "worker",
+            "attempt": null,
+            "previous_failure_id": 1
+          },
+          "suppressed": []
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            },
+            {
+              "failure_id": 2,
+              "kind": "node_recovery",
+              "message": "Node recovery raised",
+              "source": "worker",
+              "attempt": null,
+              "previous_failure_id": 1
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 2, "attempts": 1, "transitions": 0, "retries": 0, "scopes": 1 }
+      }
+    },
+    {
+      "id": "F05_flow_recovery_consumes",
+      "purpose": "The nearest nested Flow observes and consumes its child's packet.",
+      "requirements": ["D10 smallest-scope recovery", "D8 controlling input"],
+      "program": {
+        "topology": "nested_flow",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "none",
+        "flow_recovery": "end",
+        "input": { "job": 9 },
+        "output": "recovered"
+      },
+      "expect": {
+        "result": {
+          "status": "completed",
+          "state": {
+            "handler_attempts": 1,
+            "flow_recovery": {
+              "failure_id": 1,
+              "kind": "handler",
+              "input": { "job": 9 },
+              "failing_activation_id": 4,
+              "settled_outputs": [],
+              "result_outputs": null
+            }
+          },
+          "terminals": [{ "type": "end", "has_output": true, "output": "recovered" }]
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 4, "attempts": 2, "transitions": 3, "retries": 0, "scopes": 2 }
+      }
+    },
+    {
+      "id": "F06_flow_recovery_passes",
+      "purpose": "Zero-emission Flow recovery propagates the exact child packet.",
+      "requirements": ["D5 Flow-recovery zero rule", "D10 boundary pass-through"],
+      "program": {
+        "topology": "nested_flow",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "none",
+        "flow_recovery": "pass",
+        "input": { "job": 9 }
+      },
+      "expect": {
+        "result": {
+          "status": "failed",
+          "state": {
+            "handler_attempts": 1,
+            "flow_recovery": {
+              "failure_id": 1,
+              "kind": "handler",
+              "input": { "job": 9 },
+              "failing_activation_id": 4,
+              "settled_outputs": [],
+              "result_outputs": null
+            }
+          },
+          "terminals": [],
+          "failure": {
+            "failure_id": 1,
+            "kind": "handler",
+            "message": "Node handler raised",
+            "source": "worker",
+            "attempt": 1,
+            "previous_failure_id": null
+          },
+          "suppressed": []
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 4, "attempts": 2, "transitions": 1, "retries": 0, "scopes": 2 }
+      }
+    },
+    {
+      "id": "F07_flow_recovery_replaces",
+      "purpose": "A throwing nested Flow recovery replaces the child packet once.",
+      "requirements": ["D13 Flow-recovery replacement", "D10 previous identity"],
+      "program": {
+        "topology": "nested_flow",
+        "handler": "fail",
+        "retry_max_attempts": 1,
+        "node_recovery": "none",
+        "flow_recovery": "throw",
+        "input": { "job": 9 }
+      },
+      "expect": {
+        "result": {
+          "status": "failed",
+          "state": {
+            "handler_attempts": 1,
+            "flow_recovery": {
+              "failure_id": 1,
+              "kind": "handler",
+              "input": { "job": 9 },
+              "failing_activation_id": 4,
+              "settled_outputs": [],
+              "result_outputs": null
+            }
+          },
+          "terminals": [],
+          "failure": {
+            "failure_id": 2,
+            "kind": "flow_recovery",
+            "message": "Flow recovery raised",
+            "source": "child",
+            "attempt": null,
+            "previous_failure_id": 1
+          },
+          "suppressed": []
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "handler",
+              "message": "Node handler raised",
+              "source": "worker",
+              "attempt": 1,
+              "previous_failure_id": null
+            },
+            {
+              "failure_id": 2,
+              "kind": "flow_recovery",
+              "message": "Flow recovery raised",
+              "source": "child",
+              "attempt": null,
+              "previous_failure_id": 1
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 4, "attempts": 2, "transitions": 1, "retries": 0, "scopes": 2 }
+      }
+    },
+    {
+      "id": "F08_combine_recovery_consumes",
+      "purpose": "Flow recovery receives the combiner result and consumes a combiner failure.",
+      "requirements": ["D10 combiner packet", "D10 nullable failing activation"],
+      "program": {
+        "topology": "combine",
+        "handler": "end",
+        "retry_max_attempts": 1,
+        "node_recovery": "none",
+        "flow_recovery": "end",
+        "input": 4,
+        "output": "recovered"
+      },
+      "expect": {
+        "result": {
+          "status": "completed",
+          "state": {
+            "handler_attempts": 1,
+            "flow_recovery": {
+              "failure_id": 1,
+              "kind": "flow_combine",
+              "failing_activation_id": null,
+              "settled_outputs": [4],
+              "result_outputs": [4]
+            }
+          },
+          "terminals": [{ "type": "end", "has_output": true, "output": "recovered" }]
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "flow_combine",
+              "message": "Flow combine raised",
+              "source": "root",
+              "attempt": null,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 2, "attempts": 1, "transitions": 2, "retries": 0, "scopes": 1 }
+      }
+    },
+    {
+      "id": "F09_combine_recovery_passes",
+      "purpose": "Zero-emission Flow recovery preserves terminals and propagates the combiner failure.",
+      "requirements": ["D5 Flow-recovery zero rule", "D10 pre-fence terminal retention"],
+      "program": {
+        "topology": "combine",
+        "handler": "end",
+        "retry_max_attempts": 1,
+        "node_recovery": "none",
+        "flow_recovery": "pass",
+        "input": 4
+      },
+      "expect": {
+        "result": {
+          "status": "failed",
+          "state": {
+            "handler_attempts": 1,
+            "flow_recovery": {
+              "failure_id": 1,
+              "kind": "flow_combine",
+              "failing_activation_id": null,
+              "settled_outputs": [4],
+              "result_outputs": [4]
+            }
+          },
+          "terminals": [{ "type": "end", "has_output": true, "output": 4 }],
+          "failure": {
+            "failure_id": 1,
+            "kind": "flow_combine",
+            "message": "Flow combine raised",
+            "source": "root",
+            "attempt": null,
+            "previous_failure_id": null
+          },
+          "suppressed": []
+        },
+        "trace": {
+          "failures": [
+            {
+              "failure_id": 1,
+              "kind": "flow_combine",
+              "message": "Flow combine raised",
+              "source": "root",
+              "attempt": null,
+              "previous_failure_id": null
+            }
+          ],
+          "retries": []
+        },
+        "stats": { "activations": 2, "attempts": 1, "transitions": 1, "retries": 0, "scopes": 1 }
+      }
+    }
+  ]
+}

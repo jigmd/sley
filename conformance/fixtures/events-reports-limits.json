@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "E00_successful_trace",
+      "purpose": "A two-node success publishes one exact versioned event sequence.",
+      "requirements": ["D14 event ordering", "D14 transition and terminal identity"],
+      "program": { "scenario": "successful_trace" },
+      "expect": {
+        "committed_terminal_sequence": 1,
+        "end_terminal_sequence": 1,
+        "kinds": [
+          "run_started",
+          "scope_started",
+          "callback_started",
+          "callback_finished",
+          "transition_committed",
+          "callback_started",
+          "callback_finished",
+          "transition_committed",
+          "terminal_committed",
+          "scope_finished",
+          "run_finished"
+        ],
+        "route_destination": "activation",
+        "run_ids": ["fixture-events"],
+        "sequences": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        "status": "completed"
+      }
+    },
+    {
+      "id": "E01_observer_skip",
+      "purpose": "Cancellation from callback_started skips application invocation.",
+      "requirements": ["D11 guarded handoff", "D14 synchronous observer delivery"],
+      "program": { "scenario": "observer_skip" },
+      "expect": {
+        "attempts": 1,
+        "calls": 0,
+        "kinds": [
+          "run_started",
+          "scope_started",
+          "callback_started",
+          "cancellation_fenced",
+          "callback_finished",
+          "scope_finished",
+          "run_finished"
+        ],
+        "status": "cancelled"
+      }
+    },
+    {
+      "id": "E02_observer_throw",
+      "purpose": "A throwing observer is disabled after one retained diagnostic.",
+      "requirements": ["D14 nonfatal observer diagnostics"],
+      "program": { "scenario": "observer_throw" },
+      "expect": {
+        "calls": 1,
+        "diagnostic": { "event_sequence": 1, "message": "Observer raised" },
+        "diagnostic_count": 1,
+        "status": "completed"
+      }
+    },
+    {
+      "id": "R00_report_presence",
+      "purpose": "Reports preserve omitted data separately from explicit null.",
+      "requirements": ["D14 report payload presence", "D15 report accounting"],
+      "program": { "scenario": "report_presence" },
+      "expect": {
+        "report_count": 2,
+        "reports": [
+          { "has_data": false, "name": "started" },
+          { "data": null, "has_data": true, "name": "value" }
+        ],
+        "status": "completed"
+      }
+    },
+    {
+      "id": "R01_report_reentrant",
+      "purpose": "Observer reentrancy publishes no nested report and disables observation.",
+      "requirements": ["D14 observer serialization", "D15 report reentrancy"],
+      "program": { "scenario": "report_reentrant" },
+      "expect": {
+        "diagnostic": { "event_sequence": 4, "message": "Observer reentrancy disabled" },
+        "published_reports": 1,
+        "report_count": 1,
+        "status": "completed"
+      }
+    },
+    {
+      "id": "R02_report_overflow",
+      "purpose": "The first report beyond capacity commits one unrecoverable limit fence.",
+      "requirements": ["D13 limit normalization", "D15 max_reports"],
+      "program": { "scenario": "report_overflow" },
+      "expect": {
+        "failure": {
+          "activation_id": 2,
+          "attempt": 1,
+          "kind": "limit",
+          "limit": "max_reports",
+          "scope_id": 1
+        },
+        "observations": { "caught": 2, "failure_fences": 1, "published_reports": 1 },
+        "stats": {
+          "activations": 2,
+          "attempts": 1,
+          "peak_ready": 1,
+          "reports": 1,
+          "scopes": 1,
+          "transitions": 0
+        },
+        "status": "failed",
+        "terminal_count": 0
+      }
+    },
+    {
+      "id": "L00_transition_overflow",
+      "purpose": "A buffered transition overflow fences immediately and commits no arm.",
+      "requirements": ["D5 atomic callback batch", "D9 max_transitions"],
+      "program": { "scenario": "transition_overflow" },
+      "expect": {
+        "failure": {
+          "activation_id": 2,
+          "attempt": 1,
+          "kind": "limit",
+          "limit": "max_transitions",
+          "scope_id": 1
+        },
+        "observations": { "caught": true },
+        "stats": {
+          "activations": 2,
+          "attempts": 1,
+          "peak_ready": 1,
+          "reports": 0,
+          "scopes": 1,
+          "transitions": 0
+        },
+        "status": "failed",
+        "terminal_count": 0
+      }
+    },
+    {
+      "id": "L01_capacity_priority",
+      "purpose": "Run activation capacity wins before scope and ready capacity.",
+      "requirements": ["D9 batch capacity priority"],
+      "program": { "scenario": "capacity_priority" },
+      "expect": {
+        "failure": {
+          "activation_id": 2,
+          "attempt": 1,
+          "kind": "limit",
+          "limit": "max_activations",
+          "scope_id": 1
+        },
+        "observations": {},
+        "stats": {
+          "activations": 2,
+          "attempts": 1,
+          "peak_ready": 1,
+          "reports": 0,
+          "scopes": 1,
+          "transitions": 0
+        },
+        "status": "failed",
+        "terminal_count": 0
+      }
+    },
+    {
+      "id": "L02_depth_limit",
+      "purpose": "Nested depth rejection allocates no child scope.",
+      "requirements": ["D9 nested-scope admission", "D13 limit provenance"],
+      "program": { "scenario": "depth_limit" },
+      "expect": {
+        "failure": {
+          "activation_id": 3,
+          "attempt": null,
+          "kind": "limit",
+          "limit": "max_depth",
+          "scope_id": 1
+        },
+        "observations": {},
+        "stats": {
+          "activations": 3,
+          "attempts": 1,
+          "peak_ready": 1,
+          "reports": 0,
+          "scopes": 1,
+          "transitions": 1
+        },
+        "status": "failed",
+        "terminal_count": 0
+      }
+    },
+    {
+      "id": "L03_attempt_limit",
+      "purpose": "Attempt exhaustion skips the target callback and carries no attempt ordinal.",
+      "requirements": ["D8 attempt admission", "D13 limit provenance"],
+      "program": { "scenario": "attempt_limit" },
+      "expect": {
+        "failure": {
+          "activation_id": 3,
+          "attempt": null,
+          "kind": "limit",
+          "limit": "max_attempts",
+          "scope_id": 1
+        },
+        "observations": { "calls": ["source"] },
+        "stats": {
+          "activations": 3,
+          "attempts": 1,
+          "peak_ready": 1,
+          "reports": 0,
+          "scopes": 1,
+          "transitions": 1
+        },
+        "status": "failed",
+        "terminal_count": 0
+      }
+    }
+  ]
+}

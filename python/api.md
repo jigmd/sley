@@ -1,71 +1,181 @@
-# Caskada Python API Reference
+# Python API
 
-This document lists the classes and methods available in the `caskada.py` module.
+The Python package requires Python 3.13 or newer. The normative cross-language
+contract is [RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).
 
-## Classes
+## Graph Definition
 
-### `Memory`
+```python
+node(
+    handler=None,
+    /,
+    *,
+    name: str | None = None,
+    retry: RetryPolicy = RetryPolicy(),
+    timeout_ms: int | None = None,
+    recover=None,
+) -> Node
+```
 
-Manages global and local state for flow execution.
+`node` accepts a handler directly or acts as `@node` / `@node(...)` decorator
+sugar. Handlers and recovery callbacks may be synchronous or asynchronous and
+must return `None`.
 
-- `__init__(self, _global, _local=None)`: Initializes memory with global and optional local stores.
-- `__getattr__(self, name)`: Accesses properties, checking local then global store.
-- `__setattr__(self, name, value)`: Sets properties, writing to the global store.
-- `__getitem__(self, key)`: Dictionary-style access (read).
-- `__setitem__(self, key, value)`: Dictionary-style assignment (write to global).
-- `__contains__(self, key)`: Checks if a key exists in local or global store.
-- `local` (property): Provides direct access to the local store.
-- `clone(self, forking_data=None)`: Creates a new Memory instance with a shared global store and a deep-copied local store, optionally updated with `forking_data`.
-- `create(global_store, local_store=None)` (staticmethod): Factory method to create a Memory instance.
+```python
+@dataclass(frozen=True, slots=True)
+class RetryPolicy:
+    max_attempts: int = 1
+    should_retry: Callable[[Failure], bool] = retry_all
+    delay_ms: int | Callable[[int, Failure], int] = 0
+```
 
-### `NodeError(Exception)`
+```python
+class GraphElement(Generic[StateT]):
+    @property
+    def name(self) -> str: ...
+    def link(self, target, action: str = ...) -> None: ...
+    def links(self) -> tuple[Link, ...]: ...
+```
 
-Custom exception raised during node execution, potentially carrying retry information.
+`Node` is final and created only by `node(...)`.
 
-### `BaseNode(ABC)`
+```python
+Flow(
+    entry,
+    *,
+    name: str | None = None,
+    exits: Sequence[str] = (),
+    concurrency: int = 1,
+    max_activations: int | None = None,
+    combine=None,
+    recover=None,
+)
+```
 
-Abstract base class for all computational nodes.
+`Flow` is also a `GraphElement`, so it may be nested or linked in a parent
+graph.
 
-- `__init__(self)`: Initializes the node, setting up successors and a unique ID.
-- `clone(self, seen=None)`: Creates a deep copy of the node and its successors, handling cycles.
-- `on(self, action, node)`: Adds a successor node for a specific action. Returns the added node.
-- `next(self, node, action=DEFAULT_ACTION)`: Convenience method for `on` with the default action. Returns the added node.
-- `__rshift__(self, other)`: Syntax sugar (`>>`) for `next(other)`.
-- `__sub__(self, action)`: Syntax sugar (`-`) to initiate action-specific linking. Returns an `ActionLinker`.
-- `ActionLinker` (inner class): Helper for action-specific linking.
-  - `__init__(self, node, action)`
-  - `__rshift__(self, other)`: Syntax sugar (`- "action" >> other`) for `node.on(action, other)`.
-- `get_next_nodes(self, action=DEFAULT_ACTION)`: Retrieves the list of successor nodes for a given action.
-- `async prep(self, memory)`: Asynchronous preparation phase. Override in subclasses.
-- `async exec(self, prep_res)`: Asynchronous execution phase (core logic). Override in subclasses.
-- `async post(self, memory, prep_res, exec_res)`: Asynchronous post-processing phase. Override in subclasses.
-- `trigger(self, action, forking_data=None)`: Triggers a subsequent action during the `post` phase, optionally passing data to the local scope of the next branch.
-- `list_triggers(self, memory)`: Returns a list of `(action, memory_clone)` tuples based on `trigger` calls.
-- `async exec_runner(self, memory, prep_res)` (abstract): Core execution logic runner (implemented by subclasses like `Node`).
-- `async run(self, memory, propagate=False)`: Runs the node's full lifecycle (`prep` -> `exec_runner` -> `post`). Returns `exec_runner` result or triggers if `propagate=True`.
+## Context
 
-### `Node(BaseNode)`
+```python
+class Context(Protocol, Generic[StateT, InputT]):
+    state: StateT
+    input: InputT
+    run_id: str
+    scope_id: int
+    activation_id: int
+    parent_activation_id: int | None
+    attempt: int | None
+    phase: Phase
+    cancellation: Cancellation
 
-Standard node implementation with retry capabilities.
+    def remaining_ms(self) -> int | None: ...
+    def emit(self) -> None: ...
+    def emit(self, *, input: object) -> None: ...
+    def emit(self, action: str) -> None: ...
+    def emit(self, action: str, input: object) -> None: ...
+    def end(self) -> None: ...
+    def end(self, output: object) -> None: ...
+    def report(self, name: str) -> None: ...
+    def report(self, name: str, data: object) -> None: ...
+```
 
-- `__init__(self, max_retries=1, wait=0)`: Initializes the node with retry configuration.
-- `async exec_fallback(self, prep_res, error)`: Called if all retry attempts in `exec` fail. Default raises the error.
-- `async exec_runner(self, memory, prep_res)`: Runs the `exec` method with retry logic based on `max_retries` and `wait`.
+Python distinguishes unlabelled replacement input with
+`context.emit(input=value)`. Omitted and explicit `None` values are distinct for
+input, End output, and report data.
 
-### `Flow(BaseNode)`
+```python
+class Cancellation(Protocol):
+    cancelled: bool
+    reason: object
+    async def wait(self) -> None: ...
+    def raise_if_cancelled(self) -> None: ...
+```
 
-Orchestrates sequential execution of a node graph.
+## Execution
 
-- `__init__(self, start, options=None)`: Initializes the flow with a starting node and options (e.g., `max_visits`).
-- `async exec(self, prep_res)`: Raises `RuntimeError` (Flows orchestrate, not execute directly).
-- `async exec_runner(self, memory, prep_res)`: Starts the flow execution from the `start` node.
-- `async run_tasks(self, tasks)`: Executes a list of async task functions sequentially.
-- `async run_nodes(self, nodes, memory)`: Runs a list of nodes sequentially using `run_tasks`.
-- `async run_node(self, node, memory)`: Runs a single node within the flow, handling cloning, execution, triggers, recursion, and cycle detection.
-- `async _process_trigger(self, action, next_nodes, node_memory)`: Processes a single trigger, running subsequent nodes.
+```python
+class Flow:
+    def compile(self) -> CompiledFlow: ...
+    def start(self, initial_state, *, options: RunOptions | None = None) -> RunHandle: ...
+    async def run(self, initial_state, *, options: RunOptions | None = None): ...
+```
 
-### `ParallelFlow(Flow)`
+`start()` requires a running asyncio event loop. It validates options, compiles
+the graph, captures state, and returns a handle synchronously. `run()` awaits
+the handle, returns state for `Completed`, and raises `RunError` for every other
+status.
 
-Orchestrates parallel execution of node graph branches.
+```python
+class RunHandle(Protocol):
+    def cancel(self, reason: object = "cancelled") -> None: ...
+    def done(self) -> bool: ...
+    async def result(self) -> RunResult: ...
+```
 
-- `async run_tasks(self, tasks)`: Overrides `Flow.run_tasks` to execute tasks concurrently using `asyncio.gather`.
+```python
+@dataclass(frozen=True, slots=True)
+class RunOptions:
+    max_concurrency: int | None = None
+    max_activations: int = 100_000
+    max_attempts: int = 200_000
+    max_transitions: int = 200_000
+    max_ready: int = 100_000
+    max_reports: int = 100_000
+    max_depth: int = 32
+    deadline_ms: int | None = None
+    cancel_grace_ms: int = 1_000
+    observer: Observer | None = None
+    run_id: str | None = None
+```
+
+`CompiledFlow.describe()` returns the portable compiled graph description.
+`CompiledFlow.start()` and `.run()` execute the same snapshot without
+recompiling.
+
+## Results And Failures
+
+`RunResult` is the union of `Completed`, `Failed`, `Cancelled`, and `Abandoned`.
+Every variant exposes the run-owned `state`, terminal collection, statistics,
+and observer diagnostics. Failure-like variants add their structured cause and
+suppressed failures.
+
+`RunError.result` retains the exact non-completed result raised by `run()`.
+
+`ScopeResult` exposes `terminals` and the value-only `outputs` projection to
+Flow combine callbacks. `ScopeFailure` supplies structured boundary recovery
+data.
+
+`Failure` contains stable kind, canonical message, caught cause when one exists,
+scope/activation/element/attempt provenance, structured detail, and a previous
+replacement link. Compare Failure objects by identity.
+
+## Events And Logging
+
+`RunOptions.observer` receives synchronous `RunEvent` objects. Event kinds are:
+
+- `run_started`, `run_finished`
+- `scope_started`, `scope_finished`
+- `callback_started`, `callback_finished`
+- `retry_scheduled`
+- `transition_committed`, `terminal_committed`
+- `failure_recorded`, `failure_fenced`, `cancellation_fenced`
+- `report`
+
+The schema version is `RUN_EVENT_SCHEMA_VERSION`.
+
+The optional standard logging adapter is separate from the core:
+
+```python
+from caskada_logging import logging_observer
+```
+
+## Errors
+
+- `GraphDefinitionError`: invalid graph definition or callback configuration
+- `DuplicateLinkError`: duplicate unlabelled or named link
+- `OptionValidationError`: invalid run options or initial state capture
+- `RunError`: a completed handle whose result is not `Completed`
+
+Framework lifecycle failures are data in `RunResult`. Synchronous misuse of a
+closed Context or invalid state-carrier operation raises at the call site.

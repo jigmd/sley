@@ -1,9 +1,9 @@
 # RFC 0001: Caskada v3 Structured Graph Runtime
 
-- Status: proposed for implementation
-- Revision: D9 candidate
+- Status: accepted implementation baseline
+- Revision: D9
 - Target: Caskada v3.0
-- Date: 2026-08-17
+- Date: 2026-08-20
 - Supersedes: the v2 execution API and the compatibility constraints preserved
   in the historical appendix of the
   [v3 architecture verdict](../v3-architecture-verdict.md)
@@ -39,6 +39,18 @@ This is an intentionally breaking release. Caskada has no production adoption
 that justifies preserving accidental v2 complexity. V3 optimizes for the API we
 would choose from a clean sheet while retaining Caskada's essential idea:
 ordinary code connected as an action-routed graph.
+
+## Implementation baseline
+
+D9 is closed for implementation. Its authoritative file hashes are recorded in
+`internal/v3-implementation-baseline.json`, and the executable serial contract
+lives in `conformance/`. Runtime work may reveal defects, but neither port may
+silently reinterpret this document: a semantic change requires an RFC amendment
+and an exact shared conformance-fixture diff first.
+
+This acceptance is not a release claim. Phase 0 establishes the executable
+serial contract before production runtime work, while the release gates below
+remain criteria for shipping v3 after implementation.
 
 ## Quality bar
 
@@ -5039,9 +5051,8 @@ decision object.
 ## Cookbook design validation
 
 Before API freeze, the proposed grammar was applied to eight existing Python
-cookbook projects as non-executable authoring simulations. The purpose is to
-compare readable v2 and v3 programs, not to turn teaching examples into
-production templates.
+cookbook projects. They remain readability-first teaching programs rather than
+production templates, and now execute against the Python v3 runtime.
 
 | Experimental port     | Authoring question exercised                                                         |
 | --------------------- | ------------------------------------------------------------------------------------ |
@@ -5102,18 +5113,23 @@ narrow or validate collected outputs when their own trust boundary requires it;
 the cookbook does not add that ceremony to examples whose lesson is control flow.
 
 The final set deliberately mixes one small typed example, whose project types
-live in `models.py`, with six examples that omit project type models. It preserves
+live in `models.py`, with seven examples that omit project type models. It preserves
 the important retry rule by committing thinking state only after fallible model
 and parsing work, but otherwise avoids production hardening that obscures the
 graph. Independent diff review found no blocker or major in the author surface or
 the readability-focused simulations.
 
-This is design evidence, not implementation evidence. The ports intentionally
-cannot execute until v3 exists. Their source parses and their formatting and
-diffs have been checked, but they have not validated scheduler behavior, runtime
-performance, or cross-port execution parity. They become executable release
-fixtures during implementation and do not satisfy those release gates by
-themselves.
+The eight projects first ran as one deterministic smoke suite against the real
+Python v3 kernel. The implementation pass then migrated the complete official
+cookbook: all 36 Python projects and both TypeScript projects now use the v3
+authoring surface. Repository cookbook verification executes every Python graph
+with test-owned service fakes; the two TypeScript projects pass strict type
+checking and deterministic execution with the workspace package and test-owned
+fakes. The suite covers documented state, routing, fan-out, terminals, combine,
+nested exits, retry topology, state handoff, interaction adapters, and provider
+boundaries. This is authoring and integration evidence, but not a substitute for
+shared kernel conformance, browser parity, live-provider integration, or the
+fresh reviews required by the release gates.
 
 ## Alternatives considered
 
@@ -5609,12 +5625,15 @@ surface review. Later phases may not revise earlier author semantics silently.
 
 ### Phase 0: executable contract fixtures
 
-Create language-neutral JSON fixtures for compiled topology, emissions, terminal
-order, shared-state observations, inputs, outputs, failures, packets, events,
-stats, and simple-run errors. Fixture application values remain JSON-compatible
-even though runtime values are not restricted to JSON. Cross-language fixtures
-also preserve each host's missing-field behavior and agree only once application
-code turns absence into an explicit error.
+Create one language-neutral JSON fixture format and an initial serial corpus for
+compiled topology, emissions, terminal order, shared-state observations, inputs,
+outputs, basic failures, event order, stats, and simple-run errors. Fixture
+application values remain JSON-compatible even though runtime values are not
+restricted to JSON. Cross-language fixtures also preserve each host's
+missing-field behavior and agree only once application code turns absence into
+an explicit error. Before each later implementation phase begins, extend this
+same corpus with that phase's exact packets, timers, cancellation, observer, and
+resource-bound snapshots.
 
 Build tiny Python and TypeScript reference interpreters for the serial subset:
 function-backed node occurrences, one shared state, buffered emit/end calls,
@@ -5672,8 +5691,8 @@ Publish the v2-to-v3 migration guide. Remove
 `BaseNode`, subclass authoring, `ParallelFlow`, `Memory`, triggers, public clone
 behavior, operators, visit counts, public decision/patch objects, and mandatory
 execution trees from v3 core. Run a stale-term scan across code, types, tests,
-examples, and generated documentation. Turn the static cookbook v3 design
-ports into executable integration fixtures before API freeze.
+examples, and generated documentation. Keep the cookbook v3 ports executable
+against the shipped runtime and aligned with their documented lessons.
 
 ### Implementation budget
 
@@ -6235,7 +6254,7 @@ Python and TypeScript must run equivalent fixtures for:
 
 ## Release gates
 
-V3 may freeze only when:
+V3 may ship only when:
 
 1. Python and TypeScript pass the complete shared conformance matrix with no
    language-specific semantic exception.
@@ -6257,8 +6276,7 @@ V3 may freeze only when:
    each of them explicitly.
 8. The cookbook v3 design ports execute against both implementations where a
    cross-port equivalent exists, preserve their documented behavior, and pass a
-   fresh before/after API review; their current non-executable simulation is not
-   sufficient.
+   fresh before/after API review.
 9. Outside explicitly labelled v2 migration and rejected-alternative prose, a
    repository-wide stale-model scan finds no public Node subclass example,
    `prep/exec/post`, trigger, Caskada control decision/patch object, branch state,

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "X00_100k_node_run",
+      "kind": "node_chain",
+      "size": 100000,
+      "expect": {
+        "status": "completed",
+        "activations": 100001,
+        "attempts": 100000,
+        "transitions": 100000,
+        "scopes": 1,
+        "peak_ready": 1,
+        "terminal_count": 1
+      }
+    },
+    {
+      "id": "X01_10k_nested_run",
+      "kind": "nested_flows",
+      "size": 10000,
+      "expect": {
+        "status": "completed",
+        "activations": 10002,
+        "attempts": 1,
+        "transitions": 10001,
+        "scopes": 10001,
+        "peak_ready": 1,
+        "terminal_count": 1
+      }
+    },
+    {
+      "id": "X02_20k_fanout_run",
+      "kind": "wide_fanout",
+      "size": 20000,
+      "expect": {
+        "status": "completed",
+        "activations": 20002,
+        "attempts": 20001,
+        "transitions": 40000,
+        "scopes": 1,
+        "peak_ready": 20000,
+        "terminal_count": 20000,
+        "first_output": 0,
+        "last_output": 19999
+      }
+    },
+    {
+      "id": "X03_64_reused_runs",
+      "kind": "concurrent_reuse",
+      "size": 64,
+      "expect": {
+        "runs": 64,
+        "unique_state_carriers": 64,
+        "first_value": 0,
+        "last_value": 63
+      }
+    }
+  ]
+}
