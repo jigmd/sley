@@ -12,10 +12,14 @@ Question: {context.state["question"]}
 Previous research: {context.state.get("research", "No previous search")}
 
 ### NEXT ACTION
-Choose `search` or `answer` and return a YAML code block:
+Choose `search` or `answer` and return exactly one of these YAML code blocks:
 ```yaml
 action: search
 search_query: what to search for
+```
+
+```yaml
+action: answer
 answer: final answer when action is answer
 ```
 """
@@ -30,10 +34,16 @@ answer: final answer when action is answer
         raise ValueError("decision action must be search or answer")
 
     if decision["action"] == "search":
-        context.state["search_query"] = decision["search_query"]
-        print(f"🔍 Agent decided to search for: {decision['search_query']}")
+        search_query = decision.get("search_query")
+        if not isinstance(search_query, str) or not search_query.strip():
+            raise ValueError("search decision needs a non-empty search_query")
+        context.state["search_query"] = search_query
+        print(f"🔍 Agent decided to search for: {search_query}")
     else:
-        context.state["research"] = decision["answer"]
+        answer = decision.get("answer")
+        if not isinstance(answer, str) or not answer.strip():
+            raise ValueError("answer decision needs a non-empty answer")
+        context.state["research"] = answer
         print("💡 Agent decided to answer the question")
     context.emit(decision["action"])
 

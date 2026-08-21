@@ -101,6 +101,6 @@ finding. The review confirmed an acyclic dependency graph, inert definition
 modules, local state ownership, bounded scheduler exports, paired cross-port
 responsibilities, and one execution composition layer per port.
 
-This closes the size-triggered architecture gate. The author-API,
-kernel-semantics, cross-port-implementability, and cookbook review gates remain
-separate release obligations.
+This closes the size-triggered architecture gate. The cookbook review has since
+been accepted separately. The author-API, kernel-semantics, and
+cross-port-implementability reviews remain separate release obligations.

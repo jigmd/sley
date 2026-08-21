@@ -56,8 +56,13 @@ reason: Explain why the query is valid or invalid
         raise ValueError("guardrail response must contain a YAML block")
 
     result = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
-    if not isinstance(result, dict) or not {"valid", "reason"} <= result.keys():
-        raise ValueError("guardrail response is missing valid or reason")
+    if (
+        not isinstance(result, dict)
+        or type(result.get("valid")) is not bool
+        or not isinstance(result.get("reason"), str)
+        or not result["reason"].strip()
+    ):
+        raise ValueError("guardrail response needs a boolean valid and text reason")
 
     if not result["valid"]:
         print(f"\nTravel Advisor: {result['reason']}")

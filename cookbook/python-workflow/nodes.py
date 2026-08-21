@@ -19,9 +19,19 @@ sections:
   - Third section
 """
     )
+    if "```yaml" not in response:
+        raise ValueError("outline must contain a YAML block")
     yaml_text = response.split("```yaml", 1)[1].split("```", 1)[0]
     outline = yaml.safe_load(yaml_text)
-    sections = outline["sections"]
+    if not isinstance(outline, dict):
+        raise ValueError("outline must be a YAML mapping")
+    sections = outline.get("sections")
+    if (
+        not isinstance(sections, list)
+        or not sections
+        or not all(isinstance(section, str) and section.strip() for section in sections)
+    ):
+        raise ValueError("outline sections must be a non-empty list of text")
 
     context.state["sections"] = sections
     context.state["outline"] = "\n".join(

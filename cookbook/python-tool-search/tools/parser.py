@@ -27,4 +27,12 @@ follow_up_queries:
     analysis = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
     if not isinstance(analysis, dict):
         raise TypeError("analysis must be a mapping")
+    if not isinstance(analysis.get("summary"), str):
+        raise TypeError("analysis summary must be text")
+    for field in ("key_points", "follow_up_queries"):
+        values = analysis.get(field)
+        if not isinstance(values, list) or not all(
+            isinstance(value, str) for value in values
+        ):
+            raise TypeError(f"analysis {field} must be a list of text")
     return analysis

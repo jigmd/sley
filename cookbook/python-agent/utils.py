@@ -18,3 +18,13 @@ def search_web(query: str) -> str:
         f"Title: {result['title']}\nURL: {result['href']}\nSnippet: {result['body']}"
         for result in results
     )
+
+
+if __name__ == "__main__":
+    prompt = "In a few words, what is the meaning of life?"
+    print(f"LLM prompt: {prompt}")
+    print(f"LLM response: {call_llm(prompt)}")
+
+    query = "Who won the Nobel Prize in Physics 2024?"
+    print(f"\nSearch query: {query}")
+    print(search_web(query))

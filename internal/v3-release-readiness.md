@@ -15,7 +15,7 @@
 |    5 | Pass           | Python and TypeScript cancellation suites cover cooperative and uncooperative work, immutable fences, grace, and abandonment.                                                                                                                                         |
 |    6 | Pass           | Current guides teach function-backed nodes, state/input, `emit`/`end`, target-first `link`, `Flow`, and direct `run()` state before policy.                                                                                                                           |
 |    7 | Pass           | Official examples use buffered Context control and introduce input, output, topology, combine, and `start()` only where their lesson needs them.                                                                                                                      |
-|    8 | Pending review | All 36 Python and two TypeScript cookbook contracts execute from staged projects with test-owned service fixtures. The eight design-pressure ports have prior independent diff review; the complete converted cookbook still needs one fresh before/after API review. |
+|    8 | Pass           | All 36 Python and two TypeScript cookbook contracts execute from staged projects with test-owned service fixtures. A fresh independent before/after API review accepted the complete migration after its pedagogy findings were resolved.                         |
 |    9 | Pass           | The current-source scan is clean outside explicit migration/history and negative contract tests. Generated v2 translation artifacts were removed.                                                                                                                     |
 |   10 | Pass           | Both packages declare zero runtime dependencies; the browser bundle passes a real Chromium snapshot; concurrency tests prove run-local framework state and distinct top-level state carriers.                                                                         |
 |   11 | Pending review | Fresh independent author-API, kernel-semantics, and cross-port-implementability reviews have not yet been run against this implementation snapshot.                                                                                                                   |
@@ -47,13 +47,13 @@ Repository:
 ## Freeze Blockers
 
 The implementation is ready for the remaining independent reviews, not release
-or API freeze. Two review obligations remain:
+or API freeze. One review group remains:
 
-1. The fresh cookbook review required by release gate 8.
-2. The author-API, kernel-semantics, and cross-port-implementability reviews
-   required by release gate 11.
+- The author-API, kernel-semantics, and cross-port-implementability reviews
+  required by release gate 11.
 
 The size-triggered architecture review is accepted with no finding, as recorded
-in [V3 Implementation Budget Review](v3-implementation-budget-review.md). No
-executable correctness, packaging, browser, cookbook, dependency, or stale model
-failure is currently open.
+in [V3 Implementation Budget Review](v3-implementation-budget-review.md). The
+fresh cookbook API review is also accepted with no finding. No executable
+correctness, packaging, browser, cookbook, dependency, or stale model failure is
+currently open.

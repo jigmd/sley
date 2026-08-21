@@ -2,7 +2,7 @@ import asyncio
 import time
 from pathlib import Path
 
-from caskada import Context, Flow, RetryPolicy, node
+from caskada import Context, Flow, node
 from utils import call_llm
 
 
@@ -12,7 +12,7 @@ def dispatch(context: Context) -> None:
         context.emit("translate", (context.state["text"], language))
 
 
-@node(retry=RetryPolicy(max_attempts=3))
+@node
 def translate(context: Context) -> None:
     text, language = context.input
     prompt = f"""

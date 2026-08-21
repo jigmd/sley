@@ -18,7 +18,7 @@ you need; complexity metadata is a rough navigation aid, not a quality score.
 | [Text Converter Flow](https://github.com/skadaai/caskada/tree/main/cookbook/python-flow)        |          4 | Unlabelled links and deliberate `end()`         |
 | [Shared Run State](https://github.com/skadaai/caskada/tree/main/cookbook/python-communication)  |          4 | Communication through `context.state`           |
 | [Article Workflow](https://github.com/skadaai/caskada/tree/main/cookbook/python-workflow)       |        6.5 | A readable three-node linear workflow           |
-| [Async Recipe Finder](https://github.com/skadaai/caskada/tree/main/cookbook/python-async-basic) |          7 | Async handlers and ordinary awaited I/O         |
+| [Async Recipe Finder](https://github.com/skadaai/caskada/tree/main/cookbook/python-async-basic) |        4.5 | Async handlers and ordinary awaited I/O         |
 
 ## Branching, Loops, and Combining
 

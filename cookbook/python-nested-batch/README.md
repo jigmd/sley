@@ -23,8 +23,8 @@ Calculates average grades for:
 
 ## Control and Data Flow
 
-- Per-branch values move through `context.input`; shared results live in
-  `context.state`.
+- Per-branch values move through `context.input`; completed branch results move
+  through `end(value)` and `result.outputs`.
 - Repeated `emit` calls fan out students and classes.
 - Each student uses `end(value)` to give its result to the class `combine`; each
   class does the same for the school `combine`.

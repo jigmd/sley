@@ -2,7 +2,7 @@ import asyncio
 import time
 from pathlib import Path
 
-from caskada import Context, Flow, RetryPolicy, node
+from caskada import Context, Flow, node
 from utils import call_llm
 
 
@@ -20,7 +20,7 @@ def save_translation(output_dir: str, language: str, translation: str) -> None:
     print(f"Saved translation to {filename}")
 
 
-@node(retry=RetryPolicy(max_attempts=3))
+@node
 async def translate(context: Context) -> None:
     text, language = context.input
     prompt = f"""

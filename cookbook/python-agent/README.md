@@ -16,6 +16,11 @@ The decision node validates the LLM's YAML before emitting a named action.
 Search results accumulate in shared run state. The answer node emits nothing,
 so it exits the Flow normally and `run()` returns the final state.
 
+Open [the Colab tutorial](https://colab.research.google.com/github/skadaai/caskada/blob/main/cookbook/python-agent/demo.ipynb)
+to build and run the same agent one step at a time in the browser. Run
+`python utils.py` locally to try the LLM and search integrations without the
+Flow.
+
 ## Run
 
 ```bash

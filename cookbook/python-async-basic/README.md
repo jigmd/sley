@@ -1,18 +1,18 @@
 ---
-complexity: 7
+complexity: 4.5
 ---
 
 # Async Recipe Finder
 
-This example uses ordinary `async` handlers for three kinds of waiting:
+This example uses ordinary `async` handlers for real local I/O:
 
-1. Collect an ingredient from the user.
-2. Fetch recipes and ask an LLM for a suggestion.
-3. Ask whether to accept it or follow the `retry` link.
+1. Collect an ingredient from the terminal without blocking the event loop.
+2. Read a local recipe catalog without blocking the event loop.
+3. Ask whether to accept the suggestion or follow the `retry` link.
 
-The handlers read and write the shared run state just like synchronous handlers.
-`approve` emits only when retrying; a successful return with no emission exits
-the Flow normally.
+The Flow deliberately mixes async I/O handlers with a synchronous suggestion
+handler. All of them read and write the same run state. `approve` emits only
+when retrying; a successful return with no emission exits the Flow normally.
 
 ```python
 fetch.link(suggest, "suggest")
