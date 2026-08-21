@@ -1,72 +1,52 @@
-# Understanding Caskada's Core Abstractions
+# Core Model
 
-Caskada is built around a simple yet powerful abstraction: the **nested directed graph with shared store**. This mental model separates _data flow_ from _computation_, making complex LLM applications more maintainable and easier to reason about.
+Caskada has four author-facing parts:
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/skadaai/caskada/main/.github/media/abstraction.jpg" width="1300"/>
-</div>
+| Part                        | Responsibility                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| [Node](node.md)             | Run one ordinary function with retry and recovery policy                           |
+| [Context](context.md)       | Expose state, branch input, control, cancellation, and reports during one callback |
+| [State and Input](state.md) | Separate run-wide facts from branch-specific values                                |
+| [Flow](flow.md)             | Own graph topology, a structured scope, concurrency, and branch combination        |
 
-## Core Philosophy
+The graph describes allowed control movement. Application data is not inferred
+from that graph: handlers decide whether a value belongs in shared state or in
+one branch's input.
 
-Caskada follows these fundamental principles:
+## One Small Example
 
-1. **Modularity & Composability**: Build complex systems from simple, reusable components that are easy to build, test, and maintain
-2. **Explicitness**: Make data dependencies between steps clear and traceable
-3. **Separation of Concerns**: Data storage (shared store) remains separate from computation logic (nodes)
-4. **Minimalism**: The framework provides only essential abstractions, avoiding vendor-specific implementations while supporting various high-level AI design paradigms (agents, workflows, map-reduce, etc.)
-5. **Resilience**: Handle failures gracefully with retries and fallbacks
+```python
+from caskada import Context, Flow, node
 
-## The Graph + Shared Store Pattern
 
-The fundamental pattern in Caskada combines two key elements:
+@node
+def dispatch(context: Context) -> None:
+    for number in context.state["numbers"]:
+        context.emit("work", number)
 
-- **Computation Graph**: A directed graph where nodes represent discrete units of work and edges represent the flow of control.
-- **Shared `Memory` Object**: A state management store that enables communication between nodes, separating `global` and `local` state.
 
-This pattern offers several advantages:
+@node
+def square(context: Context) -> None:
+    context.end(context.input**2)
 
-- **Clear visualization** of application logic
-- **Easy identification** of bottlenecks
-- **Simple debugging** of individual components
-- **Natural parallelization** opportunities
 
-## Key Components
+def combine(context: Context, result) -> None:
+    context.state["squares"] = list(result.outputs)
 
-Caskada's architecture is based on these fundamental building blocks:
 
-| Component             | Description                                    | Key Features                                                                                                |
-| --------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [Node](./node.md)     | The basic unit of work                         | Clear lifecycle (`prep` → `exec` → `post`), fault tolerance (retries), graceful fallbacks                   |
-| [Flow](./flow.md)     | Connects nodes together                        | Action-based transitions, branching, looping (with cycle detection), nesting, sequential/parallel execution |
-| [Memory](./memory.md) | Manages state accessible during flow execution | Shared `global` store, forkable `local` store, cloning for isolation                                        |
+dispatch.link(square, "work")
+squares = Flow(dispatch, combine=combine, concurrency=4)
+```
 
-## How They Work Together
+`dispatch` creates branches, `square` hard-terminates each worker with an
+output, and the Flow invokes `combine` once after all workers settle.
 
-1. **Nodes** perform individual tasks with a clear lifecycle:
+## Compilation And Execution
 
-   - `prep`: Read from shared store and prepare data
-   - `exec`: Execute computation (often LLM calls), cannot access memory directly.
-   - `post`: Process results, write to shared store, and trigger next actions
+`Flow.compile()` validates and snapshots topology. A Flow may be compiled or
+run repeatedly, including by concurrent invocations; each run owns its runtime
+state, counters, scopes, cancellation token, results, and event sequence.
 
-2. **Flows** orchestrate nodes by:
-
-   - Starting with a designated `start` node.
-   - Following action-based transitions (driven by `trigger` calls in `post`) between nodes.
-   - Supporting branching, looping, and nested flows.
-   - Executing triggered branches sequentially (`Flow`) or concurrently (`ParallelFlow`).
-   - Supporting nested batch operations.
-
-3. **Communication** happens through the `memory` instance provided to each node's lifecycle methods (in `prep` and `post` methods):
-
-   - **Global Store**: A shared object accessible throughout the flow. Nodes typically write results here.
-   - **Local Store**: An isolated object specific to a node and its downstream path, typically populated via `forkingData` in `trigger` calls.
-
-## Getting Started
-
-If you're new to Caskada, we recommend exploring these core abstractions in the following order:
-
-1. [Node](./node.md) - Understand the basic building block
-2. [Flow](./flow.md) - Learn how to connect nodes together
-3. [Memory](./memory.md) - See how nodes share data
-
-Once you understand these core abstractions, you'll be ready to implement various [Design Patterns](../design_pattern/index.md) to solve real-world problems.
+Graph-definition and option errors are synchronous exceptions before a handle
+exists. Failures encountered by scheduler-owned lifecycle work become typed
+run results.

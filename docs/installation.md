@@ -4,68 +4,41 @@ machine-display: false
 
 # Installation
 
-Caskada is currently available for both Python and TypeScript.
+## Python
 
-{% tabs %}
-{% tab title="Python" %}
-You can install the Python package using pip:
+Caskada requires Python 3.13 or newer.
 
 ```bash
 pip install caskada
 ```
 
-{% endtab %}
-
-{% tab title="TypeScript" %}
-You can install the TypeScript package using pnpm (or npm/yarn):
+## TypeScript And JavaScript
 
 ```bash
-pnpm add caskada
-# or
 npm install caskada
-# or
-yarn add caskada
 ```
 
-{% endtab %}
+The package provides ESM and CommonJS exports plus TypeScript declarations.
 
-{% tab title="JavaScript (Browser)" %}
-You can import the JavaScript file directly in the browser using a `<script>` tag:
+```typescript
+import { Flow, node } from 'caskada'
+```
+
+Browser applications can use the ESM bundle from a CDN:
 
 ```html
 <script type="module">
-  import * as caskada from 'https://unpkg.com/caskada@latest/dist/caskada.js'
-
-  new caskada.Node(...)
+  import { Flow, node } from 'https://unpkg.com/caskada@3/dist/caskada.js'
 </script>
 ```
 
-or
+## Source Installations
 
-```html
-<script type="module" src="https://unpkg.com/caskada@latest/dist/caskada.js"></script>
-<script>
-  new globalThis.caskada.Node(...)
-</script>
-```
+The implementation entry points are
+[`python/caskada/__init__.py`](https://github.com/skadaai/caskada/blob/main/python/caskada/__init__.py)
+and
+[`typescript/caskada.ts`](https://github.com/skadaai/caskada/blob/main/typescript/caskada.ts).
+Use the packages for normal applications so Python receives PEP 561 typing and
+TypeScript receives declarations, exports, and release metadata.
 
-{% endtab %}
-{% endtabs %}
-
-## Alternative: Copy the Source Code
-
-Since Caskada is lightweight and dependency-free, you can also install it by simply copying the source code file directly into your project:
-
-{% tabs %}
-{% tab title="Python" %}
-Copy [`python/caskada.py`](https://github.com/skadaai/caskada/blob/main/python/caskada.py)
-{% endtab %}
-
-{% tab title="TypeScript" %}
-Copy [`typescript/caskada.ts`](https://github.com/skadaai/caskada/blob/main/typescript/caskada.ts)
-{% endtab %}
-{% endtabs %}
-
-## Next Steps
-
-Once you have Caskada installed, check out the [Getting Started](./getting_started.md) guide to build your first flow, or explore the [Core Abstractions](./core_abstraction/node.md) to understand the framework's fundamental concepts.
+Continue with [Getting Started](getting_started.md).

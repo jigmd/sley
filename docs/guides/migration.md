@@ -2,431 +2,226 @@
 machine-display: false
 ---
 
-# Migrating Between Caskada Versions
+# Migrating from Caskada v2 to v3
 
-This guide helps you update your Caskada applications when migrating from older versions to newer ones. We strive for backward compatibility, but major refactors sometimes introduce breaking changes for significant improvements.
+V3 is a deliberate API break. Migrate one Flow at a time and test its routing,
+state, retry, and terminal behavior before composing it into a larger graph.
 
-## General Advice
+## Concept Map
 
-- **Start Small**: Migrate one part of your application at a time.
-- **Consult the Changelog**: Check the release notes on the repository for the specific version you are upgrading to. It will list breaking changes, new features, and bug fixes.
-- **Review Core Abstraction Docs**: Changes often revolve around the core `Node`, `Flow`, or `Memory` components. Re-reading their documentation can clarify new behaviors or APIs.
+| V2                                         | V3                                        |
+| ------------------------------------------ | ----------------------------------------- |
+| `Node` subclass                            | function wrapped by `node(...)` / `@node` |
+| `prep` + `exec` + `post`                   | one handler receiving `Context`           |
+| global Memory                              | `context.state`                           |
+| local Memory / `forkingData`               | `context.input`                           |
+| `trigger(action, data)`                    | `context.emit(action, data)`              |
+| implicit/default trigger                   | zero emissions or `context.emit()`        |
+| `source.next(target)` / `source >> target` | `source.link(target)`                     |
+| `source.on(action, target)`                | `source.link(target, action)`             |
+| terminal trigger propagation               | declared Flow exit                        |
+| `ParallelFlow`                             | `Flow(..., concurrency=N)`                |
+| shared counters for fan-in                 | Flow `combine` callback                   |
+| `execFallback`                             | node `recover` callback                   |
+| Flow `post` aggregation                    | Flow `combine` callback                   |
+| execution tree from `run()`                | final shared state from `run()`           |
+| no cancellable handle                      | `start()` and structured `RunResult`      |
 
-## Migrating to v2.0
+## Replace Node Classes with Handlers
 
-The most significant recent changes revolve around `Memory` management and `Flow` execution results.
-
-1.  **Memory Management (`Memory` object/`createMemory` factory):**
-
-    - **Explicit Creation**:
-      - Python: `Memory(global_store={...}, local_store={...})`
-      - TypeScript: `createMemory(globalStore, localStore)`
-
-2.  **Flow Execution (`Flow.run()`)**:
-
-    - **Return Value**: `Flow.run()` now returns a structured `ExecutionTree` object instead of a simple dictionary. This `ExecutionTree` provides a detailed trace of node execution order, triggered actions, and nested results.
-    - **`maxVisits` Default**: The default `maxVisits` for cycle detection in `Flow` has been increased (e.g., from 5 to 15).
-
-3.  **Error Handling (`NodeError`)**:
-    - Python: `NodeError` is now a `typing.Protocol`, promoting structural typing. You'd typically catch the specific underlying error and then check `isinstance(err, NodeError)` if you need to access `err.retry_count`.
-    - TypeScript: `NodeError` remains an `Error` subtype with an optional `retryCount`.
-
-## Migrating to v1.0
-
-Version 1.0 includes several major architectural improvements that require code updates:
-
-### Key Changes
-
-1. **Memory Management**: Changed from dictionary-based `shared` to object-based `memory`
-2. **Explicit Triggers**: Flow control now requires explicit `trigger()` calls
-3. **Node Lifecycle**: Minor adjustments to method signatures
-4. **Flow Configuration**: Added options for configuration
-5. **Removal of `params`**: The `setParams` approach has been removed
-6. **Batch Processing**: Batch node classes have been removed in favor of flow-based patterns
-
-### Memory Management Changes
-
-{% tabs %}
-{% tab title="Python" %}
+Before, in v2:
 
 ```python
-# Before (v0.2)
-class MyNode(Node):
-    async def prep(self, shared):
-        return shared["input_text"]
-
-    async def post(self, shared, prep_res, exec_res):
-        shared["result"] = exec_res
-        return "default"  # Action name as return value
-```
-
-```python
-# After (v1.0)
-class MyNode(Node):
+class Answer(Node):
     async def prep(self, memory):
-        return memory.input_text  # Property access syntax
+        return memory.question
 
-    async def post(self, memory, prep_res, exec_res):
-        memory.result = exec_res  # Property assignment syntax
-        self.trigger("default")   # Explicit trigger call
+    async def exec(self, question):
+        return await model.answer(question)
+
+    async def post(self, memory, question, answer):
+        memory.answer = answer
+        self.trigger("review")
 ```
 
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```typescript
-// Before (v0.2)
-class MyNode extends Node {
-  async prep(shared: Record): Promise {
-    return shared['input_text']
-  }
-
-  async post(shared: Record, prepRes: string, execRes: string): Promise {
-    shared['result'] = execRes
-    return 'default' // Action name as return value
-  }
-}
-```
-
-```typescript
-// After (v1.0)
-class MyNode extends Node {
-  async prep(memory: Memory): Promise {
-    return memory.input_text // Property access syntax
-  }
-
-  async post(memory: Memory, prepRes: string, execRes: string): Promise {
-    memory.result = execRes // Property assignment syntax
-    this.trigger('default') // Explicit trigger call
-  }
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-### Explicit Triggers
-
-{% tabs %}
-{% tab title="Python" %}
+After, in v3:
 
 ```python
-# Before (v0.2)
-async def post(self, shared, prep_res, exec_res):
-    if exec_res > 10:
-        shared["status"] = "high"
-        return "high_value"
-    else:
-        shared["status"] = "low"
-        return "low_value"
+@node
+async def answer(context):
+    question = require_question(context.state)
+    response = await model.answer(question)
+    context.state["answer"] = response
+    context.emit("review")
 ```
+
+Validation that lived in `prep` should happen before state writes or external
+effects. A v3 retry invokes the whole handler, not only the old `exec` phase.
+
+Configuration moves to `node(...)`:
 
 ```python
-# After (v1.0)
-async def post(self, memory, prep_res, exec_res):
-    if exec_res > 10:
-        memory.status = "high"
-        self.trigger("high_value")
-    else:
-        memory.status = "low"
-        self.trigger("low_value")
+answer = node(
+    answer_handler,
+    retry=RetryPolicy(max_attempts=3, delay_ms=1_000),
+    timeout_ms=30_000,
+    recover=answer_recovery,
+)
 ```
 
-{% endtab %}
+## Replace Memory with State and Input
 
-{% tab title="TypeScript" %}
-
-```typescript
-// Before (v0.2)
-async post(shared: Record, prepRes: any, execRes: number): Promise {
-  if (execRes > 10) {
-    shared["status"] = "high";
-    return "high_value";
-  } else {
-    shared["status"] = "low";
-    return "low_value";
-  }
-}
-```
-
-```typescript
-// After (v1.0)
-async post(memory: Memory, prepRes: any, execRes: number): Promise {
-  if (execRes > 10) {
-    memory.status = "high";
-    this.trigger("high_value");
-  } else {
-    memory.status = "low";
-    this.trigger("low_value");
-  }
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-### Flow Configuration
-
-{% tabs %}
-{% tab title="Python" %}
+V3 has one shared top-level state map per run. Branch-specific data travels as
+input:
 
 ```python
-# Before (v0.2)
-flow = Flow(start=start_node)
+def dispatch(context):
+    for document in context.state["documents"]:
+        context.emit("embed", document)
 
-# After (v1.0)
-# With default options
-flow = Flow(start=start_node)
 
-# With custom options
-flow = Flow(start=start_node, options={"max_visits": 10})
+async def embed(context):
+    vector = await embeddings.create(context.input)
+    context.end(vector)
 ```
 
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```typescript
-// Before (v0.2)
-const flow = new Flow(startNode)
-
-// After (v1.0)
-// With default options
-const flow = new Flow(startNode)
-
-// With custom options
-const flow = new Flow(startNode, { maxVisits: 10 })
-```
-
-{% endtab %}
-{% endtabs %}
-
-### Removal of `params` and `setParams`
-
-In v1.0, `setParams` has been removed in favor of direct property access through the streamlined memory management.
-Replace `params` with **local memory** and remove `setParams` from the code.
-
-### Batch Processing Changes (`*BatchNode` and `*BatchFlow` Removal)
-
-In v1.0, dedicated batch processing classes like `BatchNode`, `ParallelBatchNode`, `BatchFlow`, and `ParallelBatchFlow` have been **removed** from the core library.
-
-The core concept of batching (processing multiple items, often in parallel) is now achieved using a more fundamental pattern built on standard `Node`s and `Flow`s:
-
-1.  **Fan-Out Trigger Node**: A standard `Node` (let's call it `TriggerNode`) is responsible for initiating the processing for each item in a batch.
-    - In its `prep` method, it typically reads the list of items from memory.
-    - In its `post` method, it iterates through the items and calls `this.trigger("process_one", forkingData={...})` **for each item**.
-    - The `forkingData` argument is crucial: it passes the specific item (and potentially its index or other context) to the **local memory** of the successor node instance created for that trigger. This isolates the data for each parallel branch.
-2.  **Processor Node**: Another standard `Node` (let's call it `ProcessorNode`) handles the actual processing of a single item.
-    - It's connected to the `TriggerNode` via the `"process_one"` action (e.g., `triggerNode.on("process_one", processorNode)`).
-    - Its `prep` method reads the specific item data from its **local memory** (e.g., `memory.item`, `memory.index`), which was populated by the `forkingData` from the `TriggerNode`.
-    - Its `exec` method contains the logic previously found in `exec_one`. It performs the computation for the single item.
-    - Its `post` method takes the result and typically stores it back into the **global memory**, often in a list or dictionary indexed by the item's original index to handle potential out-of-order completion in parallel scenarios.
-3.  **Flow Orchestration**:
-    - To process items **sequentially**, use a standard `Flow` containing the `TriggerNode` and `ProcessorNode`. The flow will execute the branch triggered for item 1 completely before starting the branch for item 2, and so on.
-    - To process items **concurrently**, use a `ParallelFlow`. This flow will execute all the branches triggered by `TriggerNode` in parallel (using `Promise.all` or `asyncio.gather`).
-4.  **Aggregation (Optional)**: If you need to combine the results after all items are processed (like a Reduce step), the `TriggerNode` can fire an additional, final trigger (e.g., `this.trigger("aggregate")`) after the loop. Alternatively, the `ProcessorNode` can maintain a counter in global memory and trigger the aggregation step only when the counter reaches zero (see the [MapReduce pattern](../design_pattern/mapreduce.md)).
-
-This approach simplifies the core library by handling batching as an _orchestration pattern_ rather than requiring specialized node types.
-
-#### Example: Translating Text into Multiple Languages
-
-Let's adapt the `TranslateTextNode` example provided earlier. Before, it might have been a `BatchNode`. Now, we split it into a `TriggerTranslationsNode` and a `TranslateOneLanguageNode`.
-
-{% tabs %}
-{% tab title="Python" %}
+The initial top-level state is shallow-copied. Caskada never mutates the caller's
+top-level object. Read the state returned by `run()`:
 
 ```python
-# Before (v0.2) - Conceptual BatchNode
-class TranslateTextBatchNode(BatchNode):
-    async def prep(self, shared):
-        text = shared.get("text", "(No text provided)")
-        languages = shared.get("languages", ["Chinese", "Spanish", "Japanese"])
-        # BatchNode prep would return items for exec
-        return [(text, lang) for lang in languages]
-
-    async def exec(self, item):
-        text, lang = item
-        # Assume translate_text exists
-        return await translate_text(text, lang)
-
-    async def post(self, shared, prep_res, exec_results):
-        # BatchNode post might aggregate results
-        shared["translations"] = exec_results
-        return "default"
+state = await flow.run(initial_state)
 ```
+
+Nested values remain borrowed references. Separate runs require explicit state
+handoff, while nested Flows in one run share the same state automatically.
+
+## Migrate Links and Actions
+
+V3 links are target-first:
 
 ```python
-# After (v1.0) - Using Flow Patterns with ParallelFlow
-
-from caskada import Node, Memory
-
-# 1. Trigger Node (Fans out work)
-class TriggerTranslationsNode(Node):
-    async def prep(self, memory: Memory):
-        text = memory.text if hasattr(memory, 'text') else "(No text provided)"
-        languages = memory.languages if hasattr(memory, 'languages') else ["Chinese", "Spanish", "Japanese"]
-
-        return [{"text": text, "language": lang} for lang in languages]
-
-    async def post(self, memory: Memory, prep_res, exec_res):
-        for index, input in enumerate(prep_res):
-            this.trigger("default", input | {"index": index})
-
-# 2. Processor Node (Handles one language)
-class TranslateOneLanguageNode(Node):
-    async def prep(self, memory: Memory):
-        # Read data passed via forkingData from local memory
-        return {
-            "text": memory.text,
-            "language": memory.language,
-            "index": memory.index
-        }
-
-    async def exec(self, item):
-        # Assume translate_text exists
-        return await translate_text(item.text, item.language)
-
-    async def post(self, memory: Memory, prep_res, exec_res):
-        # Store result in the global list at the correct index
-        memory.translations[exec_res["index"]] = exec_res
-        this.trigger("default")
-
-# 3. Flow Setup
-trigger_node = TriggerTranslationsNode()
-processor_node = TranslateOneLanguageNode()
-
-trigger_node >> processor_node
+source.link(target)
+source.link(reviewer, "review")
 ```
 
-{% endtab %}
+A normal handler with zero buffered control calls follows the unlabelled link.
+If no such link exists, it exits its current Flow normally.
 
-{% tab title="TypeScript" %}
+V2's `DEFAULT_ACTION` and the literal `"default"` were often used as the default
+sentinel. Translate that sentinel to zero emissions or `emit()`, and translate
+its successor to an unlabelled `link(target)`. In v3,
+`emit("default")` means a genuinely named action and requires a named link or
+declared exit.
 
-```typescript
-// Before (v0.2) - Conceptual BatchNode
-class TranslateTextBatchNode extends BatchNode<any, any, any, [string, string], string> {
-  async prep(shared: Record<string, any>): Promise<[string, string][]> {
-    const text = shared['text'] ?? '(No text provided)'
-    const languages = shared['languages'] ?? ['Chinese', 'Spanish', 'Japanese']
-    return languages.map((lang: string) => [text, lang])
-  }
+V2 allowed an action without a physical successor to propagate out of a Flow.
+V3 requires intended named exits to be declared:
 
-  async exec(item: [string, string]): Promise<string> {
-    const [text, lang] = item
-    // Assume translateText exists
-    return await translateText(text, lang)
-  }
-
-  async post(shared: Record<string, any>, prepRes: any, execResults: string[]): Promise<string> {
-    shared['translations'] = execResults
-    return 'default'
-  }
-}
+```python
+review = Flow(entry, exits=("needs_input",))
 ```
 
-```typescript
-// After (v1.0) - Using Flow Patterns with ParallelFlow
+An undeclared name with no link now fails as `unknown_action`. This turns an
+accidental missing edge into data rather than silently propagating it.
 
-import { Memory, Node } from 'caskada'
+Each source occurrence may have at most one physical target for a given action.
+Use one router node that emits distinct actions, or fan out with several
+emissions, when multiple destinations are intentional.
 
-// Define Memory structure (optional but recommended)
-interface TranslationGlobalStore {
-  text?: string
-  languages?: string[]
-  translations?: ({ language: string; translation: string } | null)[]
-}
-interface TranslationLocalStore {
-  text?: string
-  language?: string
-  index?: number
-}
-type TranslationActions = 'translate_one' | 'aggregate_results'
+## Migrate Termination
 
-// 1. Trigger Node (Fans out work)
-class TriggerTranslationsNode extends Node<TranslationGlobalStore, TranslationLocalStore, TranslationActions[]> {
-  async prep(memory: Memory<TranslationGlobalStore, TranslationLocalStore>): Promise<{ text: string; languages: string[] }> {
-    const text = memory.text ?? '(No text provided)'
-    const languages = memory.languages ?? getLanguages()
-    return { text, languages }
-  }
+V2 leaf termination was often inferred from a missing successor. V3 keeps that
+ordinary Flow-exit behavior: a successful handler may emit nothing.
 
-  // No exec needed for this trigger node
+Use `context.end(value)` only for a hard branch terminal. It bypasses links and
+crosses nested Flow boundaries until a combine callback replaces it. The call
+buffers a terminal; it does not stop Python or JavaScript execution.
 
-  async post(
-    memory: Memory<TranslationGlobalStore, TranslationLocalStore>,
-    prepRes: { text: string; languages: string[] },
-    execRes: void, // No exec result
-  ): Promise<void> {
-    const { text, languages } = prepRes
-    // Initialize results array in global memory
-    memory.translations = new Array(languages.length).fill(null)
-
-    // Trigger processing for each language
-    languages.forEach((lang, index) => {
-      this.trigger('default', {
-        text: text,
-        language: lang,
-        index: index,
-      })
-    })
-  }
-}
-
-// 2. Processor Node (Handles one language)
-class TranslateOneLanguageNode extends Node<TranslationGlobalStore, TranslationLocalStore> {
-  async prep(memory: Memory<TranslationGlobalStore, TranslationLocalStore>): Promise<{ text: string; lang: string; index: number }> {
-    // Read data passed via forkingData from local memory
-    const text = memory.text ?? ''
-    const lang = memory.language ?? 'unknown'
-    const index = memory.index ?? -1
-    return { text, language, index }
-  }
-
-  async exec(prepRes: {
-    text: string
-    language: string
-    index: number
-  }): Promise<{ translated: string; index: number; language: string }> {
-    // Assume translateText exists
-    return await translateText(prepRes.text, prepRes.language)
-  }
-
-  async post(
-    memory: Memory<TranslationGlobalStore, TranslationLocalStore>,
-    prepRes: { text: string; language: string; index: number }, // prepRes is passed through
-    execRes: { translated: string; index: number; language: string },
-  ): Promise<void> {
-    const { index, language, translated } = execRes
-    // Store result in the global list at the correct index
-    // Ensure the global array exists and is long enough (important for parallel)
-    if (!memory.translations) memory.translations = []
-    while (memory.translations.length <= index) {
-      memory.translations.push(null)
-    }
-    memory.translations[execRes.index] = execRes
-    this.trigger('default')
-  }
-}
-
-// 3. Flow Setup (Using ParallelFlow for concurrency)
-const triggerNode = new TriggerTranslationsNode()
-const processorNode = new TranslateOneLanguageNode()
-
-triggerNode.next(processorNode)
+```python
+def worker(context):
+    context.end(process(context.input))
+    return
 ```
 
-{% endtab %}
-{% endtabs %}
+An omitted End output differs from an explicit `None` / `undefined` output.
 
-## Need Help?
+## Replace Fan-In Counters with `combine`
 
-If you encounter issues during migration, you can:
+A Flow combine callback runs once after its child scope becomes quiet:
 
-1. Check the [documentation](../index.md) for detailed explanations
-2. Look at the [examples](../examples/index.md) for reference implementations
-3. File an issue on [GitHub](https://github.com/skadaai/caskada/issues)
+```python
+def collect(context, result):
+    context.state["vectors"] = list(result.outputs)
+    context.emit()
 
-Always consult the specific release notes for the version you are migrating to for the most accurate and detailed list of changes.
 
-Happy migrating!
+batch = Flow(dispatch, concurrency=8, combine=collect)
+dispatch.link(worker, "embed")
+```
+
+Worker `end(value)` outputs appear in `result.outputs`. Zero combine emissions
+forward the original terminal set unchanged. Any combine emissions replace that
+set with the newly emitted continuations.
+
+An empty dispatch loop takes the normal zero-emission path. Use an explicit
+`end()` when an empty batch must not route into a worker.
+
+## Migrate Flow Subclasses
+
+V2 Flow lifecycle hooks have no direct class override in v3:
+
+- pre-Flow work becomes an explicit entry node or ordinary helper call;
+- post-Flow aggregation and routing becomes the Flow combine callback;
+- Flow failure fallback becomes the Flow recovery callback;
+- custom `run_tasks` schedulers require redesign against v3 Flow concurrency or
+  an extension outside the core runtime.
+
+V3 Flow combine emissions replace the child terminal set. A v2 additive Flow
+`post` must explicitly reproduce any outputs or exits it intends to retain.
+
+## Migrate Retry and Loop Bounds
+
+V2 `max_retries=N` already represented total attempts. Translate it to
+`RetryPolicy(max_attempts=N)`, not `N + 1`.
+
+V2 `wait=S` was seconds and accepted floats. V3 delay is an integer number of
+milliseconds. `delay_ms=S * 1000` is semantics-preserving only when the result
+is a nonnegative safe integer. Otherwise choose and document a rounding or
+backoff policy manually.
+
+V2 Flow `max_visits` defaulted to 15. V3 has no hidden visit default. Use a
+Flow-local `max_activations` for direct work in that scope and run-wide
+activation, transition, attempt, and deadline limits for the whole invocation.
+Review cycles explicitly because the counters do not all measure the same thing.
+
+## Migrate Results and Observation
+
+Use `run()` for the common state projection:
+
+```python
+final_state = await flow.run(initial_state)
+```
+
+Use `start()` when terminal kinds, actions, outputs, failure packets,
+cancellation, statistics, or events matter:
+
+```python
+handle = flow.start(initial_state, options=options)
+result = await handle.result()
+```
+
+Static topology is available from `flow.compile().describe()`. Runtime facts
+are delivered to a synchronous RunOptions observer; application code can add
+facts with `context.report(...)`.
+
+## Migration Checklist
+
+1. Convert one lifecycle class to one function handler.
+2. Separate shared state from branch input.
+3. Convert links to target-first `link(target, action?)`.
+4. Translate the v2 default sentinel to the unlabelled path.
+5. Declare every intentional named Flow exit.
+6. Replace fan-in counters with a Flow combine callback where applicable.
+7. Re-evaluate whole-handler retry side effects and delay units.
+8. Add explicit loop, work, and deadline bounds.
+9. Capture the state returned by `run()`.
+10. Test zero emission, named routes, empty fan-out, End, combine, and failure.

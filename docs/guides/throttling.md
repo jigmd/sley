@@ -2,426 +2,113 @@
 machine-display: false
 ---
 
-# Rate Limiting and Throttling
+# Limits and Concurrency
 
-Effective rate limiting is crucial when working with external APIs and services. This guide covers patterns for implementing throttling in Caskada applications.
+Caskada limits workflow scheduling. Provider quotas and application resource
+limits remain application concerns.
 
-This is particularly important when:
+## Local Flow Concurrency
 
-1. Calling external APIs with rate limits
-2. Managing expensive operations (like LLM calls)
-3. Preventing system overload from too many parallel requests
-
-## Concurrency Control Patterns
-
-These patterns limit the number of concurrent operations within a node.
-
-{% tabs %}
-{% tab title="Python (asyncio.Semaphore)" %}
+`Flow(..., concurrency=N)` limits the number of direct child activations that
+the Flow scope may run at once. A nested Flow owns its own scope and local limit.
 
 ```python
-import asyncio
-from caskada import Node, Memory # Assuming imports
-
-class LimitedParallelNode(Node):
-    def __init__(self, concurrency_limit: int = 3, **kwargs): # Allow passing other Node args
-        super().__init__(**kwargs) # Call parent constructor
-        if concurrency_limit <= 0:
-            raise ValueError("Concurrency limit must be positive")
-        self._semaphore = asyncio.Semaphore(concurrency_limit)
-        print(f"Node initialized with concurrency limit: {concurrency_limit}")
-
-    # Prep is usually needed to get 'items' from memory
-    async def prep(self, memory):
-        # Example: Fetch items from memory
-        items = memory.items_to_process or []
-        print(f"Prep: Found {len(items)} items to process.")
-        return items # Assuming items are in memory.items_to_process
-
-    async def exec(self, items: list): # exec receives result from prep
-        if not items:
-            print("Exec: No items to process.")
-            return []
-
-        async def limited_task_runner(item):
-            async with self._semaphore:
-                print(f" Starting processing item: {item}")
-                # process_one_item should ideally be defined in the subclass or passed in
-                result = await self.process_one_item(item) # Renamed for clarity
-                print(f" Finished processing item: {item} -> {result}")
-                return result
-
-        print(f"Exec: Starting processing of {len(items)} items with limit {self._semaphore._value}...")
-        tasks = [limited_task_runner(item) for item in items]
-        results = await asyncio.gather(*tasks)
-        print("Exec: All items processed.")
-        return results
-
-    async def process_one_item(self, item):
-        """Placeholder: Subclasses must implement this method."""
-        # Example implementation:
-        await asyncio.sleep(0.5) # Simulate async work
-        return f"Processed_{item}"
-        # raise NotImplementedError("process_one_item must be implemented by subclasses")
-
-    # Post is needed to store results and trigger next step
-    async def post(self, memory, prep_res: list, exec_res: list):
-        print(f"Post: Storing {len(exec_res)} results.")
-        memory.processed_results = exec_res # Store results
-        self.trigger('default') # Trigger next node
+workers = Flow(dispatch, concurrency=8, combine=collect)
 ```
-
-{% endtab %}
-
-{% tab title="TypeScript (p-limit)" %}
 
 ```typescript
-// Requires: npm install p-limit
-import { Memory, Node } from 'caskada' // Assuming imports
-import pLimit from 'p-limit'
-
-class LimitedParallelNodeTs extends Node {
-  private limit: ReturnType<typeof pLimit>
-
-  constructor(concurrency: number = 3) {
-    super()
-    if (concurrency <= 0) {
-      throw new Error('Concurrency limit must be positive')
-    }
-    this.limit = pLimit(concurrency)
-    console.log(`Node initialized with concurrency limit: ${concurrency}`)
-  }
-
-  // Prep is usually needed to get 'items' from memory
-  async prep(memory): Promise<any[]> {
-    // Example: Fetch items from memory
-    const items = memory.items_to_process || []
-    console.log(`Prep: Found ${items.length} items to process.`)
-    return items // Assuming items are in memory.items_to_process
-  }
-
-  async exec(items: any[]): Promise<any[]> {
-    if (!items || items.length === 0) {
-      console.log('Exec: No items to process.')
-      return []
-    }
-
-    console.log(`Exec: Starting processing of ${items.length} items with limit...`)
-    // Map each item to a limited async task
-    const tasks = items.map((item) =>
-      this.limit(async () => {
-        console.log(` Starting processing item: ${item}`)
-        const result = await this.processOneItem(item)
-        console.log(` Finished processing item: ${item} -> ${result}`)
-        return result
-      }),
-    )
-
-    // Wait for all limited tasks to complete
-    const results = await Promise.all(tasks)
-    console.log('Exec: All items processed.')
-    return results
-  }
-
-  async processOneItem(item: any): Promise<any> {
-    /** Placeholder: Subclasses must implement this method. */
-    // Example implementation:
-    await new Promise((resolve) => setTimeout(resolve, 500)) // Simulate async work
-    return `Processed_${item}`
-    // throw new Error("processOneItem must be implemented by subclasses");
-  }
-
-  // Post is needed to store results and trigger next step
-  async post(memory, prepRes: any[], execRes: any[]): Promise<void> {
-    console.log(`Post: Storing ${execRes.length} results.`)
-    memory.processed_results = execRes // Store results
-    this.trigger('default') // Trigger next node
-  }
-}
+const workers = new Flow(dispatch, { concurrency: 8, combine: collect })
 ```
 
-{% endtab %}
-{% endtabs %}
+Fan-out does not require a special parallel Flow type. Several buffered
+`emit(...)` calls create branches; the scheduler applies the Flow's local cap.
 
-## Rate Limiting with Window Limits
+## Run-Wide Concurrency
 
-{% tabs %}
-{% tab title="Python" %}
+`RunOptions.max_concurrency` / `maxConcurrency` is the global callback ceiling.
+When omitted, Caskada derives the ceiling from the maximum local Flow
+concurrency in the compiled graph. An explicit value may throttle below that
+number or permit more aggregate work across separate scopes.
+
+Local caps still apply when the run-wide ceiling is higher.
 
 ```python
-from ratelimit import limits, sleep_and_retry
-
-# 30 calls per minute
-@sleep_and_retry
-@limits(calls=30, period=60)
-def call_api():
-    # Your API call here
-    pass
-```
-
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```typescript
-import { RateLimiter } from 'limiter'
-
-// 30 calls per minute
-const limiter = new RateLimiter({ tokensPerInterval: 30, interval: 'minute' })
-
-async function callApi() {
-  await limiter.removeTokens(1)
-  // Your API call here
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-## Throttler Utility
-
-{% tabs %}
-{% tab title="Python" %}
-
-```python
-from tenacity import retry, wait_exponential, stop_after_attempt
-
-@retry(
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    stop=stop_after_attempt(5)
+final_state = await flow.run(
+    initial_state,
+    options=RunOptions(max_concurrency=4),
 )
-def call_api_with_retry():
-    # Your API call here
-    pass
 ```
-
-{% endtab %}
-
-{% tab title="TypeScript" %}
 
 ```typescript
-import pRetry from 'p-retry'
-
-async function callApiWithRetry() {
-  return pRetry(
-    async () => {
-      // Your API call here
-    },
-    {
-      retries: 5,
-      minTimeout: 4000,
-      maxTimeout: 10000,
-    },
-  )
-}
+const finalState = await flow.run(initialState, { maxConcurrency: 4 })
 ```
 
-{% endtab %}
-{% endtabs %}
+Use `flow.compile().describe()["auto_max_concurrency"]` in Python or
+`flow.compile().describe().auto_max_concurrency` in TypeScript to inspect the
+derived default.
 
-## Advanced Throttling Patterns
+## Work Limits
 
-### 1. Token Bucket Rate Limiter
+RunOptions provides portable run-wide bounds:
 
-{% tabs %}
-{% tab title="Python" %}
+| Python            | TypeScript       | Bounds                       |
+| ----------------- | ---------------- | ---------------------------- |
+| `max_activations` | `maxActivations` | admitted graph activations   |
+| `max_attempts`    | `maxAttempts`    | admitted handler attempts    |
+| `max_transitions` | `maxTransitions` | committed control arms       |
+| `max_ready`       | `maxReady`       | queued ready work            |
+| `max_reports`     | `maxReports`     | accepted application reports |
+| `max_depth`       | `maxDepth`       | active nested Flow depth     |
+
+A Flow may also set `max_activations` / `maxActivations` for direct activations
+inside each invocation of that scope. Use it for a deliberate local loop bound.
+It does not count descendants or retry attempts.
+
+Limit exhaustion becomes a structured unrecoverable `limit` Failure in the run
+result. It is not an application exception from the handler.
+
+## Deadlines and Cancellation
+
+Use `deadline_ms` / `deadlineMs` for a run deadline and
+`cancel_grace_ms` / `cancelGraceMs` for cooperative shutdown grace. A node may
+also have `timeout_ms` / `timeoutMs`.
+
+Handlers can inspect `context.remaining_ms()` / `remainingMs()` and the
+cancellation token. Long loops should checkpoint cancellation between units of
+work.
+
+Runtime timers can signal async work, but they cannot preempt synchronous
+blocking code. Prefer:
+
+1. native async clients with their own request timeout;
+2. cancellation-aware library calls;
+3. deliberate thread or process isolation when no async client exists.
+
+Thread offload keeps the scheduler responsive but cannot kill the underlying
+thread. The provider timeout remains necessary.
+
+## Provider Rate Limits
+
+Flow concurrency controls simultaneous Caskada callbacks, not requests made
+inside one callback and not quotas shared with other processes. Put a limiter in
+the injected service client when several workflows share a provider:
 
 ```python
-from pyrate_limiter import Duration, Rate, Limiter
-
-# 10 requests per minute
-rate = Rate(10, Duration.MINUTE)
-limiter = Limiter(rate)
-
-@limiter.ratelimit("api_calls")
-async def call_api():
-    # Your API call here
-    pass
+async def call_model(prompt):
+    async with provider_limiter:
+        return await client.generate(prompt, timeout=30)
 ```
 
-{% endtab %}
+Keep retry ownership clear. Use a provider client's retry policy for transport
+details, or Caskada's node retry for the whole application operation. Stacking
+both without explicit bounds can multiply attempts and latency.
 
-{% tab title="TypeScript" %}
+## Choosing Values
 
-```typescript
-import { TokenBucket } from 'limiter'
+Start with each Flow at concurrency 1. Raise the cap only where branches are
+independent and the downstream service can absorb the load. Set explicit
+run-wide work budgets for cycles and dynamic fan-out, and use a deadline for a
+wall-clock bound.
 
-// 10 requests per minute
-const limiter = new TokenBucket({
-  bucketSize: 10,
-  tokensPerInterval: 10,
-  interval: 'minute',
-})
-
-async function callApi() {
-  await limiter.removeTokens(1)
-  // Your API call here
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-### 2. Sliding Window Rate Limiter
-
-{% tabs %}
-{% tab title="Python" %}
-
-```python
-from slidingwindow import SlidingWindowRateLimiter
-
-limiter = SlidingWindowRateLimiter(
-    max_requests=100,
-    window_size=60  # 60 seconds
-)
-
-async def call_api():
-    if not limiter.allow_request():
-        await asyncio.sleep(limiter.time_to_next_request()) #  or raise RateLimitExceeded()
-    # Your API call here
-    return "API response"
-```
-
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```typescript
-class SlidingWindowRateLimiter {
-  private requests: number[] = []
-
-  constructor(
-    private maxRequests: number,
-    private windowSize: number,
-  ) {}
-
-  allowRequest(): boolean {
-    const now = Date.now()
-    // Remove expired requests
-    this.requests = this.requests.filter((time) => now - time < this.windowSize * 1000)
-    // Check if we can allow another request
-    return this.requests.length < this.maxRequests
-  }
-
-  timeToNextRequest(): number {
-    const now = Date.now()
-    this.requests = this.requests.filter((time) => now - time < this.windowSize * 1000)
-    if (this.requests.length < this.maxRequests) return 0
-    const oldest = this.requests[0]
-    return Math.ceil((oldest + this.windowSize * 1000 - now) / 1000)
-  }
-}
-
-// Usage:
-const limiter = new SlidingWindowRateLimiter(100, 60) // 100 requests per 60 seconds
-
-async function callApi() {
-  if (!limiter.allowRequest()) {
-    await new Promise((resolve) => setTimeout(resolve, limiter.timeToNextRequest() * 1000))
-  }
-  // Your API call here
-  return 'API response'
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-## Best Practices
-
-1. **Monitor API Responses**: Watch for 429 (Too Many Requests) responses and adjust your rate limiting accordingly
-2. **Implement Retry Logic**: When hitting rate limits, implement exponential backoff for retries
-3. **Distribute Load**: If possible, spread requests across multiple API keys or endpoints
-4. **Cache Responses**: Cache frequent identical requests to reduce API calls
-5. **Batch Requests**: Combine multiple requests into single API calls when possible
-
-## Integration with Caskada
-
-### Throttled LLM Node
-
-{% tabs %}
-{% tab title="Python" %}
-
-```python
-class ThrottledLLMNode(Node):
-    def __init__(self, max_retries=3, wait=1, calls_per_minute=30):
-        super().__init__(max_retries=max_retries, wait=wait) # Pass wait to super
-        self.limiter = Limiter(Rate(calls_per_minute, Duration.MINUTE))
-
-    # Prep is needed to get the prompt from memory
-    async def prep(self, memory):
-        return memory.prompt # Assuming prompt is in memory.prompt
-
-    async def exec(self, prompt): # exec receives prompt from prep
-        @self.limiter.ratelimit('llm_calls')
-        async def limited_llm_call(text):
-            # Assuming call_llm is async
-            return await call_llm(text)
-
-        # Add basic check for empty prompt
-        if not prompt:
-             return "No prompt provided."
-        return await limited_llm_call(prompt)
-
-    async def exec_fallback(self, prompt, error): # Make fallback async
-        # Handle rate limit errors specially
-        # Note: Retrying within fallback can lead to complex loops.
-        # Consider just logging or returning an error message.
-        if "rate limit" in str(error).lower():
-            print(f"Rate limit hit for prompt: {prompt[:50]}...")
-            # Fallback response instead of complex retry logic here
-            return f"Rate limit exceeded. Please try again later. Error: {error}"
-        # For other errors, fall back to a simple response
-        print(f"LLM call failed after retries: {error}")
-        return f"I'm having trouble processing your request right now. Error: {error}"
-
-    # Post is needed to store the result and trigger next step
-    async def post(self, memory, prep_res, exec_res):
-        memory.llm_response = exec_res # Store the result
-        self.trigger('default') # Trigger next node
-```
-
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```typescript
-import { Memory, Node, NodeError } from 'caskada'
-import { RateLimiter } from 'limiter'
-
-class ThrottledLLMNode extends Node {
-  private limiter: RateLimiter
-
-  constructor(
-    private maxRetries = 3,
-    callsPerMinute = 30,
-  ) {
-    super({ maxRetries })
-    this.limiter = new RateLimiter({ tokensPerInterval: callsPerMinute, interval: 'minute' })
-  }
-
-  async exec(prompt: string): Promise<string> {
-    // Wait for token before proceeding
-    await this.limiter.removeTokens(1)
-    return await callLLM(prompt)
-  }
-
-  async execFallback(prompt: string, error: NodeError): Promise<string> {
-    // Handle rate limit errors specially
-    if (error.message.toLowerCase().includes('rate limit')) {
-      // Wait longer before retrying
-      await new Promise((resolve) => setTimeout(resolve, 60000))
-      return this.exec(prompt)
-    }
-    // For other errors, fall back to a simple response
-    return "I'm having trouble processing your request right now."
-  }
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-## Linking to Related Concepts
-
-For batch processing patterns, see [Flow](../core_abstraction/flow.md).
+Measure peak callbacks and terminal behavior through `start()` results and
+events before increasing limits.

@@ -1,153 +1,123 @@
-# Best Practices for Caskada Development
+# Best Practices
 
-Developing robust and maintainable applications with Caskada involves adhering to certain best practices. These guidelines help ensure your flows are clear, efficient, and easy to debug and extend.
+## Keep Handlers Small
 
-## General Principles
+A node handler should perform one recognizable unit of work. Put graph control in
+`context.emit(...)` and `context.end(...)`, and keep service clients and domain
+logic in ordinary functions that can be tested without Caskada.
 
-- **Modularity**: Break down complex problems into smaller, manageable nodes and sub-flows.
-- **Explicitness**: Make data dependencies and flow transitions clear and easy to follow.
-- **Separation of Concerns**: Keep computation logic (in `exec`) separate from data handling (`prep`, `post`) and orchestration (`Flow`).
+Use nested Flows when a group of nodes has its own entry, exits, concurrency
+limit, or combine step. Do not create a Flow merely to group files.
 
-## Design & Architecture
+## Choose One Data Channel Deliberately
 
-- **Memory Planning**: Clearly define the structure of your global and local memory stores upfront (e.g., using `TypedDict` in Python or interfaces/types in TypeScript). Decide what state needs to be globally accessible versus what should be passed down specific branches via `forkingData` into the local store.
-- **Action Naming**: Use descriptive, meaningful action names (e.g., `'user_clarification_needed'`, `'data_validated'`) rather than generic names like `'next'` or `'step2'`. This improves the readability of your flow logic and the resulting `ExecutionTree`.
-- **Explicit Transitions**: Clearly define transitions for all expected actions a node might trigger using `.on()` or `>>`. Consider adding a default `.next()` transition for unexpected or general completion actions.
-- **Cycle Management**: Be mindful of loops. Use the `maxVisits` option in the `Flow` constructor (default is now 15, can be customized) to prevent accidental infinite loops. The `ExecutionTree` can also help visualize loops.
-- **Error Handling Strategy**:
-  - Use the built-in retry mechanism (`maxRetries`, `wait` in Node constructor) for transient errors in `exec()`.
-  - Implement `execFallback(prepRes, error: NodeError)` to provide a default result or perform cleanup if retries fail.
-  - Define specific error-handling nodes and transitions (e.g., `node.on('error', errorHandlerNode)`) for critical errors.
-- **Parallelism Choice**: Use `ParallelFlow` when a node fans out to multiple independent branches that can benefit from concurrent execution. Stick with the standard `Flow` (sequential branch execution) if branches have interdependencies or if concurrent modification of shared global memory state is a concern.
-- **Memory Isolation with `forkingData`**: When triggering successors, use the `forkingData` argument to pass data specifically to the `local` store of the next node(s) in a branch. This keeps the `global` store cleaner and is essential for correct state management in parallel branches.
-- **Test Incrementally**:
-  - Test individual nodes in isolation using `node.run(memory)`. Remember this only runs the single node and does not follow graph transitions.
-  - Test sub-flows before integrating them into larger pipelines.
-  - Write tests that verify the final state of the `Memory` object and, if important, the structure of the `ExecutionTree` returned by `flow.run()`.
-- **Avoid Deep Nesting of Flows**: While nesting flows is a powerful feature for modularity, keep the hierarchy reasonably flat (e.g., 2-3 levels deep) to maintain understandability and ease of debugging.
+Caskada has three application-data channels:
 
-## Code Quality
+- `context.state` is one shared top-level map for the run.
+- `context.input` is the value carried by the current branch.
+- `context.end(value)` publishes one completed branch output for a Flow
+  combiner.
 
-- **Type Hinting/Interfaces**: Use Python's type hints (`TypedDict`, `List`, `Dict`, `Optional`, `Union`) and TypeScript interfaces/types to clearly define the expected shapes of `Memory` stores, `prep_res`, `exec_res`, and `actions`. This improves readability, enables static analysis, and reduces runtime errors.
-- **Docstrings/Comments**: Document your nodes, their purpose, expected inputs/outputs, and any complex logic.
-- **Consistent Naming**: Follow consistent naming conventions for nodes, actions, and memory keys.
-- **Idempotent `exec`**: Strive to make your `exec` methods idempotent where possible, meaning running them multiple times with the same input produces the same result and no additional side effects. This simplifies retries and debugging.
+Use state for run-wide facts and accumulated results. Use input for the specific
+item a branch is processing. Use End output when a parent Flow must join results
+from several branches.
 
+Caskada does not validate application schemas or prove payload compatibility
+across links. Validate dynamic input before writes or external effects:
 
-## Project Structure
-
-A well-organized project structure enhances maintainability and collaboration:
-
-{% tabs %}
-{% tab title="Python (simple)" %}
-
-```haskell
-my_simple_project/
-├── main.py
-├── nodes.py
-├── flow.py
-├── utils/
-│   ├── __init__.py
-│   ├── call_llm.py
-│   └── search_web.py
-├── requirements.txt
-└── docs/
-    └── design.md
+```python
+def process(context):
+    job = parse_job(context.input)
+    result = call_service(job)
+    context.state["result"] = result
 ```
 
-{% endtab %}
+Static `Context[State, Input]` types document a handler's local expectation;
+they are not runtime validation and do not type-check an entire graph.
 
-{% tab title="Python (complex)" %}
+## Treat Retry as Whole-Handler Retry
 
-```haskell
-my_complex_project/
-├── main.py                # Entry point
-├── nodes/                 # Node implementations
-│   ├── __init__.py
-│   ├── input_nodes.py
-│   ├── processing_nodes.py
-│   └── output_nodes.py
-├── flows/                 # Flow definitions
-│   ├── __init__.py
-│   └── main_flow.py
-├── utils/                 # Utility functions
-│   ├── __init__.py
-│   ├── llm.py
-│   ├── database.py
-│   └── web_search.py
-├── tests/                 # Test cases
-│   ├── test_nodes.py
-│   └── test_flows.py
-├── config/                # Configuration
-│   └── settings.py
-├── requirements.txt       # Dependencies
-└── docs/                  # Documentation
-    ├── design.md          # High-level design
-    └── api.md             # API documentation
+A retry invokes the complete handler again. Validate first, then perform
+fallible work, and commit state or irreversible effects as late as practical.
+Prefer idempotent service operations and idempotency keys where an external
+effect may be repeated.
+
+Use a node recovery callback for a local fallback. Use a Flow recovery callback
+when the boundary needs to interpret failure from any child branch.
+
+## Make Control Intent Visible
+
+- Emit nothing for the ordinary unlabelled path.
+- Use `emit("review", value)` for a genuinely named path.
+- Use `end(value)` only for a hard branch terminal, commonly a worker output.
+- Use a Flow combine callback when work must wait for every branch in that Flow.
+
+The string `"default"` has no special meaning. An unlabelled link is defined by
+`source.link(target)`.
+
+`end()` appends an End arm; it does not stop the host function. Return afterward
+when no later application code should run:
+
+```python
+def worker(context):
+    context.end(transform(context.input))
+    return
 ```
 
-{% endtab %}
+An empty emission loop follows the normal zero-emission rule. If an empty batch
+must not continue to a worker, handle that case explicitly with `end()`.
 
-{% tab title="TypeScript (simple)" %}
+## Be Intentional About Shared State
 
-```haskell
-my_project/
-├── src/
-│   ├── main.ts
-│   ├── nodes.ts
-│   ├── flow.ts
-│   └── utils/
-│       ├── callLLM.ts
-│       └── searchWeb.ts
-├── package.json
-└── docs/
-    └── design.md
+The caller's top-level initial state is shallow-copied once. Every branch in the
+run shares the resulting top-level state map, and `run()` returns it. Nested
+objects remain borrowed references.
+
+With concurrent branches:
+
+- write disjoint state keys, or synchronize application access;
+- treat shared branch input objects as immutable, or emit distinct copies;
+- do not assume output settlement order matches source order.
+
+Read the returned state when chaining separate runs:
+
+```python
+state = await prepare_flow.run(initial_state)
+state = await answer_flow.run(state)
 ```
 
-{% endtab %}
+Prefer one composed root Flow when the phases are one logical run.
 
-{% tab title="TypeScript (complex)" %}
+## Bound Work Explicitly
 
-```haskell
-my_complex_project/
-├── src/                      # Source code
-│   ├── index.ts              # Entry point
-│   ├── nodes/                # Node implementations
-│   │   ├── index.ts          # Exports all nodes
-│   │   ├── inputNodes.ts
-│   │   ├── processingNodes.ts
-│   │   └── outputNodes.ts
-│   ├── flows/                # Flow definitions
-│   │   ├── index.ts          # Exports all flows
-│   │   └── mainFlow.ts
-│   ├── utils/                # Utility functions
-│   │   ├── index.ts          # Exports all utilities
-│   │   ├── llm.ts
-│   │   ├── database.ts
-│   │   └── webSearch.ts
-│   ├── types/                # Type definitions
-│   │   ├── index.ts          # Exports all types
-│   │   ├── node.types.ts
-│   │   └── flow.types.ts
-│   └── config/               # Configuration
-│       └── settings.ts
-├── dist/                     # Compiled JavaScript
-├── tests/                    # Test cases
-│   ├── nodes.test.ts
-│   └── flows.test.ts
-├── package.json              # Dependencies and scripts
-└── docs/                     # Documentation
-    ├── design.md             # High-level design
-    └── api.md                # API documentation
+Use Flow `concurrency` for local parallelism and optional Flow
+`max_activations` for a local cycle or scope budget. Use `RunOptions` for the
+run-wide concurrency ceiling, work limits, deadline, and cancellation grace.
+
+Runtime deadlines cannot interrupt synchronous blocking code. Use an async
+client, a provider timeout, or deliberate thread/process isolation for blocking
+operations. Thread offload does not make the underlying call cancellable.
+
+## Observe Without Driving Control
+
+Use `compile().describe()` for static topology. Use a synchronous observer and
+`context.report(...)` for runtime facts. Observers must be fast and must not be
+used to mutate workflow control.
+
+Use `run()` when only the final state matters. Use `start()` when the caller
+needs cancellation, terminal metadata, failures, events, or statistics.
+
+## Organize for the Reader
+
+Keep small projects small. A typical application needs only:
+
+```text
+main.py
+nodes.py
+flow.py
+services.py
 ```
 
-{% endtab %}
-{% endtabs %}
-
-- **`docs/design.md`**: Contains project documentation for each step designed in [agentic coding](./agentic_coding.md). This should be _high-level_ and _no-code_.
-- **`utils/`**: Contains all utility functions.
-  - It's recommended to dedicate one file to each API call, for example `call_llm.py` or `search_web.ts`.
-  - Each file should also include a `main()` function to try that API call
-- **`nodes.py`** or **`nodes.ts`**: Contains all the node definitions.
-- **`flow.py`** or **`flow.ts`**: Implements functions that create flows by importing node definitions and connecting them.
-- **`main.py`** or **`main.ts`**: Serves as the project's entry point.
+Split files when a domain boundary becomes real, not in anticipation of future
+size. Keep shared type definitions together when types materially help readers;
+omit them in examples or scripts where they add more ceremony than clarity.

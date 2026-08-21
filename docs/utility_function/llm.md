@@ -1,135 +1,92 @@
 ---
-title: 'LLM Wrapper'
+title: 'LLM Calls'
 machine-display: false
 ---
 
-# LLM Wrappers
+# LLM Calls
 
-{% hint style="warning" %}
+Put model SDK calls behind an application-owned interface. Caskada does not
+require or provide an LLM wrapper.
 
-**Caskada does NOT provide built-in utilities**
+## Define the Application Contract
 
-Instead, we offer examples that you can implement yourself. This approach gives you [more flexibility and control](./index.md#why-not-built-in) over your project's dependencies and functionality.
+Prefer a function named after the job it performs:
 
-{% endhint %}
+```python
+from typing import Protocol
 
-Caskada doesn't provide built-in LLM wrappers.
-You are better of checking out libraries like [litellm](https://github.com/BerriAI/litellm) (Python).
-Here's a simple example of how you might implement your own wrapper:
 
-## Basic Implementation
+class AnswerModel(Protocol):
+    async def answer(self, question: str, sources: list[str]) -> str: ...
+```
+
+```typescript
+interface AnswerModel {
+  answer(question: string, sources: readonly string[]): Promise<string>
+}
+```
+
+The concrete implementation may call a hosted provider, a local model, or a
+test fake. It should own model selection, request formatting, provider timeout,
+and response extraction.
+
+## Call It from a Node
 
 {% tabs %}
 {% tab title="Python" %}
 
 ```python
-# utils/call_llm.py
-import os
-from openai import OpenAI
+from caskada import Flow, node
 
-def call_llm(prompt, model="gpt-4o", temperature=0.7):
-    """Simple wrapper for calling OpenAI's API"""
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=temperature
-    )
-    return response.choices[0].message.content
+
+def create_answer_flow(model):
+    async def answer(context):
+        response = await model.answer(
+            context.state["question"],
+            context.state.get("sources", []),
+        )
+        context.state["answer"] = response
+
+    return Flow(node(answer, name="answer"))
 ```
 
 {% endtab %}
-
 {% tab title="TypeScript" %}
 
 ```typescript
-// utils/callLLM.ts
-import OpenAI from 'openai'
+import { Flow, node } from 'caskada'
 
-export async function callLLM(prompt: string, model: string = 'gpt-4o', temperature: number = 0.7): Promise<string> {
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+interface State {
+  question: string
+  sources?: string[]
+  answer?: string
+}
+
+function createAnswerFlow(model: AnswerModel): Flow<State> {
+  const answer = node<State>(async (context) => {
+    context.state.answer = await model.answer(context.state.question, context.state.sources ?? [])
   })
 
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [{ role: 'user', content: prompt }],
-    temperature,
-  })
-
-  return response.choices[0]?.message?.content || ''
+  return new Flow(answer)
 }
 ```
 
 {% endtab %}
 {% endtabs %}
 
-## Why Implement Your Own?
+The ordinary zero-emission return exits this one-node Flow. The model call does
+not need to know about Context or graph topology.
 
-Caskada intentionally doesn't include vendor-specific APIs for several reasons:
+## Operational Rules
 
-1. **API Volatility**: External APIs change frequently
-2. **Flexibility**: You may want to switch providers or use fine-tuned models
-3. **Optimizations**: Custom implementations allow for caching, batching, and other optimizations
+- Set a provider-side request timeout; a runtime deadline cannot interrupt
+  synchronous blocking code.
+- Decide whether provider retries or Caskada whole-handler retries own each
+  failure. Avoid unbounded stacked retry policies.
+- Parse and validate structured model output before committing state.
+- Use idempotency keys for model APIs that can create durable side effects.
+- Keep prompts and response objects out of logs unless their data policy permits
+  it.
+- Use a deterministic fake in workflow tests.
 
-## Integration with Caskada
-
-Here's how to use your LLM wrapper in a Caskada node:
-
-{% tabs %}
-{% tab title="Python" %}
-
-```python
-from caskada import Node
-from utils import call_llm
-
-class LLMNode(Node):
-    async def prep(self, memory):
-        return memory.prompt
-
-    async def exec(self, prompt):
-        return await call_llm(prompt)
-
-    async def post(self, memory, prep_res, exec_res):
-        memory.response = exec_res
-        self.trigger('default')
-```
-
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```typescript
-import { Memory, Node } from 'caskada'
-import { callLLM } from './utils/callLLM' // Your wrapper
-
-class LLMNode extends Node {
-  async prep(memory): Promise<string> {
-    // Read prompt from memory
-    return memory.prompt ?? '' // Provide default if needed
-  }
-
-  async exec(prompt: string): Promise<string> {
-    // Call the LLM wrapper
-    if (!prompt) throw new Error('No prompt provided.')
-    return await callLLM(prompt)
-  }
-
-  async post(memory, prepRes: string, llmResponse: string): Promise<void> {
-    // Store the response in memory
-    memory.response = llmResponse
-    this.trigger('default') // Or another action based on response
-  }
-}
-```
-
-{% endtab %}
-{% endtabs %}
-
-## Additional Considerations
-
-- Add error handling for API failures
-- Consider implementing caching for repeated queries
-- For production systems, add rate limiting to avoid quota issues
-
-Remember that this is just a starting point. You can extend this implementation based on your specific needs.
+See the agent, structured-output, and RAG cookbook projects for larger patterns.

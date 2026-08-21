@@ -4,62 +4,43 @@ machine-display: true
 
 # Utility Functions
 
-Caskada does not provide built-in utilities. Instead, we offer examples that you can implement yourself. This approach gives you more flexibility and control over your project's dependencies and functionality.
+Caskada schedules application work but does not wrap model providers,
+databases, search APIs, or media services. Use their SDKs through ordinary
+functions or small client objects.
 
-## Available Utility Function Examples
+## Guides
 
-1. [LLM Wrapper](./llm.md): Interact with Language Models
-2. [Web Search](./websearch.md): Perform web searches
-3. [Chunking](./chunking.md): Split large texts into manageable chunks
-4. [Embedding](./embedding.md): Generate vector embeddings for text
-5. [Vector Databases](./vector.md): Store and query vector embeddings
-6. [Text-to-Speech](./text_to_speech.md): Convert text to speech
+- [LLM Calls](./llm.md)
+- [Web Search](./websearch.md)
+- [Text Chunking](./chunking.md)
+- [Embeddings](./embedding.md)
+- [Vector Search](./vector.md)
+- [Text to Speech](./text_to_speech.md)
 
-## Why Not Built-in?
+## Why Utilities Stay Outside Core
 
-We believe it's a bad practice to include vendor-specific APIs in a general framework for several reasons:
+Provider APIs and deployment choices change independently of workflow
+semantics. Keeping integrations in application code provides:
 
-1. **API Volatility**: Frequent changes in external APIs lead to heavy maintenance for hardcoded APIs.
-2. **Flexibility**: You may want to switch vendors, use fine-tuned models, or run them locally.
-3. **Optimizations**: Prompt caching, batching, and streaming are easier to implement without vendor lock-in.
+- direct access to the provider's current features and error types;
+- straightforward service fakes in tests;
+- provider replacement without changing graph control;
+- explicit ownership of timeouts, rate limits, and credentials.
 
-## Implementing Utility Functions
+## A Useful Boundary
 
-When implementing utility functions for your Caskada project:
+A utility should have a small domain-oriented interface:
 
-1. Create a separate file for each utility function in the `utils/` directory.
-2. Include a simple test or example usage in each file.
-3. Document the input/output and purpose of each utility function.
-
-Example structure:
-
-{% tabs %}
-{% tab title="Python" %}
-
-```
-my_project/
-├── utils/
-│   ├── __init__.py
-│   ├── call_llm.py
-│   ├── search_web.py
-│   └── embed_text.py
-└── ...
+```python
+async def generate_answer(question: str, sources: list[str]) -> str: ...
 ```
 
-{% endtab %}
-
-{% tab title="TypeScript" %}
-
-```
-my_project/
-├── utils/
-│   ├── callLlm.ts
-│   ├── searchWeb.ts
-│   └── embedText.ts
-└── ...
+```typescript
+async function generateAnswer(question: string, sources: string[]): Promise<string>
 ```
 
-{% endtab %}
-{% endtabs %}
+The function owns provider request shape. The Caskada handler owns when it is
+called, where its result goes, and which graph route follows.
 
-By following this approach, you can easily maintain and update your utility functions as needed, without being constrained by the framework's built-in utilities.
+Keep utility fakes in tests. Avoid placing provider response objects in shared
+state when a smaller application value will do.

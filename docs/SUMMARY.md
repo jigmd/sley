@@ -7,17 +7,13 @@
 - [Getting Started](getting_started.md)
 - [Comparison](comparison.md)
 
-## Cookbook
-
-- [Python Examples](cookbook/python.md)
-- [Typescript Examples](cookbook/typescript.md)
-
-## Core Abstraction
+## Core Model
 
 - [Overview](core_abstraction/index.md)
 - [Node](core_abstraction/node.md)
-- [Flow](core_abstraction/flow.md)
-- [Memory](core_abstraction/memory.md)
+- [Context](core_abstraction/context.md)
+- [State and Input](core_abstraction/state.md)
+- [Flow and Combine](core_abstraction/flow.md)
 
 ## Design Patterns
 
@@ -27,24 +23,29 @@
 - [RAG](design_pattern/rag.md)
 - [Map Reduce](design_pattern/mapreduce.md)
 - [Structured Output](design_pattern/structure.md)
-- [Multi-Agents (Advanced)](design_pattern/multi_agent.md)
+- [Multi-Agent](design_pattern/multi_agent.md)
 
-## Utility Functions
+## Cookbook
 
-- [Overview](utility_function/index.md)
-- [LLM Wrapper](utility_function/llm.md)
-- [Web Search](utility_function/websearch.md)
-- [Chunking](utility_function/chunking.md)
-- [Embedding](utility_function/embedding.md)
-- [Vector Databases](utility_function/vector.md)
-- [Text-to-Speech](utility_function/text_to_speech.md)
+- [Python Examples](cookbook/python.md)
+- [TypeScript Examples](cookbook/typescript.md)
 
 ## Guides
 
 - [Best Practices](guides/best_practices.md)
-- [Agentic Coding Guide](guides/agentic_coding.md)
-- [Throttling](guides/throttling.md)
-- [Visualization & Logging](guides/visualization_logging.md)
 - [Testing](guides/testing.md)
+- [Limits and Concurrency](guides/throttling.md)
+- [Events and Logging](guides/visualization_logging.md)
+- [Agentic Coding](guides/agentic_coding.md)
+- [Migrating from v2](guides/migration.md)
 - [Migrating from PocketFlow](guides/migrating_from_pocketflow.md)
-- [Migrating from Older Versions](guides/migration.md)
+
+## Application Utilities
+
+- [Overview](utility_function/index.md)
+- [LLM Calls](utility_function/llm.md)
+- [Web Search](utility_function/websearch.md)
+- [Chunking](utility_function/chunking.md)
+- [Embedding](utility_function/embedding.md)
+- [Vector Search](utility_function/vector.md)
+- [Text-to-Speech](utility_function/text_to_speech.md)

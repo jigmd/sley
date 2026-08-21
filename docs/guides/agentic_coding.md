@@ -1,316 +1,170 @@
+---
+title: 'Agentic Coding'
+---
+
 # Agentic Coding with Caskada
 
-<details>
+Use a short design document to keep a human and an implementation agent aligned.
+The document should explain the workflow well enough to review before code is
+written, without turning into a second implementation.
 
-<summary>Notes For AI Assistants</summary>
+## Design Before Implementation
 
-{% hint style="warning" %}
-**AI only**: If you are a human, skip this section.
-{% endhint %}
+The human owns purpose, constraints, and acceptance. The implementation agent
+can propose topology and code, but must surface ambiguous control and data
+contracts before choosing them silently.
 
-This is your implementation playbook and most important guideline. Strictly follow the instructions listed in this document.
+For a new workflow:
 
-Use the design document as your single source of truth. Never proceed to code without explicit human approval of the design.
+1. define examples and expected results;
+2. sketch nodes, links, nested Flow boundaries, and loops;
+3. identify external service calls;
+4. assign each data item to state, branch input, or End output;
+5. decide where fan-out joins and what the combiner produces;
+6. define failure, retry, cancellation, and work bounds;
+7. agree on observable success criteria;
+8. implement the smallest end-to-end path first.
 
-1.  start with a small and simple solution
-2.  design at a high level (`docs/design.md`) before implementation and do not start coding until the design is approved
-3.  once approved, start coding and iterate on the design based on feedback
-4.  do not stop coding until the implementation is working as intended and fully complaint with the design document
+## Design Document Template
 
-</details>
+````markdown
+# Design: <Project>
 
-In the context of Human-AI Co-Design, agentic coding involves humans providing high-level guidance while AI agents handle implementation details:
-It represents a powerful approach to software development where humans are freed up to focus solely in strategic decisions.
-This guide will help you create effective design documents that enable successful Caskada implementations.
+## Requirements
 
-## The AI Implementation Brief
+- Problem:
+- Users:
+- Success criteria:
+- Constraints:
+- Example inputs and expected outputs:
 
-```mermaid
-flowchart TD
-    A[Human Request] --> B{AI Asks Questions}
-    B --> C[AI Generates Structured Design Draft]
-    C --> D{Human Validates/Edits}
-    D -->|Approved| E[AI Implements]
-    D -->|Needs Changes| B
-    E --> F[Continuous Co-Refinement]
-```
+## Flow
 
-- **AI-Driven Structuring:** Convert vague requests into technical specifications through dialogue
-- **Essentialism:** Only capture requirements that directly impact implementation
-- **Living Documentation:** Design evolves organically through implementation insights
-
-Before writing any code, create a comprehensive AI Implementation Brief at `docs/design.md`. This document serves as the foundation for human-AI collaboration and should contain all the essential sections listed below.
-
-### 1. Requirements Definition
-
-Clearly articulate what you're building and why:
-
-- **Problem Statement**: Define the problem being solved in 1-2 sentences
-- **User Needs**: Describe who will use this and what they need
-- **Success Criteria**: List measurable outcomes that define success
-- **Constraints**: Note any technical or business limitations
-
-Example:
-
-```
-We need a document processing system that extracts key information from legal contracts,
-summarizes them, and stores the results for easy retrieval. This will help our legal
-team review contracts 70% faster.
-```
-
-### 2. Flow Design
-
-Outline the high-level architecture using Caskada's nested directed graph abstraction:
-
-- **Flow Diagram**: Create a mermaid diagram showing node connections
-- **Processing Stages**: Describe each major stage in the flow
-- **Decision Points**: Identify where branching logic occurs
-- **Data Flow**: Explain how information moves through the system
-
-Example:
+- Entry:
+- Nodes and responsibilities:
+- Unlabelled and named links:
+- Nested Flows and declared exits:
+- Loops and bounds:
 
 ```mermaid
-graph TD
-    A[DocumentLoader] --> B[TextExtractor]
-    B --> C[EntityExtractor]
-    C --> D[ValidationNode]
-    D -->|Valid| E[SummaryGenerator]
-    D -->|Invalid| C
-    E --> F[DatabaseStorage]
+flowchart LR
+    input --> process
+    process -->|review| review
+    review --> output
+```
+````
+
+## Data
+
+- Shared state keys:
+- Branch input shapes:
+- End output shapes:
+- Runtime validation boundaries:
+
+## Fan-Out and Combine
+
+- What creates branches:
+- Local concurrency:
+- What ends each branch:
+- What `combine` reads and emits:
+- Empty-input behavior:
+
+## Services
+
+- Service function:
+- Input and output:
+- Timeout and rate limit:
+- Fake used by tests:
+
+## Failure Policy
+
+- Retried failures and maximum attempts:
+- Side effects that must be idempotent:
+- Recovery behavior:
+- Run deadline and work limits:
+
+## Verification
+
+- Unit checks for domain logic:
+- Flow scenarios:
+- Failure/cancellation scenarios:
+- Commands that prove completion:
+
 ```
 
-### 3. Utility Functions
+Delete sections that do not apply. Add a section only when it represents a real
+decision the team must preserve.
 
-List all external utilities needed:
+## Describe Node Behavior Precisely
 
-- **Function Name**: Clear, descriptive name
-- **Purpose**: What the function does
-- **Inputs/Outputs**: Expected parameters and return values
-- **External Dependencies**: Any APIs or libraries required
+For each node, state:
 
-Example:
+- the one job it performs;
+- state keys it reads and writes;
+- input it expects and how it is validated;
+- zero, named, or repeated emissions it may append;
+- whether it can create an End output;
+- fallible or irreversible operations it performs.
 
+Do not describe v3 nodes as preparation, execution, and post-processing phases.
+There is one handler. Ordering inside that handler matters, especially because a
+retry repeats it from the beginning.
+
+## Make Data Roles Explicit
+
+Use `context.state` for facts shared across the run, `context.input` for the
+current branch's work item, and `context.end(value)` for a completed branch value
+that a Flow may combine.
+
+Caskada does not validate application schemas or prove compatibility across
+links. The design should name the node that validates each dynamic boundary.
+Static types document local expectations but do not replace runtime parsing.
+
+## Design Termination and Joining
+
+Record why a leaf exits normally or creates a hard End:
+
+- zero emissions take the unlabelled path or exit the current Flow;
+- `emit("name")` selects a named link or declared exit;
+- `end(value)` finishes one branch and bypasses links;
+- a Flow combine callback runs once after that Flow's children settle;
+- zero combine emissions preserve the child terminals;
+- combine emissions replace those terminals with new continuations.
+
+An empty fan-out loop also has zero emissions. Decide its behavior explicitly.
+
+## Keep Service Utilities Ordinary
+
+External integrations should be plain functions or small client objects with
+clear inputs, outputs, timeouts, and fakes. A handler coordinates them; it should
+not hide graph control inside a service wrapper.
+
+Prefer native async APIs. If a blocking call is offloaded, document that runtime
+cancellation cannot kill the underlying thread and that the provider still
+needs its own timeout.
+
+## Implement in Reviewable Slices
+
+Build one executable path before broadening the graph. After each slice:
+
+1. run the real Flow with test-owned fakes;
+2. inspect returned state;
+3. exercise the intended routes and terminals;
+4. inspect structured failure through `start()` where relevant;
+5. update the design when the contract actually changes.
+
+Do not add production hardening merely to make an instructional prototype look
+complete. Conversely, do not claim completion while required behavior remains a
+stub or while verification commands have not run.
+
+## Completion Questions
+
+Before calling the implementation complete, answer yes or no:
+
+- Does every stated success criterion have a passing check?
+- Does every graph link resolve intentionally?
+- Are state, input, and End output roles consistent across connected nodes?
+- Are empty input, retry, failure, and termination behaviors deliberate?
+- Were all documented verification commands run successfully?
+- Does the design document still describe the code that exists?
 ```
-extract_entities(text: str) -> dict:
-- Purpose: Uses NER to identify entities in text
-- Input: Document text string
-- Output: Dictionary of entity lists by type
-- Dependencies: spaCy NLP library with legal model
-```
-
-### 4. Node Design
-
-For each node in your flow, define:
-
-- **Purpose**: One-line description of what the node does
-- **Shared Store Access**: What data it reads from and writes to the shared store
-- **Lifecycle Implementation**: How `prep`, `exec`, and `post` will be implemented
-- **Action Returns**: What actions the node might return to direct flow
-- **Error Handling**: How failures will be managed
-
-Example:
-
-```
-EntityExtractorNode:
-- Purpose: Identifies parties, dates, and monetary values in contract text
-- Reads: document_text from shared store
-- Writes: entities dictionary to shared store
-- Actions: Returns "valid" if entities found, "retry" if processing failed
-- Error Handling: Will retry up to 3 times with exponential backoff
-```
-
-### 5. Shared Store Schema
-
-Define the structure of your shared store. Using interfaces (TypeScript) or type hints (Python) is highly recommended.
-
-- **Key Namespaces**: Major sections of your shared store (often represented as nested objects or distinct keys).
-- **Data Types**: Expected types for each key.
-- **Data Flow**: How data evolves through processing (which nodes read/write which keys).
-
-Example:
-
-{% tabs %}
-{% tab title="Python (Conceptual + Type Hints)" %}
-
-```python
-from typing import TypedDict, List, Dict, Any
-
-# Define TypedDicts for structure (optional but good practice)
-class InputStore(TypedDict, total=False):
-    document_path: str
-
-class ProcessingStore(TypedDict, total=False):
-    document_text: str
-    entities: Dict[str, List[Any]] # e.g., {"parties": [], "dates": [], "amounts": []}
-    validation_status: str
-
-class OutputStore(TypedDict, total=False):
-    summary: str
-    storage_id: str
-
-# Conceptual structure of the memory object using separate keys
-# (Actual implementation might use a single dict or class instance)
-memory_conceptual = {
-    "document_path": "path/to/file.pdf", # str
-    "document_text": "",                 # str
-    "entities": {                        # Dict[str, List[Any]]
-        "parties": [],
-        "dates": [],
-        "amounts": []
-    },
-    "validation_status": "",             # str
-    "summary": "",                       # str
-    "storage_id": ""                     # str
-}
-
-# Note: In Caskada, you typically access these directly, e.g.,
-# memory.document_text = "..."
-# entities = memory.entities
-# This conceptual breakdown helps in planning the data flow.
-```
-
-{% endtab %}
-
-{% tab title="TypeScript (Interface Definition)" %}
-
-```typescript
-// Define interfaces for the shared store structure
-interface InputStore {
-  document_path: string
-}
-
-interface ProcessingStore {
-  document_text: string
-  entities: {
-    parties: any[]
-    dates: any[]
-    amounts: any[]
-  }
-  validation_status: string
-}
-
-interface OutputStore {
-  summary: string
-  storage_id: string
-}
-
-// Combine interfaces for the complete global store (if using nested structure conceptually)
-interface GlobalStore extends InputStore, ProcessingStore, OutputStore {}
-
-// Or define a flat global store interface (more common in Caskada usage)
-interface FlatGlobalStore {
-  document_path?: string
-  document_text?: string
-  entities?: {
-    parties: any[]
-    dates: any[]
-    amounts: any[]
-  }
-  validation_status?: string
-  summary?: string
-  storage_id?: string
-}
-
-// Conceptual structure (using the flat interface)
-const memoryConceptual: FlatGlobalStore = {
-  document_path: 'path/to/file.pdf',
-  document_text: '',
-  entities: {
-    parties: [],
-    dates: [],
-    amounts: [],
-  },
-  validation_status: '',
-  summary: '',
-  storage_id: '',
-}
-
-// Note: In Caskada, you'd typically pass an object conforming to
-// FlatGlobalStore (or a relevant subset) to flow.run() and access
-// properties directly, e.g., memory.document_text = "...", const entities = memory.entities;
-```
-
-{% endtab %}
-{% endtabs %}
-
-## Best Practices for Your Design Document
-
-1. **Start Simple**: Begin with the minimal viable solution
-2. **Be Explicit**: Clearly define all components and their interactions
-3. **Visualize Flows**: Use diagrams to illustrate complex relationships
-4. **Define Boundaries**: Clarify what's in and out of scope
-5. **Consider Edge Cases**: Note how the system handles failures
-6. **Be Concise**: Keep it short and to the point; Do not add any other section to the design document other than the ones listed above
-
-## Implementation Process
-
-After completing your design document:
-
-1. **Review with Stakeholders**: Ensure the design meets requirements. If you are the AI agent, ask the user to verify the design document and confirm it fits their needs.
-2. **Refine as Needed**: Iterate on the design based on feedback
-3. **Hand Off to AI**: Provide the design document to your AI assistant - If you are the AI agent, start working on the solution based on the design document
-4. **Collaborative Implementation**: Work with AI to implement the design
-5. **Test and Validate**: Verify the implementation against success criteria
-
-Once the AI assistant starts working on the implementation it's common for it to get lazy midway through the implementation.
-Whenever it claims to be done, you can give it an extra push with the following prompt:
-
-```markdown
-Review the design document and the whole implemented code, then answer the following questions:
-
-- are all stubs and placeholders gone?
-- have all requirements and features been implemented?
-- have you successfully run the application and all tests?
-- what should be implemented next?
-
-If the answer to any question is "no", or you can name something to be implemented next, then you are not done yet.
-Go back to working and finish it! Do not stop until you are done.
-```
-
-<details>
-
-<summary>Notes For AI Assistants</summary>
-
-{% hint style="warning" %}
-**AI only**: If you are a human, skip this section.
-{% endhint %}
-
-Be sure you **always** strictly follow these instructions:
-
-1. **Be Patient**: Do not start the implementation until the design document is approved.
-2. **Be Brainy**: Import `caskada` and use its archictecture to implement the design document! Adhere to the proposed flow, node and shared store design.
-3. **Focus on What Matters**: Do not fix types or edge cases until you are certain the core implementation is working as intended.
-4. **Be Adaptive**: Continuously refine the design document based on feedback and changes in the implementation, but keep it clear and concise.
-5. **Be Compliant**: You must always write code that is compliant with the design document and the system's architecture. Remember to stick to the flow, node and shared store design:
-   - prep(memory)
-     Read and preprocess data from the memory object.
-   - exec(prep_res)
-     Execute compute logic. Receives result from prep. Cannot access memory.
-   - post(memory, prep_res, exec_res)
-     Postprocess results, write data back to the memory object (usually global store), and trigger next actions.
-6. **Be Resilient**: You are not done until the implementation is working as intended.
-7. **Be Accountable**: Before finishing the implementation, ask yourself the following questions:
-   - are all stubs and placeholders gone?
-   - have all requirements and features been implemented?
-   - have I successfully run the application and all tests?
-   - what should be implemented next?
-     If the answer to any question is "no", or you can name something to be implemented next, then you are not done yet.
-     Go back to working and finish it!
-
-</details>
-
-## Conclusion: Precision Through Structure
-
-This approach ensures all Caskada solutions maintain:
-
-- **Human Focus:** Strategic requirements and validation
-
-- **AI Precision:** Structured implementation targets
-
-- **System Integrity:** Clear component boundaries
-
-By enforcing these four pillars through adaptive dialogue rather than rigid templates, we achieve flexible yet reliable AI system development. The design document becomes a living contract between human intent and AI execution.
-
-You provide your AI assistant with the clear direction needed to implement an effective Caskada solution while maintaining human oversight of the critical design decisions.
-
-Remember: The quality of your design document directly impacts the quality of the implementation. Invest time in creating a comprehensive brief to ensure successful outcomes.
