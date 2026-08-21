@@ -2,13 +2,14 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { Flow, node } from '../caskada'
 
-import type { Context, GraphElement, ScopeFailure, ScopeResult } from '../caskada'
+import type { Context, Failure, GraphElement, ScopeFailure, ScopeResult } from '../caskada'
 
 type State = { [key: string]: unknown }
 
 describe('v3 Flow failure packets and recovery', () => {
   it('recovers one failed child at the root boundary', async () => {
     const seen: ScopeFailure[] = []
+    const suppressedInside: Array<readonly Failure[]> = []
     const handlerStates: State[] = []
     const recoveryStates: State[] = []
     const fail = node<State>((context) => {
@@ -20,6 +21,7 @@ describe('v3 Flow failure packets and recovery', () => {
       recover(context, failure) {
         recoveryStates.push(context.state)
         seen.push(failure)
+        suppressedInside.push([...failure.suppressed])
         assert.equal(context.input, undefined)
         assert.equal(context.attempt, null)
         context.end('recovered')
@@ -34,7 +36,8 @@ describe('v3 Flow failure packets and recovery', () => {
     assert.equal(seen.length, 1)
     const scoped = seen[0]!
     assert.equal(scoped.primary.kind, 'handler')
-    assert.deepEqual(scoped.suppressed, [])
+    assert.deepEqual(suppressedInside, [[]])
+    assert.throws(() => scoped.suppressed.length, /closed/)
     assert.deepEqual(scoped.settledBeforeFence, [])
     assert.equal(scoped.result, null)
     assert.equal(scoped.failingActivationId, 2)
@@ -125,6 +128,7 @@ describe('v3 Flow failure packets and recovery', () => {
 
   it('propagates the exact primary after zero recovery emissions', async () => {
     const seen: ScopeFailure[] = []
+    const suppressedInside: Array<readonly Failure[]> = []
     const flow = new Flow(
       node<State>(() => {
         throw new Error('unhandled')
@@ -132,6 +136,7 @@ describe('v3 Flow failure packets and recovery', () => {
       {
         recover(_context, failure) {
           seen.push(failure)
+          suppressedInside.push([...failure.suppressed])
         },
       },
     )
@@ -141,7 +146,8 @@ describe('v3 Flow failure packets and recovery', () => {
     assert.equal(result.status, 'failed')
     if (result.status !== 'failed') throw new Error('zero-emission recovery must propagate')
     assert.equal(result.failure, seen[0]!.primary)
-    assert.equal(result.suppressed, seen[0]!.suppressed)
+    assert.deepEqual(result.suppressed, suppressedInside[0])
+    assert.throws(() => [...seen[0]!.suppressed], /closed/)
     assert.deepEqual(result.terminals, seen[0]!.settledBeforeFence)
   })
 

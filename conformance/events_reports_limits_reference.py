@@ -91,7 +91,21 @@ def evaluate_events_reports_limits(scenario: str) -> dict[str, object]:
             transitions=0,
             reports=0,
             scopes=1,
-            observations={"caught": True},
+            observations={
+                "caught": True,
+                "caught_kinds": [
+                    "failure_recorded",
+                    "failure_fenced:run",
+                    "cancellation_fenced:run",
+                ],
+                "control_order": [
+                    "failure_recorded",
+                    "failure_fenced:run",
+                    "cancellation_fenced:run",
+                    "callback_finished",
+                    "run_finished",
+                ],
+            },
         )
     if scenario == "capacity_priority":
         return _limit(

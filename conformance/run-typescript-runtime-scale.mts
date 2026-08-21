@@ -7,7 +7,7 @@ import type { Context, GraphElement, RunResult } from '../typescript/caskada.ts'
 type State = Record<string, unknown>
 type Fixture = {
   readonly id: string
-  readonly kind: 'node_chain' | 'nested_flows' | 'wide_fanout' | 'concurrent_reuse'
+  readonly kind: 'node_chain' | 'nested_flows' | 'wide_fanout' | 'concurrent_reuse' | 'nested_cancel'
   readonly size: number
   readonly expect: Record<string, unknown>
 }
@@ -80,6 +80,29 @@ async function run(fixture: Fixture): Promise<Record<string, unknown>> {
       last_output: result.terminals.at(-1)!.output,
     }
   }
+  if (kind === 'nested_cancel') {
+    const started = deferred()
+    let entry: GraphElement<State> = node<State>(
+      async (context) => {
+        started.resolve()
+        await waitForCancellation(context)
+      },
+      { name: 'leaf' },
+    )
+    for (let index = 0; index < size; index += 1) entry = new Flow(entry, { name: `nested-${index}` })
+    const handle = new Flow(entry, { name: 'root' }).start(
+      {},
+      {
+        maxDepth: size + 1,
+        maxActivations: size + 2,
+        maxAttempts: 1,
+        maxTransitions: size * 2 + 1,
+      },
+    )
+    await started.promise
+    handle.cancel('fixture-cancel')
+    return resultSnapshot(await handle.result)
+  }
   const work = node<State>(
     async (context) => {
       await Promise.resolve()
@@ -95,6 +118,20 @@ async function run(fixture: Fixture): Promise<Record<string, unknown>> {
     first_value: states[0]!.value,
     last_value: states.at(-1)!.value,
   }
+}
+
+function deferred(): { readonly promise: Promise<void>; readonly resolve: () => void } {
+  let resolve!: () => void
+  const promise = new Promise<void>((settle) => {
+    resolve = settle
+  })
+  return { promise, resolve }
+}
+
+function waitForCancellation(context: Context<State, unknown>): Promise<void> {
+  return new Promise<void>((resolve) => {
+    context.cancellation.signal.addEventListener('abort', () => resolve(), { once: true })
+  })
 }
 
 function resultSnapshot(result: RunResult<State>): Record<string, unknown> {

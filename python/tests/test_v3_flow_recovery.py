@@ -9,6 +9,7 @@ from caskada import Context, Flow, RunOptions, ScopeFailure, ScopeResult, node
 class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
     async def test_root_flow_recovers_one_failed_child(self) -> None:
         seen: list[ScopeFailure] = []
+        suppressed_inside: list[tuple[object, ...]] = []
         handler_state: list[dict[str, Any]] = []
         recovery_state: list[dict[str, Any]] = []
 
@@ -22,6 +23,7 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
         ) -> None:
             recovery_state.append(context.state)
             seen.append(failure)
+            suppressed_inside.append(tuple(failure.suppressed))
             self.assertIsNone(context.input)
             self.assertIsNone(context.attempt)
             context.end("recovered")
@@ -34,7 +36,9 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(seen), 1)
         scoped = seen[0]
         self.assertEqual(scoped.primary.kind, "handler")
-        self.assertEqual(scoped.suppressed, ())
+        self.assertEqual(suppressed_inside, [()])
+        with self.assertRaisesRegex(RuntimeError, "closed"):
+            len(scoped.suppressed)
         self.assertEqual(scoped.settled_before_fence, ())
         self.assertIsNone(scoped.result)
         self.assertEqual(scoped.failing_activation_id, 2)
@@ -121,6 +125,7 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_zero_emission_recovery_propagates_the_exact_primary(self) -> None:
         seen: list[ScopeFailure] = []
+        suppressed_inside: list[tuple[object, ...]] = []
 
         def fail(_context: Context[dict[str, Any]]) -> None:
             raise ValueError("unhandled")
@@ -129,6 +134,7 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
             _context: Context[dict[str, Any], object], failure: ScopeFailure
         ) -> None:
             seen.append(failure)
+            suppressed_inside.append(tuple(failure.suppressed))
 
         result = await Flow(node(fail), recover=recover).start({}).result()
 
@@ -136,7 +142,9 @@ class FlowRecoveryTests(unittest.IsolatedAsyncioTestCase):
         if result.status != "failed":
             self.fail("zero-emission Flow recovery must propagate")
         self.assertIs(result.failure, seen[0].primary)
-        self.assertEqual(result.suppressed, tuple(seen[0].suppressed))
+        self.assertEqual(result.suppressed, suppressed_inside[0])
+        with self.assertRaisesRegex(RuntimeError, "closed"):
+            tuple(seen[0].suppressed)
         self.assertEqual(result.terminals, seen[0].settled_before_fence)
 
     async def test_recovery_throw_replaces_primary_and_retains_previous(self) -> None:

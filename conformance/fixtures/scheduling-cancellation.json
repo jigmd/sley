@@ -134,7 +134,10 @@
       "requirements": ["D10 scope failure fencing", "D12 recovery ordering"],
       "program": { "scenario": "sibling_signal_before_recovery" },
       "expect": {
-        "observations": { "sibling_signalled": true },
+        "observations": {
+          "scope_reason": "scope_failed",
+          "sibling_signalled": true
+        },
         "result": {
           "outputs": [],
           "state": { "recovered": true },
@@ -149,6 +152,161 @@
           "retries": 0,
           "scopes": 1,
           "transitions": 3
+        }
+      }
+    },
+    {
+      "id": "Q06_parked_retry_packet",
+      "purpose": "A sibling packet parked in retry delay is drained into suppression exactly once.",
+      "requirements": ["D10 active packet ownership", "D10 scope failure drain"],
+      "program": { "scenario": "parked_retry_packet" },
+      "expect": {
+        "observations": {
+          "primary_is_controller": true,
+          "suppressed_is_parked": true
+        },
+        "result": {
+          "outputs": [],
+          "state": {},
+          "status": "failed",
+          "suppressed": [{ "attempt": 1, "kind": "handler" }],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 3,
+          "peak_callbacks": 2,
+          "retries": 1,
+          "scopes": 1,
+          "transitions": 2
+        }
+      }
+    },
+    {
+      "id": "Q07_attempt_limit_before_permit",
+      "purpose": "Attempt exhaustion fails before the rejected activation reserves a callback permit.",
+      "requirements": ["D9 attempt admission", "D12 callback permits"],
+      "program": { "scenario": "attempt_limit_before_permit" },
+      "expect": {
+        "observations": {
+          "calls": ["source", "first"],
+          "limit": "max_attempts"
+        },
+        "result": {
+          "outputs": [],
+          "state": {},
+          "status": "failed",
+          "suppressed": [],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 2,
+          "peak_callbacks": 1,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 2
+        }
+      }
+    },
+    {
+      "id": "Q08_zero_delay_retry_priority",
+      "purpose": "An immediately due retry is admitted before a fresh callback already waiting for a permit.",
+      "requirements": ["D8 zero-delay retry", "D12 callback-ready priority"],
+      "program": { "scenario": "zero_delay_retry_priority" },
+      "expect": {
+        "observations": { "order": ["retry:1", "retry:2", "peer:1"] },
+        "result": {
+          "outputs": ["retry", "peer"],
+          "state": {},
+          "status": "completed",
+          "suppressed": [],
+          "terminal_count": 2
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 4,
+          "peak_callbacks": 1,
+          "retries": 1,
+          "scopes": 1,
+          "transitions": 4
+        }
+      }
+    },
+    {
+      "id": "Q09_observer_retry_delay",
+      "purpose": "Time spent delivering retry_scheduled counts toward the requested retry delay.",
+      "requirements": ["D8 retry deadline origin", "D12 observer backpressure"],
+      "program": { "scenario": "observer_retry_delay" },
+      "expect": {
+        "observations": { "order": ["retry:1", "retry:2", "peer:1"] },
+        "result": {
+          "outputs": ["retry", "peer"],
+          "state": {},
+          "status": "completed",
+          "suppressed": [],
+          "terminal_count": 2
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 4,
+          "peak_callbacks": 1,
+          "retries": 1,
+          "scopes": 1,
+          "transitions": 4
+        }
+      }
+    },
+    {
+      "id": "Q10_node_recovery_priority",
+      "purpose": "Node recovery is admitted through callback-ready before fresh callback work waiting for a permit.",
+      "requirements": ["D8 Node recovery", "D12 callback-ready priority"],
+      "program": { "scenario": "node_recovery_priority" },
+      "expect": {
+        "observations": {
+          "order": ["handle:bad", "recover:bad", "handle:peer"]
+        },
+        "result": {
+          "outputs": ["recovered", "peer"],
+          "state": {},
+          "status": "completed",
+          "suppressed": [],
+          "terminal_count": 2
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 3,
+          "peak_callbacks": 1,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 4
+        }
+      }
+    },
+    {
+      "id": "Q11_ready_waiter_capacity",
+      "purpose": "An activation waiting for a callback permit remains charged to max_ready.",
+      "requirements": ["D9 max_ready", "D12 callback admission"],
+      "program": { "scenario": "ready_waiter_capacity" },
+      "expect": {
+        "observations": {
+          "calls": ["dispatch", "active"],
+          "limit": "max_ready"
+        },
+        "result": {
+          "outputs": [],
+          "state": {},
+          "status": "failed",
+          "suppressed": [],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 2,
+          "peak_callbacks": 1,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 2
         }
       }
     },
@@ -321,6 +479,208 @@
           "activations": 2,
           "attempts": 1,
           "peak_callbacks": 1,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 0
+        }
+      }
+    },
+    {
+      "id": "K07_failure_grace_abandonment",
+      "purpose": "A sibling still live after a failure fence grace period abandons the run under that Failure.",
+      "requirements": ["D10 failure fencing", "D11 grace abandonment"],
+      "program": { "scenario": "failure_grace_abandonment" },
+      "expect": {
+        "observations": {
+          "fences": [
+            "failure_fenced:scope",
+            "cancellation_fenced:scope",
+            "failure_fenced:run",
+            "cancellation_fenced:run",
+            "run_finished:abandoned"
+          ],
+          "recovery_called": false
+        },
+        "result": {
+          "cause": { "attempt": 1, "kind": "handler", "type": "failure" },
+          "outputs": [],
+          "state": {},
+          "status": "abandoned",
+          "suppressed": [],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 3,
+          "peak_callbacks": 2,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 2
+        }
+      }
+    },
+    {
+      "id": "K08_retry_suppression_unique",
+      "purpose": "A replacement retry packet keeps each inherited suppressed Failure exactly once.",
+      "requirements": ["D10 packet replacement", "D10 suppression identity"],
+      "program": { "scenario": "retry_suppression_unique" },
+      "expect": {
+        "observations": {
+          "primary_is_second_attempt": true,
+          "previous_is_timeout": true,
+          "suppression_is_unique": true
+        },
+        "result": {
+          "outputs": [],
+          "state": {},
+          "status": "failed",
+          "suppressed": [{ "attempt": 1, "kind": "handler" }],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 2,
+          "attempts": 2,
+          "peak_callbacks": 1,
+          "retries": 1,
+          "scopes": 1,
+          "transitions": 0
+        }
+      }
+    },
+    {
+      "id": "K09_concurrent_cancel_abandonment",
+      "purpose": "Caller cancellation abandons a run when one concurrent sibling remains live after grace.",
+      "requirements": ["D11 concurrent cancellation", "D11 grace abandonment"],
+      "program": { "scenario": "concurrent_cancel_abandonment" },
+      "expect": {
+        "observations": {
+          "fences": ["cancellation_fenced:run", "run_finished:abandoned"]
+        },
+        "result": {
+          "cause": {
+            "deadline": false,
+            "reason": "fixture-cancel",
+            "type": "cancellation"
+          },
+          "outputs": [],
+          "state": {},
+          "status": "abandoned",
+          "suppressed": [],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 4,
+          "attempts": 3,
+          "peak_callbacks": 2,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 2
+        }
+      }
+    },
+    {
+      "id": "K10_sync_retry_policy_grace",
+      "purpose": "A synchronous retry policy settling after cancellation grace abandons without retaining its late throw.",
+      "requirements": ["D8 retry policy", "D11 synchronous grace precedence"],
+      "program": { "scenario": "sync_retry_policy_grace" },
+      "expect": {
+        "observations": { "recorded_failure_kinds": ["handler"] },
+        "result": {
+          "cause": {
+            "deadline": false,
+            "reason": "fixture-cancel",
+            "type": "cancellation"
+          },
+          "outputs": [],
+          "state": {},
+          "status": "abandoned",
+          "suppressed": [{ "attempt": 1, "kind": "handler" }],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 2,
+          "attempts": 1,
+          "peak_callbacks": 1,
+          "retries": 0,
+          "scopes": 1,
+          "transitions": 0
+        }
+      }
+    },
+    {
+      "id": "K11_route_packet_cancellation",
+      "purpose": "Cancellation during route settlement retains the active packet primary and inherited suppression.",
+      "requirements": ["D10 packet ownership", "D11 post-observer checkpoint"],
+      "program": { "scenario": "route_packet_cancellation" },
+      "expect": {
+        "observations": {},
+        "result": {
+          "cancellation": { "deadline": false, "reason": "fixture-cancel" },
+          "outputs": [],
+          "state": {},
+          "status": "cancelled",
+          "suppressed": [
+            { "attempt": 1, "kind": "handler_timeout" },
+            { "attempt": 1, "kind": "handler" }
+          ],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 2,
+          "attempts": 2,
+          "peak_callbacks": 1,
+          "retries": 1,
+          "scopes": 1,
+          "transitions": 0
+        }
+      }
+    },
+    {
+      "id": "K12_nested_scope_failure_status",
+      "purpose": "A recovered parent cannot rewrite its failed child scope as completed.",
+      "requirements": ["D10 nested failure propagation", "D14 scope lifecycle truth"],
+      "program": { "scenario": "nested_scope_failure_status" },
+      "expect": {
+        "observations": { "scope_finishes": ["2:failed", "1:completed"] },
+        "result": {
+          "outputs": [],
+          "state": { "recovered": true },
+          "status": "completed",
+          "suppressed": [],
+          "terminal_count": 1
+        },
+        "stats": {
+          "activations": 3,
+          "attempts": 1,
+          "peak_callbacks": 1,
+          "retries": 0,
+          "scopes": 2,
+          "transitions": 2
+        }
+      }
+    },
+    {
+      "id": "K13_opening_observer_deadline",
+      "purpose": "An opening observer that crosses the run deadline settles cancellation before start returns.",
+      "requirements": ["D11 run deadline", "D12 opening observer checkpoint"],
+      "program": { "scenario": "opening_observer_deadline" },
+      "expect": {
+        "observations": { "called": false, "done_on_return": true },
+        "result": {
+          "cancellation": {
+            "deadline": true,
+            "reason": "deadline_exceeded"
+          },
+          "outputs": [],
+          "state": {},
+          "status": "cancelled",
+          "suppressed": [],
+          "terminal_count": 0
+        },
+        "stats": {
+          "activations": 2,
+          "attempts": 0,
+          "peak_callbacks": 0,
           "retries": 0,
           "scopes": 1,
           "transitions": 0

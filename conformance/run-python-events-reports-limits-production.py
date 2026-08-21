@@ -202,24 +202,52 @@ async def _report_overflow() -> dict[str, object]:
 
 
 async def _transition_overflow() -> dict[str, object]:
+    events: list[RunEvent] = []
     caught = False
+    caught_kinds: list[str] = []
+
+    def control_kinds() -> list[str]:
+        selected = {
+            "callback_finished",
+            "cancellation_fenced",
+            "failure_fenced",
+            "failure_recorded",
+            "run_finished",
+        }
+        return [
+            (
+                f"{event.kind}:{event.payload.target.kind}"
+                if event.kind in {"failure_fenced", "cancellation_fenced"}
+                else event.kind
+            )
+            for event in events
+            if event.kind in selected
+        ]
 
     def source(context: Context[dict[str, Any]]) -> None:
-        nonlocal caught
+        nonlocal caught, caught_kinds
         context.emit("next", 1)
         try:
             context.emit("next", 2)
         except asyncio.CancelledError:
             caught = True
+            caught_kinds = control_kinds()
 
     source_node = node(source, name="source")
     source_node.link(node(lambda _context: None, name="target"), "next")
     result = (
         await Flow(source_node)
-        .start({}, options=RunOptions(max_transitions=1))
+        .start({}, options=RunOptions(max_transitions=1, observer=events.append))
         .result()
     )
-    return _normalize_limit(result, observations={"caught": caught})
+    return _normalize_limit(
+        result,
+        observations={
+            "caught": caught,
+            "caught_kinds": caught_kinds,
+            "control_order": control_kinds(),
+        },
+    )
 
 
 async def _capacity_priority() -> dict[str, object]:

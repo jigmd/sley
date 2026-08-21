@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -145,18 +146,20 @@ async def _fair_scope_rotation() -> tuple[RunResult[dict[str, Any]], dict[str, o
 
 async def _sibling_signal() -> tuple[RunResult[dict[str, Any]], dict[str, object]]:
     sibling_signalled = False
+    scope_reason: object = None
 
     def dispatch(context: Context[dict[str, Any]]) -> None:
         context.emit("work", "failure")
         context.emit("work", "sibling")
 
     async def work(context: Context[dict[str, Any], str]) -> None:
-        nonlocal sibling_signalled
+        nonlocal scope_reason, sibling_signalled
         if context.input == "failure":
             await asyncio.sleep(0)
             raise FixtureError("failure")
         await context.cancellation.wait()
         sibling_signalled = context.cancellation.cancelled
+        scope_reason = context.cancellation.reason
 
     def recover(
         context: Context[dict[str, Any]],
@@ -168,7 +171,211 @@ async def _sibling_signal() -> tuple[RunResult[dict[str, Any]], dict[str, object
     source = node(dispatch, name="dispatch")
     source.link(node(work, name="work"), "work")
     result = await Flow(source, concurrency=2, recover=recover).start({}).result()
-    return result, {"sibling_signalled": sibling_signalled}
+    return result, {
+        "scope_reason": (
+            scope_reason
+            if isinstance(scope_reason, (str, int, float, bool))
+            or scope_reason is None
+            else type(scope_reason).__name__
+        ),
+        "sibling_signalled": sibling_signalled,
+    }
+
+
+async def _parked_retry_packet() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    retry_scheduled = asyncio.Event()
+    parked_cause = FixtureError("parked")
+    controller_cause = FixtureError("controller")
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", "parked")
+        context.emit("work", "controller")
+
+    def should_retry(failure: Failure) -> bool:
+        return failure.cause is parked_cause
+
+    def delay(_attempt: int, _failure: Failure) -> int:
+        retry_scheduled.set()
+        return 4_294_967_295
+
+    async def work(context: Context[dict[str, Any], str]) -> None:
+        if context.input == "parked":
+            raise parked_cause
+        await retry_scheduled.wait()
+        raise controller_cause
+
+    source = node(dispatch, name="dispatch")
+    source.link(
+        node(
+            work,
+            name="work",
+            retry=RetryPolicy(
+                max_attempts=2,
+                should_retry=should_retry,
+                delay_ms=delay,
+            ),
+        ),
+        "work",
+    )
+    result = (
+        await Flow(source, concurrency=2)
+        .start({}, options=RunOptions(max_concurrency=2))
+        .result()
+    )
+    return result, {
+        "primary_is_controller": (
+            result.status == "failed" and result.failure.cause is controller_cause
+        ),
+        "suppressed_is_parked": (
+            len(getattr(result, "suppressed", ())) == 1
+            and result.suppressed[0].cause is parked_cause  # type: ignore[union-attr]
+        ),
+    }
+
+
+async def _attempt_limit_before_permit() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    calls: list[str] = []
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        calls.append("source")
+        context.emit("work", "first")
+        context.emit("work", "second")
+
+    async def work(context: Context[dict[str, Any], str]) -> None:
+        calls.append(context.input)
+        await context.cancellation.wait()
+        context.cancellation.raise_if_cancelled()
+
+    source = node(dispatch, name="dispatch")
+    source.link(node(work, name="work"), "work")
+    result = (
+        await Flow(source, concurrency=2)
+        .start(
+            {},
+            options=RunOptions(
+                max_attempts=2,
+                max_concurrency=2,
+            ),
+        )
+        .result()
+    )
+    detail = result.failure.detail if result.status == "failed" else None
+    return result, {"calls": calls, "limit": getattr(detail, "limit", None)}
+
+
+async def _retry_priority(
+    *, observer_delay: bool
+) -> tuple[RunResult[dict[str, Any]], dict[str, object]]:
+    order: list[str] = []
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", "retry")
+        context.emit("work", "peer")
+
+    def work(context: Context[dict[str, Any], str]) -> None:
+        order.append(f"{context.input}:{context.attempt}")
+        if context.input == "retry" and context.attempt == 1:
+            raise FixtureError("retry")
+
+    def observe(event: Any) -> None:
+        if observer_delay and event.kind == "retry_scheduled":
+            time.sleep(0.01)
+
+    source = node(dispatch, name="dispatch")
+    source.link(
+        node(
+            work,
+            name="work",
+            retry=RetryPolicy(
+                max_attempts=2,
+                delay_ms=1 if observer_delay else 0,
+            ),
+        ),
+        "work",
+    )
+    result = (
+        await Flow(source, concurrency=2)
+        .start(
+            {},
+            options=RunOptions(
+                max_concurrency=1,
+                observer=observe if observer_delay else None,
+            ),
+        )
+        .result()
+    )
+    return result, {"order": order}
+
+
+async def _node_recovery_priority() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    order: list[str] = []
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", "bad")
+        context.emit("work", "peer")
+
+    def work(context: Context[dict[str, Any], str]) -> None:
+        order.append(f"handle:{context.input}")
+        if context.input == "bad":
+            raise FixtureError("bad")
+
+    def recover(
+        context: Context[dict[str, Any], str],
+        _failure: Failure,
+    ) -> None:
+        order.append(f"recover:{context.input}")
+        context.end("recovered")
+
+    source = node(dispatch, name="dispatch")
+    source.link(node(work, name="work", recover=recover), "work")
+    result = (
+        await Flow(source, concurrency=2)
+        .start({}, options=RunOptions(max_concurrency=1))
+        .result()
+    )
+    return result, {"order": order}
+
+
+async def _ready_waiter_capacity() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    calls: list[str] = []
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        calls.append("dispatch")
+        context.emit("run", "active")
+        context.emit("run", "waiting")
+
+    async def work(context: Context[dict[str, Any], str]) -> None:
+        calls.append(context.input)
+        if context.input == "active":
+            await asyncio.sleep(0)
+            context.emit("child", 1)
+            context.emit("child", 2)
+
+    source = node(dispatch, name="dispatch")
+    worker = node(work, name="work")
+    worker.link(node(lambda _context: None, name="child"), "child")
+    source.link(worker, "run")
+    result = (
+        await Flow(source, concurrency=2)
+        .start(
+            {},
+            options=RunOptions(
+                max_concurrency=1,
+                max_ready=2,
+            ),
+        )
+        .result()
+    )
+    detail = result.failure.detail if result.status == "failed" else None
+    return result, {"calls": calls, "limit": getattr(detail, "limit", None)}
 
 
 async def _cancel_before_admission() -> tuple[
@@ -303,6 +510,278 @@ async def _cancel_recovery(
     return await handle.result(), {}
 
 
+def _fence_observer(fences: list[str]) -> Any:
+    def observe(event: Any) -> None:
+        if event.kind in {"failure_fenced", "cancellation_fenced"}:
+            fences.append(f"{event.kind}:{event.payload.target.kind}")
+        elif event.kind == "run_finished":
+            fences.append(f"run_finished:{event.payload.status}")
+
+    return observe
+
+
+async def _failure_grace_abandonment() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    sibling_started = asyncio.Event()
+    release_sibling = asyncio.Event()
+    fences: list[str] = []
+    recovery_called = False
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", "sibling")
+        context.emit("work", "failure")
+
+    async def work(context: Context[dict[str, Any], str]) -> None:
+        if context.input == "sibling":
+            sibling_started.set()
+            await release_sibling.wait()
+            return
+        await sibling_started.wait()
+        raise FixtureError("failure")
+
+    def recover(
+        context: Context[dict[str, Any]],
+        _failure: ScopeFailure,
+    ) -> None:
+        nonlocal recovery_called
+        recovery_called = True
+        context.end()
+
+    source = node(dispatch, name="dispatch")
+    source.link(node(work, name="work"), "work")
+    try:
+        result = (
+            await Flow(source, concurrency=2, recover=recover)
+            .start(
+                {},
+                options=RunOptions(
+                    max_concurrency=2,
+                    cancel_grace_ms=0,
+                    observer=_fence_observer(fences),
+                ),
+            )
+            .result()
+        )
+    finally:
+        release_sibling.set()
+        await asyncio.sleep(0)
+    return result, {"fences": fences, "recovery_called": recovery_called}
+
+
+async def _retry_suppression_unique() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    late_attempt_one = FixtureError("late attempt one")
+    second_attempt = FixtureError("second attempt")
+
+    async def work(context: Context[dict[str, Any]]) -> None:
+        if context.attempt == 1:
+            await context.cancellation.wait()
+            raise late_attempt_one
+        raise second_attempt
+
+    result = (
+        await Flow(
+            node(
+                work,
+                name="work",
+                timeout_ms=1,
+                retry=RetryPolicy(max_attempts=2),
+            )
+        )
+        .start({}, options=RunOptions(cancel_grace_ms=100))
+        .result()
+    )
+    primary = result.failure if result.status == "failed" else None
+    suppressed = getattr(result, "suppressed", ())
+    return result, {
+        "primary_is_second_attempt": (
+            primary is not None
+            and primary.kind == "handler"
+            and primary.attempt == 2
+            and primary.cause is second_attempt
+        ),
+        "previous_is_timeout": (
+            primary is not None
+            and primary.previous is not None
+            and primary.previous.kind == "handler_timeout"
+        ),
+        "suppression_is_unique": (
+            len(suppressed) == 1
+            and suppressed[0].kind == "handler"
+            and suppressed[0].attempt == 1
+            and suppressed[0].cause is late_attempt_one
+        ),
+    }
+
+
+async def _concurrent_cancel_abandonment() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    active = 0
+    both_started = asyncio.Event()
+    release_stuck = asyncio.Event()
+    fences: list[str] = []
+
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit("work", "cooperative")
+        context.emit("work", "stuck")
+
+    async def work(context: Context[dict[str, Any], str]) -> None:
+        nonlocal active
+        active += 1
+        if active == 2:
+            both_started.set()
+        if context.input == "stuck":
+            await release_stuck.wait()
+            return
+        await context.cancellation.wait()
+        context.cancellation.raise_if_cancelled()
+
+    source = node(dispatch, name="dispatch")
+    source.link(node(work, name="work"), "work")
+    handle = Flow(source, concurrency=2).start(
+        {},
+        options=RunOptions(
+            max_concurrency=2,
+            cancel_grace_ms=0,
+            observer=_fence_observer(fences),
+        ),
+    )
+    await both_started.wait()
+    handle.cancel(CANCEL_REASON)
+    try:
+        result = await handle.result()
+    finally:
+        release_stuck.set()
+        await asyncio.sleep(0)
+    return result, {"fences": fences}
+
+
+async def _sync_retry_policy_grace() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    handle: Any = None
+    recorded_failure_kinds: list[str] = []
+
+    def observe(event: Any) -> None:
+        if event.kind == "failure_recorded":
+            recorded_failure_kinds.append(event.payload.failure.kind)
+
+    def should_retry(_failure: Failure) -> bool:
+        handle.cancel(CANCEL_REASON)
+        time.sleep(0.01)
+        raise FixtureError("late retry policy")
+
+    def fail(_context: Context[dict[str, Any]]) -> None:
+        raise FixtureError("handler")
+
+    worker = node(
+        fail,
+        name="work",
+        retry=RetryPolicy(max_attempts=2, should_retry=should_retry),
+    )
+    handle = Flow(worker).start(
+        {},
+        options=RunOptions(cancel_grace_ms=0, observer=observe),
+    )
+    result = await handle.result()
+    return result, {"recorded_failure_kinds": recorded_failure_kinds}
+
+
+async def _route_packet_cancellation() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    handle: Any = None
+
+    def observe(event: Any) -> None:
+        if (
+            event.kind == "callback_finished"
+            and event.payload.phase == "handle"
+            and event.payload.attempt == 2
+        ):
+            handle.cancel(CANCEL_REASON)
+
+    async def work(context: Context[dict[str, Any]]) -> None:
+        if context.attempt == 1:
+            await context.cancellation.wait()
+            raise FixtureError("after timeout")
+        context.end("discarded")
+
+    worker = node(
+        work,
+        name="work",
+        timeout_ms=1,
+        retry=RetryPolicy(max_attempts=2),
+    )
+    handle = Flow(worker).start(
+        {},
+        options=RunOptions(cancel_grace_ms=100, observer=observe),
+    )
+    return await handle.result(), {}
+
+
+async def _nested_scope_failure_status() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    scope_finishes: list[str] = []
+
+    def observe(event: Any) -> None:
+        if event.kind == "scope_finished":
+            scope_finishes.append(f"{event.payload.scope_id}:{event.payload.status}")
+
+    def combine(_context: Context[dict[str, Any]], _result: Any) -> None:
+        raise FixtureError("combine")
+
+    def recover(
+        context: Context[dict[str, Any]],
+        _failure: ScopeFailure,
+    ) -> None:
+        context.state["recovered"] = True
+        context.end()
+
+    child = Flow(
+        node(lambda context: context.end(), name="leaf"),
+        name="child",
+        combine=combine,
+    )
+    result = (
+        await Flow(child, name="root", concurrency=2, recover=recover)
+        .start({}, options=RunOptions(observer=observe))
+        .result()
+    )
+    return result, {"scope_finishes": scope_finishes}
+
+
+async def _opening_observer_deadline() -> tuple[
+    RunResult[dict[str, Any]], dict[str, object]
+]:
+    called = False
+
+    def work(_context: Context[dict[str, Any]]) -> None:
+        nonlocal called
+        called = True
+
+    def observe(event: Any) -> None:
+        if event.kind == "run_started":
+            time.sleep(0.01)
+
+    handle = Flow(node(work, name="work")).start(
+        {},
+        options=RunOptions(
+            deadline_ms=1,
+            cancel_grace_ms=100,
+            observer=observe,
+        ),
+    )
+    done_on_return = handle.done()
+    return await handle.result(), {
+        "called": called,
+        "done_on_return": done_on_return,
+    }
+
+
 async def run_program(
     program: dict[str, Any],
 ) -> tuple[RunResult[dict[str, Any]], dict[str, object]]:
@@ -319,6 +798,18 @@ async def run_program(
         return await _fair_scope_rotation()
     if scenario == "sibling_signal_before_recovery":
         return await _sibling_signal()
+    if scenario == "parked_retry_packet":
+        return await _parked_retry_packet()
+    if scenario == "attempt_limit_before_permit":
+        return await _attempt_limit_before_permit()
+    if scenario == "zero_delay_retry_priority":
+        return await _retry_priority(observer_delay=False)
+    if scenario == "observer_retry_delay":
+        return await _retry_priority(observer_delay=True)
+    if scenario == "node_recovery_priority":
+        return await _node_recovery_priority()
+    if scenario == "ready_waiter_capacity":
+        return await _ready_waiter_capacity()
     if scenario == "cancel_before_admission":
         return await _cancel_before_admission()
     if scenario == "cancel_after_buffer":
@@ -333,6 +824,20 @@ async def run_program(
         return await _cancel_recovery("node")
     if scenario == "cancel_flow_recovery":
         return await _cancel_recovery("flow")
+    if scenario == "failure_grace_abandonment":
+        return await _failure_grace_abandonment()
+    if scenario == "retry_suppression_unique":
+        return await _retry_suppression_unique()
+    if scenario == "concurrent_cancel_abandonment":
+        return await _concurrent_cancel_abandonment()
+    if scenario == "sync_retry_policy_grace":
+        return await _sync_retry_policy_grace()
+    if scenario == "route_packet_cancellation":
+        return await _route_packet_cancellation()
+    if scenario == "nested_scope_failure_status":
+        return await _nested_scope_failure_status()
+    if scenario == "opening_observer_deadline":
+        return await _opening_observer_deadline()
     raise AssertionError(f"unknown scheduling/cancellation scenario {scenario!r}")
 
 
@@ -357,6 +862,19 @@ def normalize(
             "reason": result.cancellation.reason,
             "deadline": result.cancellation.deadline,
         }
+    elif result.status == "abandoned":
+        if isinstance(result.cause, Failure):
+            normalized_result["cause"] = {
+                "type": "failure",
+                "kind": result.cause.kind,
+                "attempt": result.cause.attempt,
+            }
+        else:
+            normalized_result["cause"] = {
+                "type": "cancellation",
+                "reason": result.cause.reason,
+                "deadline": result.cause.deadline,
+            }
     return {
         "result": normalized_result,
         "observations": observations,

@@ -55,6 +55,20 @@
         "first_value": 0,
         "last_value": 63
       }
+    },
+    {
+      "id": "X04_10k_nested_cancel",
+      "kind": "nested_cancel",
+      "size": 10000,
+      "expect": {
+        "status": "cancelled",
+        "activations": 10002,
+        "attempts": 1,
+        "transitions": 0,
+        "scopes": 10001,
+        "peak_ready": 1,
+        "terminal_count": 0
+      }
     }
   ]
 }
