@@ -257,23 +257,31 @@ class CooperativeCancellationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.failure.kind, "handler")
         self.assertIs(result.failure.cause, cause)
 
-    async def test_cancelling_flow_run_rethrows_without_injecting_its_callback(
+    async def test_cancelling_run_rethrows_without_injecting_its_callback(
         self,
     ) -> None:
-        started = asyncio.Event()
-        cooperated = asyncio.Event()
+        for compiled in (False, True):
+            with self.subTest(compiled=compiled):
+                started = asyncio.Event()
+                cooperated = asyncio.Event()
 
-        async def handler(context: Context[dict[str, Any]]) -> None:
-            started.set()
-            await context.cancellation.wait()
-            cooperated.set()
+                async def handler(
+                    context: Context[dict[str, Any]],
+                    started_event: asyncio.Event = started,
+                    cooperated_event: asyncio.Event = cooperated,
+                ) -> None:
+                    started_event.set()
+                    await context.cancellation.wait()
+                    cooperated_event.set()
 
-        task = asyncio.create_task(Flow(node(handler)).run({}))
-        await started.wait()
-        task.cancel()
-        with self.assertRaises(asyncio.CancelledError):
-            await task
-        await asyncio.wait_for(cooperated.wait(), timeout=1)
+                flow = Flow(node(handler))
+                runner = flow.compile() if compiled else flow
+                task = asyncio.create_task(runner.run({}))
+                await started.wait()
+                task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await task
+                await asyncio.wait_for(cooperated.wait(), timeout=1)
 
 
 if __name__ == "__main__":

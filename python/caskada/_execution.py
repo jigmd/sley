@@ -86,15 +86,7 @@ class Flow(_FlowDefinition[StateT], Generic[StateT]):
         *,
         options: RunOptions | None = None,
     ) -> StateT:
-        handle = self.start(initial_state, options=options)
-        try:
-            result = await handle.result()
-        except asyncio.CancelledError:
-            handle.cancel("caller_cancelled")
-            raise
-        if result.status == "completed":
-            return result.state
-        raise RunError(result)
+        return await _project_run(self.start(initial_state, options=options))
 
 
 class _CompiledFlowConstructionToken:
@@ -148,10 +140,18 @@ class CompiledFlow(Generic[StateT]):
         *,
         options: RunOptions | None = None,
     ) -> StateT:
-        result = await self.start(initial_state, options=options).result()
-        if result.status == "completed":
-            return result.state
-        raise RunError(result)
+        return await _project_run(self.start(initial_state, options=options))
 
     def describe(self) -> CompiledDescription:
         return _describe_compiled(self._snapshot)
+
+
+async def _project_run(handle: RunHandle[StateT]) -> StateT:
+    try:
+        result = await handle.result()
+    except asyncio.CancelledError:
+        handle.cancel("caller_cancelled")
+        raise
+    if result.status == "completed":
+        return result.state
+    raise RunError(result)

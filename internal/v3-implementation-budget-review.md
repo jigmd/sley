@@ -3,9 +3,9 @@
 - Status: independently accepted architecture evidence
 - Date: 2026-08-21
 - Python ordered module-set SHA-256:
-  `a80ea8c84ff019897628eaca369b1a05bd6ab9a1c5dfa0acef741d54f9628545`
+  `5ed810dd5c55a27bdb015a9065486c0d696656a459553e542870e5762bf153d0`
 - TypeScript ordered module-set SHA-256:
-  `d9571f0943bdf531577a9ab5c72cb08e3dca5cc23081d375b4298c7f6fd61f52`
+  `f982174b5e4ef86b68466a141448be605cc1e1681390b4b84e4a006be4a9f56d`
 
 Each digest hashes the ordered `sha256sum` records for the public facade,
 contracts, definition, execution, state, failures, timing, observation, and
@@ -23,8 +23,8 @@ conformance runners.
 
 | Port       | V2 lines | V3 lines | Ratio |
 | ---------- | -------: | -------: | ----: |
-| Python     |      207 |    5,352 | 25.9x |
-| TypeScript |      296 |    4,621 | 15.6x |
+| Python     |      207 |    5,360 | 25.9x |
+| TypeScript |      296 |    4,627 | 15.6x |
 
 The increase is not evidence of an equally large author model. It is primarily
 the cost of making the cross-language scheduler, failure lifecycle, limits,
@@ -64,17 +64,17 @@ The main implementation cost is concentrated in six kernel responsibilities:
 
 The two ports now use the same responsibility map:
 
-| Module        | Ownership                                                            |
-| ------------- | -------------------------------------------------------------------- |
-| Facade        | Exact intentional public exports                                      |
-| Contracts     | Public data, protocols, options, results, and errors                  |
-| Definition    | Graph construction, validation, compilation, and inspection           |
-| Execution     | Public `Flow` lifecycle composition                                    |
-| State         | Run-state validation and the persistent carrier                       |
-| Failures      | Failure construction, packets, replacement, and retry policy          |
-| Timing        | Cancellation, callback permits, deadlines, grace, and callback races  |
-| Observation   | Event publication, failure fences, diagnostics, IDs, and statistics   |
-| Scheduling    | The sole activation and structured-scope orchestration owner          |
+| Module      | Ownership                                                            |
+| ----------- | -------------------------------------------------------------------- |
+| Facade      | Exact intentional public exports                                     |
+| Contracts   | Public data, protocols, options, results, and errors                 |
+| Definition  | Graph construction, validation, compilation, and inspection          |
+| Execution   | Public `Flow` lifecycle composition                                  |
+| State       | Run-state validation and the persistent carrier                      |
+| Failures    | Failure construction, packets, replacement, and retry policy         |
+| Timing      | Cancellation, callback permits, deadlines, grace, and callback races |
+| Observation | Event publication, failure fences, diagnostics, IDs, and statistics  |
+| Scheduling  | The sole activation and structured-scope orchestration owner         |
 
 The facade exposes execution and inert definitions; execution invokes the
 scheduler; the scheduler depends only on focused leaf modules. No leaf module
@@ -96,11 +96,12 @@ regression tests.
 ## Independent Verdict
 
 An independent reviewer assessed the exact module-set hashes above after the
-responsibility split and returned `ACCEPT` with no blocker, major, or minor
-finding. The review confirmed an acyclic dependency graph, inert definition
-modules, local state ownership, bounded scheduler exports, paired cross-port
-responsibilities, and one execution composition layer per port.
+responsibility split and D10 delta, then returned `ACCEPT` with no blocker,
+major, or minor finding. The review confirmed an acyclic dependency graph,
+inert definition modules, local state ownership, bounded scheduler exports,
+paired cross-port responsibilities, and one execution composition layer per
+port.
 
 This closes the size-triggered architecture gate. The cookbook review has since
-been accepted separately. The author-API, kernel-semantics, and
-cross-port-implementability reviews remain separate release obligations.
+been accepted separately, as has the D10 author-API review. The kernel-semantics
+and cross-port-implementability reviews remain separate release obligations.

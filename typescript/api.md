@@ -117,7 +117,9 @@ selects the topology-derived automatic ceiling.
 `state`, terminals, statistics, and observer diagnostics. Failure-like variants
 add their structured cause and suppressed failures.
 
-`RunError.result` retains the exact non-completed result raised by `run()`.
+`RunError.result` retains the exact non-completed result raised by `run()`. If a
+native thrown value caused the controlling Failure, `RunError.cause` is that
+exact value.
 
 `ScopeResult` exposes `terminals` and `outputs`. `ScopeFailure` provides boundary
 recovery information. `Failure` carries identity, kind, canonical message,

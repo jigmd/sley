@@ -114,15 +114,29 @@ export function evaluateFailureRecovery(program: FailureRecoveryProgram): Record
     previous === null
       ? { status: 'completed', state, terminals }
       : { status: 'failed', state, terminals, failure: previous, suppressed: [] }
-  return {
+  const snapshot: Record<string, unknown> = {
     result,
     trace: { failures, retries },
     stats: { activations, attempts, transitions, retries: retries.length, scopes },
   }
+  if (previous !== null) snapshot.run_projection = runProjection()
+  return snapshot
 }
 
 function end(output: unknown): Record<string, unknown> {
   return { type: 'end', has_output: true, output: structuredClone(output) }
+}
+
+function runProjection(): Record<string, unknown> {
+  return {
+    type: 'throw',
+    error: {
+      name: 'RunError',
+      message: 'Caskada run failed',
+      result_status: 'failed',
+      cause_is_result_failure_cause: true,
+    },
+  }
 }
 
 function validateProgram(program: FailureRecoveryProgram): void {

@@ -375,13 +375,19 @@ export class RunError<State extends object = Record<string, unknown>> extends Ca
   readonly result: FailedResult<State> | CancelledResult<State> | AbandonedResult<State>
 
   constructor(result: FailedResult<State> | CancelledResult<State> | AbandonedResult<State>) {
-    super(
+    const message =
       result.status === 'failed'
         ? 'Caskada run failed'
         : result.status === 'cancelled'
           ? 'Caskada run cancelled'
-          : 'Caskada run abandoned',
-    )
+          : 'Caskada run abandoned'
+    const cause =
+      result.status === 'failed'
+        ? result.failure.cause
+        : result.status === 'abandoned' && 'kind' in result.cause
+          ? result.cause.cause
+          : null
+    super(message, cause === null ? undefined : { cause })
     this.result = result
   }
 }

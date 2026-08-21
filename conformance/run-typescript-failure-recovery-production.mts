@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { Flow, node } from '../typescript/caskada.ts'
+import { Flow, node, RunError } from '../typescript/caskada.ts'
 
 import type { Context, Failure, RunEvent, ScopeFailure, ScopeResult, Terminal } from '../typescript/caskada.ts'
 import type { FailureRecoveryProgram } from './failure-recovery-reference.mts'
@@ -104,9 +104,26 @@ async function runFixture(fixture: Fixture): Promise<Record<string, unknown>> {
     state: Object.fromEntries(Object.entries(result.state)),
     terminals: result.terminals.map(normalizeTerminal),
   }
+  let normalizedRunProjection: Record<string, unknown> | undefined
   if (result.status === 'failed') {
     normalizedResult.failure = normalizeFailure(result.failure, names)
     normalizedResult.suppressed = result.suppressed.map((failure) => normalizeFailure(failure, names))
+    try {
+      await compiled.run({})
+    } catch (error) {
+      assert(error instanceof RunError, 'failed run projection must throw RunError')
+      assert(error.result.status === 'failed', 'RunError must retain a failed result')
+      normalizedRunProjection = {
+        type: 'throw',
+        error: {
+          name: error.name,
+          message: error.message,
+          result_status: error.result.status,
+          cause_is_result_failure_cause: error.cause === error.result.failure.cause,
+        },
+      }
+    }
+    assert(normalizedRunProjection !== undefined, 'failed run projection did not throw')
   }
   const failures = runtime.events
     .filter((event) => event.kind === 'failure_recorded')
@@ -119,19 +136,21 @@ async function runFixture(fixture: Fixture): Promise<Record<string, unknown>> {
       next_attempt: event.payload.nextAttempt,
       delay_ms: event.payload.delayMs,
     }))
+  const snapshot: Record<string, unknown> = {
+    result: normalizedResult,
+    trace: { failures, retries },
+    stats: {
+      activations: result.stats.activations,
+      attempts: result.stats.attempts,
+      transitions: result.stats.transitions,
+      retries: result.stats.retries,
+      scopes: result.stats.scopes,
+    },
+  }
+  if (normalizedRunProjection !== undefined) snapshot.run_projection = normalizedRunProjection
   return {
     id: fixture.id,
-    snapshot: {
-      result: normalizedResult,
-      trace: { failures, retries },
-      stats: {
-        activations: result.stats.activations,
-        attempts: result.stats.attempts,
-        transitions: result.stats.transitions,
-        retries: result.stats.retries,
-        scopes: result.stats.scopes,
-      },
-    },
+    snapshot,
   }
 }
 

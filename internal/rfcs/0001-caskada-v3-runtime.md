@@ -1,9 +1,9 @@
 # RFC 0001: Caskada v3 Structured Graph Runtime
 
 - Status: accepted implementation baseline
-- Revision: D9
+- Revision: D10
 - Target: Caskada v3.0
-- Date: 2026-08-20
+- Date: 2026-08-21
 - Supersedes: the v2 execution API and the compatibility constraints preserved
   in the historical appendix of the
   [v3 architecture verdict](../v3-architecture-verdict.md)
@@ -42,7 +42,7 @@ ordinary code connected as an action-routed graph.
 
 ## Implementation baseline
 
-D9 is closed for implementation. Its authoritative file hashes are recorded in
+D10 is closed for implementation. Its authoritative file hashes are recorded in
 `internal/v3-implementation-baseline.json`, and the executable serial contract
 lives in `conformance/`. Runtime work may reveal defects, but neither port may
 silently reinterpret this document: a semantic change requires an RFC amendment
@@ -2046,7 +2046,12 @@ Public exception classes have identical roles in both ports:
 `error.name == "RunError"`. Its message is the framework-owned literal
 `"Caskada run failed"`, `"Caskada run cancelled"`, or
 `"Caskada run abandoned"` selected by `result.status`; neither port formats a
-Failure cause or application value.
+Failure cause or application value. When the controlling outcome is `Failed`,
+or is `Abandoned` with a `Failure` cause, the error also exposes that controlling
+Failure's exact non-null native cause through Python exception chaining
+(`error.__cause__`) or the standard TypeScript `Error.cause`. It does not walk
+`Failure.previous`. Framework-only Failures, `Cancelled`, and
+cancellation-caused `Abandoned` outcomes have no synthetic native cause.
 
 Failures encountered by scheduler-owned lifecycle execution after a handle
 starts are data in `RunHandle.result`, not escaped framework exceptions.
@@ -3860,7 +3865,7 @@ Python waiter cancellation has two explicit layers:
 - cancelling a task awaiting `RunHandle.result()` re-raises
   `asyncio.CancelledError` in that waiter but does not cancel the underlying run;
   the handle remains independently settleable;
-- cancelling a task inside `Flow.run()` calls
+- cancelling a task inside `Flow.run()` or `CompiledFlow.run()` calls
   `handle.cancel("caller_cancelled")` and re-raises `CancelledError`; the handle
   settles later even though that convenience call does not return it.
 
@@ -3894,15 +3899,15 @@ after the current bundle drains.
 
 Framework-created cancellation reasons are portable literal strings:
 
-| Source                                        | `Context.cancellation.reason` | Final `CancellationInfo`, if any                               |
-| --------------------------------------------- | ----------------------------- | -------------------------------------------------------------- |
-| omitted `RunHandle.cancel()`                  | `"cancelled"`                 | reason `"cancelled"`, deadline false                           |
-| explicit `RunHandle.cancel(value)`            | the borrowed value            | the same value, deadline false                                 |
-| Python `Flow.run()` waiter cancellation       | `"caller_cancelled"`          | reason `"caller_cancelled"`, deadline false                    |
-| run deadline                                  | `"deadline_exceeded"`         | reason `"deadline_exceeded"`, deadline true                    |
-| node attempt timeout                          | `"attempt_timeout"`           | none; timeout may become a suppressed or abandonment `Failure` |
-| recoverable scope failure signalling siblings | `"scope_failed"`              | none; grace exhaustion uses the primary `Failure` as cause     |
-| unrecoverable or root-level failure shutdown  | `"run_failed"`                | no `CancellationInfo`; result cause is `Failure`               |
+| Source                                                         | `Context.cancellation.reason` | Final `CancellationInfo`, if any                               |
+| -------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------- |
+| omitted `RunHandle.cancel()`                                   | `"cancelled"`                 | reason `"cancelled"`, deadline false                           |
+| explicit `RunHandle.cancel(value)`                             | the borrowed value            | the same value, deadline false                                 |
+| Python `Flow.run()` / `CompiledFlow.run()` waiter cancellation | `"caller_cancelled"`          | reason `"caller_cancelled"`, deadline false                    |
+| run deadline                                                   | `"deadline_exceeded"`         | reason `"deadline_exceeded"`, deadline true                    |
+| node attempt timeout                                           | `"attempt_timeout"`           | none; timeout may become a suppressed or abandonment `Failure` |
+| recoverable scope failure signalling siblings                  | `"scope_failed"`              | none; grace exhaustion uses the primary `Failure` as cause     |
+| unrecoverable or root-level failure shutdown                   | `"run_failed"`                | no `CancellationInfo`; result cause is `Failure`               |
 
 The first committed run-level fence fixes the final reason. Parent cancellation
 propagates that same reason into existing descendants; a later signal does not
@@ -5932,7 +5937,12 @@ Python and TypeScript must run equivalent fixtures for:
   `RunResult` without rerunning;
 - `RunError(result)` requires a non-completed result, preserves its identity,
   and has the exact language-normalized class name and cross-port message selected
-  by status; no application cause is formatted;
+  by status; no application cause is formatted; a controlling Failure's exact
+  non-null native cause is exposed through Python `__cause__` or TypeScript
+  `Error.cause` without traversing `Failure.previous`;
+- cancelling a Python task inside either `Flow.run()` or `CompiledFlow.run()`
+  cancels the underlying handle with `"caller_cancelled"` and re-raises native
+  `asyncio.CancelledError`;
 - repeated `RunHandle.result` reads and every `RunError` preserve required
   result, state, Failure, terminal, and diagnostic object identities.
 

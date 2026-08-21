@@ -825,6 +825,14 @@ class RunError(CaskadaError, Generic[StateT]):
         }[result.status]
         super().__init__(message)
         self._result = result
+        if result.status == "failed":
+            cause = result.failure.cause
+        elif result.status == "abandoned" and isinstance(result.cause, Failure):
+            cause = result.cause.cause
+        else:
+            cause = None
+        if cause is not None:
+            self.__cause__ = cause
 
     @property
     def result(self) -> Failed[StateT] | Cancelled[StateT] | Abandoned[StateT]:

@@ -123,7 +123,10 @@ it with normal outward control.
 ## Run And Start
 
 `run(initial_state)` awaits a completed run and returns its shared state. It
-raises `RunError` for failed, cancelled, or abandoned results.
+raises `RunError` for failed, cancelled, or abandoned results. The error retains
+the exact result; when a native application error caused the controlling
+Failure, standard Python exception chaining or TypeScript `Error.cause` also
+points to that exact error.
 
 `start(initial_state)` returns immediately with a `RunHandle`. Use the handle to
 cancel, poll completion, or await the full discriminated `RunResult` including

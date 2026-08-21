@@ -144,15 +144,30 @@ def evaluate_failure_recovery(program: dict[str, Any]) -> dict[str, object]:
             "failure": previous,
             "suppressed": [],
         }
-    return {
+    snapshot: dict[str, object] = {
         "result": result,
         "trace": {"failures": failures, "retries": retries},
         "stats": stats,
     }
+    if previous is not None:
+        snapshot["run_projection"] = _run_projection()
+    return snapshot
 
 
 def _end(output: object) -> dict[str, object]:
     return {"type": "end", "has_output": True, "output": deepcopy(output)}
+
+
+def _run_projection() -> dict[str, object]:
+    return {
+        "type": "throw",
+        "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": True,
+        },
+    }
 
 
 def _validate_program(

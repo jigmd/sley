@@ -81,6 +81,7 @@ class FailureNormalizationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(calls, 1)
         self.assertEqual(raised.exception.result.status, "failed")
         self.assertIs(raised.exception.result.failure.cause, cause)
+        self.assertIs(raised.exception.__cause__, cause)
 
     async def test_wrong_returns_have_phase_specific_details(self) -> None:
         def wrong_handler(_context: Context[dict[str, Any]]) -> object:

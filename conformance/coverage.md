@@ -1,9 +1,9 @@
 # Phase 0 Requirement Coverage
 
-Every case names the D9 rule it fixes. Later implementation phases extend this
+Every case names the D10 rule it fixes. Later implementation phases extend this
 table rather than weakening an existing expectation.
 
-| Fixture                      | D9 contract fixed by the case                                                                             |
+| Fixture                      | D10 contract fixed by the case                                                                            |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `S00_compile_nested`         | Breadth-first placement IDs; deferred nested entry; scope-local concurrency; target-first links           |
 | `S01_implicit_default`       | Successful zero-emission Node handler synthesizes one unlabelled route; successful `run()` projects state |
@@ -22,7 +22,7 @@ table rather than weakening an existing expectation.
 
 ## Definition coverage
 
-| Fixture                   | D9 contract fixed by the case                                                                         |
+| Fixture                   | D10 contract fixed by the case                                                                        |
 | ------------------------- | ----------------------------------------------------------------------------------------------------- |
 | `D00_definition_defaults` | Function occurrence, inferred name, resolved retry defaults, Flow defaults, and empty immutable links |
 | `D01_configured_topology` | Occurrence identity, captured configuration, target-first links, declaration order, and named default |
@@ -62,18 +62,18 @@ mutation guards, and thenable-safe exact `run()` fulfillment.
 
 ## Failure and recovery coverage
 
-| Fixture                         | D9 contract fixed by the case                                                      |
-| ------------------------------- | ---------------------------------------------------------------------------------- |
-| `F00_unhandled_handler`         | Canonical handler Failure and exact unrecovered root packet                        |
-| `F01_retry_success`             | Retry references the failed attempt and its exact Failure before successful retry  |
-| `F02_node_recovery_consumes`    | Node recovery receives the packet/input and consumes it only through committed End |
-| `F03_node_recovery_passes`      | Zero-emission Node recovery propagates the exact original Failure                  |
-| `F04_node_recovery_replaces`    | Throwing Node recovery creates one replacement with `previous` identity            |
-| `F05_flow_recovery_consumes`    | Nearest nested Flow recovery receives controlling input and failing activation     |
-| `F06_flow_recovery_passes`      | Zero-emission Flow recovery preserves and propagates the exact child packet        |
-| `F07_flow_recovery_replaces`    | Throwing Flow recovery replaces once at the producing Flow                         |
-| `F08_combine_recovery_consumes` | Combiner Failure exposes its exact result, pre-fence terminals, and null child ID  |
-| `F09_combine_recovery_passes`   | Unhandled combiner Failure retains terminals while propagating the exact packet    |
+| Fixture                         | D10 contract fixed by the case                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| `F00_unhandled_handler`         | Canonical handler Failure, exact unrecovered root packet, and native cause projection |
+| `F01_retry_success`             | Retry references the failed attempt and its exact Failure before successful retry     |
+| `F02_node_recovery_consumes`    | Node recovery receives the packet/input and consumes it only through committed End    |
+| `F03_node_recovery_passes`      | Zero-emission Node recovery propagates the exact original Failure                     |
+| `F04_node_recovery_replaces`    | Throwing Node recovery creates one replacement with `previous` identity               |
+| `F05_flow_recovery_consumes`    | Nearest nested Flow recovery receives controlling input and failing activation        |
+| `F06_flow_recovery_passes`      | Zero-emission Flow recovery preserves and propagates the exact child packet           |
+| `F07_flow_recovery_replaces`    | Throwing Flow recovery replaces once at the producing Flow                            |
+| `F08_combine_recovery_consumes` | Combiner Failure exposes its exact result, pre-fence terminals, and null child ID     |
+| `F09_combine_recovery_passes`   | Unhandled combiner Failure retains terminals while propagating the exact packet       |
 
 Both independent references and both production adapters emit one byte-identical
 snapshot for all ten fixtures. The snapshot includes canonical Failure messages,
@@ -82,7 +82,7 @@ recovery-visible state, terminal retention, and selected committed stats.
 
 ## Scheduling and cancellation coverage
 
-| Fixture                              | D9 contract fixed by the case                                           |
+| Fixture                              | D10 contract fixed by the case                                          |
 | ------------------------------------ | ----------------------------------------------------------------------- |
 | `Q00_auto_width`                     | Omitted global ceiling derives the root scope's declared callback width |
 | `Q01_nested_auto_width`              | A serial parent does not throttle a parallel nested scope               |
@@ -106,7 +106,7 @@ tests because they are not language-neutral values.
 
 ## Events, reports, observers, and limits coverage
 
-| Fixture                   | D9 contract fixed by the case                                            |
+| Fixture                   | D10 contract fixed by the case                                           |
 | ------------------------- | ------------------------------------------------------------------------ |
 | `E00_successful_trace`    | Exact versioned serial event order and transition/terminal linkage       |
 | `E01_observer_skip`       | Synchronous callback-start cancellation skips application invocation     |
@@ -126,7 +126,7 @@ provenance, committed counters, and application-observed interruption.
 
 ## Runtime-scale coverage
 
-| Fixture              | D9 contract fixed by the case                                                |
+| Fixture              | D10 contract fixed by the case                                               |
 | -------------------- | ---------------------------------------------------------------------------- |
 | `X00_100k_node_run`  | Iterative execution of a 100,000-node chain with exact committed counters    |
 | `X01_10k_nested_run` | Iterative entry, closure, and forwarding across 10,000 nested Flow scopes    |

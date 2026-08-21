@@ -77,6 +77,7 @@ describe('v3 portable failure normalization', () => {
     assert.equal(projected.message, 'Caskada run failed')
     assert.equal(projected.result.status, 'failed')
     assert.equal(projected.result.failure.cause, cause)
+    assert.equal(projected.cause, cause)
     assert.equal(calls, 1)
   })
 

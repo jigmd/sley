@@ -140,7 +140,9 @@ Every variant exposes the run-owned `state`, terminal collection, statistics,
 and observer diagnostics. Failure-like variants add their structured cause and
 suppressed failures.
 
-`RunError.result` retains the exact non-completed result raised by `run()`.
+`RunError.result` retains the exact non-completed result raised by `run()`. If a
+native exception caused the controlling Failure, `RunError.__cause__` is that
+exact exception.
 
 `ScopeResult` exposes `terminals` and the value-only `outputs` projection to
 Flow combine callbacks. `ScopeFailure` supplies structured boundary recovery

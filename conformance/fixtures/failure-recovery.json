@@ -27,6 +27,15 @@
           },
           "suppressed": []
         },
+        "run_projection": {
+          "type": "throw",
+          "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": true
+          }
+        },
         "trace": {
           "failures": [
             {
@@ -141,6 +150,15 @@
           },
           "suppressed": []
         },
+        "run_projection": {
+          "type": "throw",
+          "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": true
+          }
+        },
         "trace": {
           "failures": [
             {
@@ -182,6 +200,15 @@
             "previous_failure_id": 1
           },
           "suppressed": []
+        },
+        "run_projection": {
+          "type": "throw",
+          "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": true
+          }
         },
         "trace": {
           "failures": [
@@ -289,6 +316,15 @@
           },
           "suppressed": []
         },
+        "run_projection": {
+          "type": "throw",
+          "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": true
+          }
+        },
         "trace": {
           "failures": [
             {
@@ -341,6 +377,15 @@
             "previous_failure_id": 1
           },
           "suppressed": []
+        },
+        "run_projection": {
+          "type": "throw",
+          "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": true
+          }
         },
         "trace": {
           "failures": [
@@ -445,6 +490,15 @@
             "previous_failure_id": null
           },
           "suppressed": []
+        },
+        "run_projection": {
+          "type": "throw",
+          "error": {
+            "name": "RunError",
+            "message": "Caskada run failed",
+            "result_status": "failed",
+            "cause_is_result_failure_cause": true
+          }
         },
         "trace": {
           "failures": [

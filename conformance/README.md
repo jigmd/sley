@@ -1,6 +1,6 @@
 # Caskada V3 Conformance
 
-This directory is the executable interpretation of the accepted D9 serial
+This directory is the executable interpretation of the accepted D10 serial
 contract. It is deliberately independent of `python/caskada/__init__.py` and
 `typescript/caskada.ts`; production runtimes must eventually consume these
 fixtures through their own adapters rather than becoming the expected-value
@@ -57,7 +57,8 @@ Concurrency, retry packets, timers, cancellation, observers, and resource-bound
 stress cases enter the corpus in the later RFC implementation phases identified
 in `coverage.md`.
 
-The failure/recovery corpus covers unhandled handler failure, retry success,
+The failure/recovery corpus covers unhandled handler failure, `RunError` native
+cause identity, retry success,
 Node and Flow recovery consumption, exact zero-emission pass-through, universal
 replacement with `previous`, nearest nested recovery, and combiner-failure
 context. Its references are independent of both production runtimes.

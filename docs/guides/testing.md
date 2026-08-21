@@ -99,6 +99,9 @@ assert result.state["attempted"] is True
 
 Use the corresponding TypeScript `handle.result` Promise. Assert structured
 failure kinds, details, and provenance rather than native exception messages.
+When testing the simple `run()` projection, `RunError.result` exposes the same
+structured data and its standard native cause points to the controlling
+application error when one exists.
 
 ## Test Retry and Recovery Boundaries
 

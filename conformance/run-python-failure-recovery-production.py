@@ -14,6 +14,7 @@ from caskada import (
     Failure,
     Flow,
     RetryPolicy,
+    RunError,
     RunEvent,
     RunOptions,
     ScopeFailure,
@@ -156,6 +157,25 @@ async def run_fixture(fixture: dict[str, Any]) -> dict[str, object]:
         normalized_result["suppressed"] = [
             normalize_failure(failure, names) for failure in result.suppressed
         ]
+        try:
+            await compiled.run({})
+        except RunError as error:
+            if error.result.status != "failed":
+                raise AssertionError("RunError must retain a failed result")
+            run_error = error
+        else:
+            raise AssertionError("failed run projection did not raise RunError")
+        run_projection: dict[str, object] = {
+            "type": "throw",
+            "error": {
+                "name": type(run_error).__name__,
+                "message": str(run_error),
+                "result_status": run_error.result.status,
+                "cause_is_result_failure_cause": (
+                    run_error.__cause__ is run_error.result.failure.cause
+                ),
+            },
+        }
     failures = [
         normalize_failure(event.payload.failure, names)
         for event in runtime.events
@@ -171,19 +191,22 @@ async def run_fixture(fixture: dict[str, Any]) -> dict[str, object]:
         for event in runtime.events
         if event.kind == "retry_scheduled"
     ]
+    snapshot: dict[str, object] = {
+        "result": normalized_result,
+        "trace": {"failures": failures, "retries": retries},
+        "stats": {
+            "activations": result.stats.activations,
+            "attempts": result.stats.attempts,
+            "transitions": result.stats.transitions,
+            "retries": result.stats.retries,
+            "scopes": result.stats.scopes,
+        },
+    }
+    if result.status == "failed":
+        snapshot["run_projection"] = run_projection
     return {
         "id": fixture["id"],
-        "snapshot": {
-            "result": normalized_result,
-            "trace": {"failures": failures, "retries": retries},
-            "stats": {
-                "activations": result.stats.activations,
-                "attempts": result.stats.attempts,
-                "transitions": result.stats.transitions,
-                "retries": result.stats.retries,
-                "scopes": result.stats.scopes,
-            },
-        },
+        "snapshot": snapshot,
     }
 
 

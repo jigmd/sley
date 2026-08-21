@@ -150,7 +150,8 @@ continuations.
 
 `await flow.run(initial_state)` is the simple API. It returns the final state for
 every completed run and raises `RunError` for failure, cancellation, or
-abandonment. The error retains the complete result.
+abandonment. The error retains the complete result and exposes a controlling
+application error through standard native exception chaining.
 
 `flow.start(initial_state)` returns a `RunHandle` for cancellation and complete
 status, terminal, failure, event, diagnostic, and statistics data.

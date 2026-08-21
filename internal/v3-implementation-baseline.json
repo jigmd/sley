@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "revision": "D9",
-  "accepted_on": "2026-08-20",
+  "revision": "D10",
+  "accepted_on": "2026-08-21",
   "status": "accepted_implementation_baseline",
   "hash_algorithm": "sha256",
   "authority": [
     {
       "path": "internal/rfcs/0001-caskada-v3-runtime.md",
-      "sha256": "e6ab4aed42bb6d0121504a4e5681c1da25d683daacb464e6c247279c2cd08198"
+      "sha256": "0cd4f4b803d7f78690dc4145a42f6a51849ad68d263df14e41853cc6a13aa152"
     },
     {
       "path": "internal/v3-architecture-verdict.md",
-      "sha256": "7e21e711f0b86c07459a1ddab470b846760d45433a5795340d28f19985d30ef3"
+      "sha256": "6359e8067a04629f5ca10f21dec67e9f7ad4cdeca88ad900d87a017f49214993"
     },
     {
       "path": "conformance/fixture.schema.json",
@@ -39,7 +39,7 @@
     },
     {
       "path": "conformance/fixtures/failure-recovery.json",
-      "sha256": "1385eb1b03eb46af8b38a4af9e0dff2e10988792a00a9676ff1d156b0403ef76"
+      "sha256": "50a34c4236126527685cdebea0e9ba8eea289b0046200abb730fd17bce1e2b39"
     },
     {
       "path": "conformance/scheduling-cancellation.schema.json",
@@ -59,7 +59,7 @@
     },
     {
       "path": "conformance/coverage.md",
-      "sha256": "8c21751c1abbc43b74916d18bb4da60c05b5543cc08d89c1a26587cdaa1dc0be"
+      "sha256": "65859a4b06293cfcdb55bd4d050cb32dda4411a42bf7e38892f6610c0d86adf3"
     }
   ],
   "verification_tools": [
@@ -141,11 +141,11 @@
     },
     {
       "path": "conformance/failure_recovery_reference.py",
-      "sha256": "dad1dd89e4bd69b27d464459e12bdc2d6584b46b40e22002ca70eecc6c656cfa"
+      "sha256": "b94c0f24013d97227e5b83c60471542fcf90ee96ee463b404321accd0f9694cf"
     },
     {
       "path": "conformance/failure-recovery-reference.mts",
-      "sha256": "c0145d8e3522f1595df2cb442cdb7108dfeb1d11f05cd8f09629b36af626c26f"
+      "sha256": "bbddf870f059a4da80d8e18ae0dfe29721278c92883491c87abd43ebeeb2a396"
     },
     {
       "path": "conformance/run-python-failure-recovery.py",
@@ -157,11 +157,11 @@
     },
     {
       "path": "conformance/run-python-failure-recovery-production.py",
-      "sha256": "a522b206de22e45f8cbb6482ffe6f5eca2020b3f45e851b575a437d5f71ccc4b"
+      "sha256": "6bf295e90542297c12ff6d320f099023c34ad5cf5935839c538f47dc18f4665b"
     },
     {
       "path": "conformance/run-typescript-failure-recovery-production.mts",
-      "sha256": "0ae79297da312370acc31d6deea307c4dbda3faf7236333cc4948678071d8233"
+      "sha256": "d63ab0f20ab047f698d9b5c26d7822db59a806b6a49221ccee2588fb4e74bf28"
     },
     {
       "path": "conformance/run-failure-recovery.py",
