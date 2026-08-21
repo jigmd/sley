@@ -1,21 +1,12 @@
-"""Flow configuration for the communication example."""
-
 from caskada import Flow
-from nodes import TextInput, WordCounter, ShowStats, EndNode
+from nodes import count_words, read_text, show_stats
 
-def create_flow():
-    """Create and configure the flow with all nodes."""
-    # Create nodes
-    text_input = TextInput()
-    word_counter = WordCounter()
-    show_stats = ShowStats()
-    end_node = EndNode()
-    
-    # Configure transitions
-    text_input - "count" >> word_counter
-    word_counter - "show" >> show_stats
-    show_stats - "continue" >> text_input
-    text_input - "exit" >> end_node
-    
-    # Create and return flow
-    return Flow(start=text_input) 
+
+def build_flow() -> Flow:
+    read_text.link(count_words, "count")
+    count_words.link(show_stats, "show")
+    show_stats.link(read_text, "continue")
+    return Flow(read_text)
+
+
+word_counter = build_flow()

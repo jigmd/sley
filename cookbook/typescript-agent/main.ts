@@ -1,14 +1,10 @@
-import { createAgentFlow } from './flow'
+import { agentFlow } from './flow'
 
 async function main() {
-  const question = process.argv[2] || 'What is the latest Deepseek LLM model?'
-  const agentFlow = createAgentFlow()
-  const sharedContext = {
-    question: question,
-  }
-  await agentFlow.run(sharedContext)
+  const question = process.argv[2] ?? 'What is the latest Deepseek LLM model?'
+  const state = await agentFlow.run({ question })
+
+  if (state.answer === undefined) throw new Error('The agent finished without an answer')
 }
 
-main().catch((error) => {
-  console.error('Error running the agent:', error)
-})
+main().catch(console.error)

@@ -1,18 +1,10 @@
 from caskada import Flow
-from nodes import SearchNode, AnalyzeResultsNode
+from nodes import analyze, search
 
-def create_flow() -> Flow:
-    """Create and configure the search flow
-    
-    Returns:
-        Flow: Configured flow ready to run
-    """
-    # Create nodes
-    search = SearchNode()
-    analyze = AnalyzeResultsNode()
-    
-    # Connect nodes
-    search >> analyze
-    
-    # Create flow starting with search
-    return Flow(start=search)
+
+def build_flow() -> Flow:
+    search.link(analyze)
+    return Flow(search)
+
+
+search_flow = build_flow()

@@ -1,14 +1,8 @@
 import { Flow } from 'caskada'
-import { AnswerNode, DecideNode, SearchNode } from './nodes'
+import { answer, decide, search } from './nodes'
 
-export function createAgentFlow() {
-  const decideNode = new DecideNode()
-  const searchNode = new SearchNode()
-  const answerNode = new AnswerNode()
+decide.link(search, 'search')
+decide.link(answer, 'answer')
+search.link(decide, 'decide')
 
-  decideNode.on('search', searchNode)
-  decideNode.on('answer', answerNode)
-  searchNode.on('decide', decideNode)
-
-  return new Flow(decideNode)
-}
+export const agentFlow = new Flow(decide)

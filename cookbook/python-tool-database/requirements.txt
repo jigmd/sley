@@ -1,2 +1,1 @@
-caskada>=2.2.0
-python-dotenv>=1.2.3
+caskada>=3.0.0

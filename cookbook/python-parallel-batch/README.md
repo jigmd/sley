@@ -1,104 +1,31 @@
 ---
-complexity: 8
+complexity: 5
 ---
 
-# Parallel Batch Translation Process
+# Parallel Batch Translation
 
-This project demonstrates using Caskada's async and parallel features (`ParallelFlow`, `Node`) to translate a document into multiple languages concurrently.
+This is the concurrent counterpart to `python-batch`. The graph is the same:
+one dispatcher emits eight branch inputs and each translator ends its own branch
+after writing a file.
 
-- Check out the [Substack Post Tutorial](https://pocketflow.substack.com/p/parallel-llm-calls-from-scratch-tutorial) for more!
+The difference is local to the Flow definition:
 
-## Goal
+```python
+translation_flow = Flow(dispatch, concurrency=8)
+```
 
-Translate `../../README.md` into multiple languages (Chinese, Spanish, etc.) in parallel, saving each to a file in the `translations/` directory. The main goal is to compare execution time against a sequential process.
+The runtime-wide callback ceiling is derived from the compiled topology unless
+the caller supplies a smaller `RunOptions.max_concurrency`.
 
-## Getting Started
+The generated translations are intentionally not checked into the repository:
+they describe whichever README version was translated and become stale quickly.
+Running the example creates eight `translations/README_*.md` files; cookbook
+verification checks that all eight are produced in an isolated project copy.
 
-1. Install requirements:
+## Run
 
 ```bash
+export ANTHROPIC_API_KEY="your-api-key"
 pip install -r requirements.txt
+python main.py
 ```
-
-2. Set API Key:
-   Set the environment variable for your Anthropic API key.
-
-   ```bash
-   export ANTHROPIC_API_KEY="your-api-key-here"
-   ```
-
-   _(Replace `"your-api-key-here"` with your actual key)_
-   _(Alternatively, place `ANTHROPIC_API_KEY=your-api-key-here` in a `.env` file)_
-
-3. Verify API Key (Optional):
-   Run a quick check using the utility script.
-
-   ```bash
-   python utils.py
-   ```
-
-   _(Note: This requires a valid API key to be set.)_
-
-4. Run the translation process:
-   ```bash
-   python main.py
-   ```
-
-## How It Works
-
-The implementation uses a `Node` that processes translation requests concurrently. The `TranslateTextNodeParallel`:
-
-1. Prepares batches, pairing the source text with each target language.
-
-2. Executes translation calls to the LLM for all languages concurrently using `async` operations.
-
-3. Saves the translated content to individual files (`translations/README_LANGUAGE.md`).
-
-This approach leverages `asyncio` and parallel execution to speed up I/O-bound tasks like multiple API calls.
-
-## Example Output & Comparison
-
-Running this parallel version significantly reduces the total time compared to a sequential approach:
-
-```
-# --- Sequential Run Output (from python-batch) ---
-Starting sequential translation into 8 languages...
-Translated Chinese text
-...
-Translated Korean text
-Saved translation to translations/README_CHINESE.md
-...
-Saved translation to translations/README_KOREAN.md
-
-Total sequential translation time: ~1136 seconds
-
-=== Translation Complete ===
-Translations saved to: translations
-============================
-
-
-# --- Parallel Run Output (this example) ---
-Starting parallel translation into 8 languages...
-Translated French text
-Translated Portuguese text
-... # Messages may appear interleaved
-Translated Spanish text
-Saved translation to translations/README_CHINESE.md
-...
-Saved translation to translations/README_KOREAN.md
-
-Total parallel translation time: ~209 seconds
-
-=== Translation Complete ===
-Translations saved to: translations
-============================
-```
-
-_(Actual times will vary based on API response speed and system.)_
-
-## Files
-
-- [`main.py`](./main.py): Implements the parallel batch translation node and flow.
-- [`utils.py`](./utils.py): Async wrapper for calling the Anthropic model.
-- [`requirements.txt`](./requirements.txt): Project dependencies (includes `aiofiles`).
-- [`translations/`](./translations/): Output directory (created automatically).

@@ -1,13 +1,13 @@
-from caskada import Flow
-from nodes import ChainOfThoughtNode
+from caskada import Flow, RetryPolicy, node
+from nodes import chain_of_thought
+
 
 def create_chain_of_thought_flow():
-    # Create a ChainOfThoughtNode
-    cot_node = ChainOfThoughtNode(max_retries=3, wait=10)
-    
-    # Connect the node to itself for the "continue" action
-    cot_node - "continue" >> cot_node
-    
-    # Create the flow
-    cot_flow = Flow(start=cot_node, options={"max_visits": 50})
-    return cot_flow
+    thought = node(
+        chain_of_thought,
+        retry=RetryPolicy(max_attempts=3, delay_ms=10_000),
+    )
+
+    thought.link(thought, "continue")
+
+    return Flow(thought, max_activations=50)

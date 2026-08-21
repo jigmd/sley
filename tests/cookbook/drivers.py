@@ -9,14 +9,19 @@ import logging
 import sys
 from pathlib import Path
 
-
 # Drivers live outside the staged cookbook, so explicitly give imports the same
 # project-local resolution they get from `python main.py`.
 sys.path.insert(0, str(Path.cwd()))
 
 
 async def _a2a() -> None:
-    from common.types import Message, SendTaskRequest, TaskSendParams, TaskState, TextPart
+    from common.types import (
+        Message,
+        SendTaskRequest,
+        TaskSendParams,
+        TaskState,
+        TextPart,
+    )
     from task_manager import CaskadaTaskManager
 
     request = SendTaskRequest(
@@ -50,17 +55,14 @@ async def _fastapi_hitl() -> None:
 
     review_event = asyncio.Event()
     review_event.set()
-    shared = {
-        "task_input": "cookbook input",
-        "processed_output": None,
-        "feedback": "approved",
-        "review_event": review_event,
-        "sse_queue": asyncio.Queue(),
-        "final_result": None,
-        "task_id": "cookbook-task",
-    }
-    await create_feedback_flow().run(shared)
-    assert shared["final_result"] == "Processed: cookbook input"
+    state = await create_feedback_flow().run(
+        {
+            "task_input": "cookbook input",
+            "review": {"event": review_event, "feedback": "approved"},
+            "sse_queue": asyncio.Queue(),
+        }
+    )
+    assert state["final_result"] == "Processed: cookbook input"
     print("FastAPI HITL contract passed")
 
 
@@ -77,7 +79,8 @@ async def _streamlit_hitl() -> None:
     assert app.session_state["stage"] == "awaiting_review"
     assert app.session_state["processed_output"] == expected
 
-    app.button[1].click().run(timeout=10)
+    approve = next(button for button in app.button if button.label == "Approve")
+    approve.click().run(timeout=10)
     assert not app.exception
     assert app.session_state["stage"] == "completed"
     assert app.session_state["final_result"] == expected

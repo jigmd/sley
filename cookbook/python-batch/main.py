@@ -1,93 +1,67 @@
 import asyncio
-import os
 import time
-from caskada import Node, Flow
+from pathlib import Path
+
+from caskada import Context, Flow, RetryPolicy, node
 from utils import call_llm
 
-class TriggerTranslationsNode(Node):
-    async def prep(self, shared):
-        text = getattr(shared, "text", "(No text provided)")
-        languages = getattr(shared, "languages", ["Chinese", "Spanish", "Japanese", "German", 
-                              "Russian", "Portuguese", "French", "Korean"])
-        
-        return [(text, lang) for lang in languages]
-    
-    async def post(self, memory, prep_res, exec_res):
-        for index, input in enumerate(prep_res):
-            self.trigger("default", {"index": index, "data": input})
-            
 
-class TranslateTextNode(Node):
-    async def prep(self, memory):
-        return memory.index, memory.data            
+@node
+def dispatch(context: Context) -> None:
+    for language in context.state["languages"]:
+        context.emit("translate", (context.state["text"], language))
 
-    async def exec(self, data_tuple):
-        index, (text, language) = data_tuple
 
-        prompt = f"""
-Please translate the following markdown file into {language}. 
-But keep the original markdown format, links and code blocks.
-Directly return the translated text, without any other text or comments.
+@node(retry=RetryPolicy(max_attempts=3))
+def translate(context: Context) -> None:
+    text, language = context.input
+    prompt = f"""
+Please translate the following markdown into {language}.
+Keep the original formatting, links, and code blocks.
+Return only the translated text.
 
-Original: 
 {text}
+"""
+    translation = call_llm(prompt)
 
-Translated:"""
-        
-        result = call_llm(prompt)
-        print(f"Translated {language} text")
-        return {"language": language, "translation": result}
+    output = Path(context.state["output_dir"])
+    output.mkdir(exist_ok=True)
+    filename = output / f"README_{language.upper()}.md"
+    filename.write_text(translation, encoding="utf-8")
+    print(f"Saved translation to {filename}")
+    context.end()
 
-    async def post(self, shared, prep_res, result):
-        if not isinstance(result, dict):
-            print(f"Warning: Invalid result received: {result}")
-            return
 
-        # Create output directory if it doesn't exist
-        output_dir = getattr(shared, "output_dir", "translations")
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Write each translation to a file
-        language, translation = result["language"], result["translation"]
-        
-        # Write to file
-        filename = os.path.join(output_dir, f"README_{language.upper()}.md")
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(translation)
-        
-        print(f"Saved translation to {filename}")
+dispatch.link(translate, "translate")
+translation_flow = Flow(dispatch)
 
-async def main():
-    # read the text from ../../README.md
-    with open("../../README.md", "r") as f:
-        text = f.read()
-    
-    # Default settings
-    shared = {
-        "text": text,
-        "languages": ["Chinese", "Spanish", "Japanese", "German", "Russian", "Portuguese", "French", "Korean"],
-        "output_dir": "translations"
+
+async def main() -> None:
+    languages = [
+        "Chinese",
+        "Spanish",
+        "Japanese",
+        "German",
+        "Russian",
+        "Portuguese",
+        "French",
+        "Korean",
+    ]
+    initial_state = {
+        "text": Path("../../README.md").read_text(encoding="utf-8"),
+        "languages": languages,
+        "output_dir": "translations",
     }
 
-    # --- Time Measurement Start ---
-    print(f"Starting sequential translation into {len(shared['languages'])} languages...")
-    start_time = time.perf_counter()
-
-    # Run the translation flow
-    trigger_node = TriggerTranslationsNode(max_retries=3)
-    translate_node = TranslateTextNode(max_retries=3)
-    trigger_node >> translate_node
-    flow = Flow(start=trigger_node)
-    await flow.run(shared)
-
-    # --- Time Measurement End ---
-    end_time = time.perf_counter()
-    duration = end_time - start_time
-
-    print(f"\nTotal sequential translation time: {duration:.4f} seconds") # Print duration
+    print(f"Starting sequential translation into {len(languages)} languages...")
+    started = time.perf_counter()
+    await translation_flow.run(initial_state)
+    print(
+        f"\nTotal sequential translation time: {time.perf_counter() - started:.4f} seconds"
+    )
     print("\n=== Translation Complete ===")
-    print(f"Translations saved to: {shared['output_dir']}")
-    print("============================")
+    print("Translations saved to: translations")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

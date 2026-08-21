@@ -5,6 +5,9 @@ packages:
 
   - '!**/test/**'
 
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+
 overrides:
   esbuild: 0.28.2
 

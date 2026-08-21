@@ -1,5 +1,5 @@
 openai>=3.1.0
-caskada>=2.2.0
+caskada>=3.0.0
 numpy>=2.5.2
 sounddevice>=0.5.5
 scipy>=1.18.0

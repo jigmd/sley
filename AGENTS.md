@@ -75,6 +75,12 @@ Default section order:
 5. Run existing verification when relevant
 6. Report any docs intentionally left unchanged and why
 
+## Workspace Contract
+
+- The root pnpm workspace links matching local package versions during repository
+  development. Example package manifests must retain publishable semver ranges so
+  they also install correctly outside the workspace.
+
 ## User Preferences
 
 When the user requests a durable behavior change, record it here or in the relevant child AGENTS.md

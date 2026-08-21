@@ -4,49 +4,34 @@ complexity: 9.5
 
 # Web Crawler with Content Analysis
 
-A web crawler tool built with Caskada that crawls websites and analyzes content using LLM.
+A Caskada flow that crawls a website, analyzes each page with an LLM, and
+assembles one report.
 
-## Features
+## Run
 
-- Crawls websites while respecting domain boundaries
-- Extracts text content and links from pages
-- Analyzes content using GPT-4 to generate:
-  - Page summaries
-  - Main topics/keywords
-  - Content type classification
-- Processes pages in batches for efficiency
-- Generates a comprehensive analysis report
-
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Set your OpenAI API key:
-   ```bash
-   export OPENAI_API_KEY='your-api-key'
-   ```
-
-## Usage
-
-Run the crawler:
+Set `OPENAI_API_KEY`, then run:
 
 ```bash
+pip install -r requirements.txt
 python main.py
 ```
 
-You will be prompted to:
+## Fan-out and Combine
 
-1. Enter the website URL to crawl
-2. Specify maximum number of pages to crawl (default: 10)
+The crawler emits its pages as input to a nested analysis Flow:
 
-The tool will then:
+1. `dispatch_pages` emits one `page` branch for every crawled page.
+2. Each `analyze_page` worker calls `end(value)` to publish its result.
+3. `combine_pages` runs after every worker settles and collects those outputs.
+4. The combiner emits one page list, so `generate_report` runs exactly once.
 
-1. Crawl the specified website
-2. Extract and analyze content using GPT-4
-3. Generate a report with findings
+```mermaid
+flowchart LR
+    Crawl[crawl website] --> Dispatch[dispatch pages]
+    Dispatch -->|page x N| Analyze[analyze page]
+    Analyze -->|end result| Combine[combine pages]
+    Combine -->|one page list| Report[generate report]
+```
 
 ## Project Structure
 
@@ -57,8 +42,8 @@ python-tool-crawler/
 │   └── parser.py      # Content analysis using LLM
 ├── utils/
 │   └── call_llm.py    # LLM API wrapper
-├── nodes.py           # Caskada nodes
-├── flow.py           # Flow configuration
+├── nodes.py           # Crawl, dispatch, analysis, and report handlers
+├── flow.py            # Graph topology and combine callback
 ├── main.py           # Main script
 └── requirements.txt   # Dependencies
 ```
@@ -67,12 +52,11 @@ python-tool-crawler/
 
 - Only crawls within the same domain
 - Text content only (no images/media)
-- Rate limited by OpenAI API
-- Basic error handling
+- Rate limited by the OpenAI API
 
 ## Dependencies
 
-- caskada: Flow-based processing
-- requests: HTTP requests
-- beautifulsoup4: HTML parsing
-- openai: GPT-4 API access
+- Caskada: Flow-based processing
+- Requests: HTTP requests
+- Beautiful Soup: HTML parsing
+- OpenAI: GPT-4 API access

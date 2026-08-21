@@ -1,47 +1,19 @@
-# Your Project Title
+# Question Answer Flow
 
-## Project Requirements
-A description of the project requirements. 
-
-## Utility Functions
-
-1. **Call LLM** (`utils/call_llm.py`)
-
-## Flow Design
-
-1. **First Node**
-2. **Second Node**
-3. **Third Node**
-
-### Flow Diagram
+The `answer` node reads a question from `context.state`, asks the LLM, and stores
+the answer back in state.
 
 ```mermaid
-flowchart TD
-    firstNode[First Node] --> secondNode[Second Node]
-    secondNode --> thirdNode[Third Node]
+flowchart LR
+    Answer[answer] --> Exit[ordinary Flow exit]
 ```
 
-## Data Structure
-
-The shared memory structure will be organized as follows:
+The handler emits nothing. Because it has no unlabelled link, its normal return
+exits the Flow; a separate end node or `context.end()` call would add no value.
 
 ```python
-shared = {
-    "key": "value"
+state = {
+    "question": "In one sentence, what's the end of universe?",
+    "answer": None,
 }
 ```
-
-## Node Designs
-
-### 1. First Node
-- **Purpose**: What the node does
-- **Design**: Regular Node (no batch)
-- **Data Access**:
-  - Read: `memory.key` from global memory
-  - Write: `memory.key = value` to global memory
-- **Flow Control**: Uses `self.trigger("action_name")` to transition to the next node.
-
-### 2. Second Node
-...
-
-### 3. Third Node

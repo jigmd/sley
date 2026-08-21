@@ -1,193 +1,93 @@
-import { Memory, Node } from 'caskada'
+import { node } from 'caskada'
 import { parse } from 'yaml'
 import { callLLM, webSearch } from './utils'
 
-export type SearchAgentGlobalStore = {
-  question: string
-  context?: string
-  searchQuery?: string
-  answer?: string
+import type { AgentState, Decision } from './types'
+
+function parseDecision(response: string): Decision {
+  const yaml = response.split('```yaml', 2)[1]?.split('```', 1)[0]
+  if (yaml === undefined) throw new Error('LLM response must contain a YAML block')
+
+  const value: unknown = parse(yaml)
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('LLM decision must be a YAML object')
+  }
+
+  const decision = value as Record<string, unknown>
+  if ((decision.action !== 'search' && decision.action !== 'answer') || typeof decision.reason !== 'string') {
+    throw new Error('LLM decision needs a valid action and reason')
+  }
+
+  if (decision.action === 'search') {
+    if (typeof decision.searchQuery !== 'string' || decision.searchQuery.trim() === '') {
+      throw new Error('A search decision needs a non-empty searchQuery')
+    }
+    return {
+      action: 'search',
+      reason: decision.reason,
+      searchQuery: decision.searchQuery,
+    }
+  }
+
+  return { action: 'answer', reason: decision.reason }
 }
 
-interface PrepResult {
-  question: string
-  context?: string
-}
+export const decide = node<AgentState>(async (context) => {
+  console.log('Deciding whether to search or answer the question...')
+  const response = await callLLM(`
+### Context
+Current date: ${new Date().toISOString()}
+Question: ${context.state.question}
+Research: ${context.state.research ?? 'No previous search.'}
 
-// Define allowed actions for DecideNode
-type DecideNodeActions = ['search', 'answer', 'error']
+### Next Action
+Choose whether to search for more information or answer now.
 
-interface LLMDecision {
-  thinking: string
-  action: 'search' | 'answer'
-  reason: string
-  answer?: string
-  searchQuery?: string
-}
+Return exactly one YAML code block in one of these forms:
 
-interface SearchResult {
-  title: string
-  href: string
-  body: string
-}
+\`\`\`yaml
+action: search
+reason: Why another search is needed
+searchQuery: A concise query written for a search engine
+\`\`\`
 
-export class DecideNode extends Node<SearchAgentGlobalStore, PrepResult, LLMDecision, DecideNodeActions> {
-  async prep(memory: Memory<SearchAgentGlobalStore>) {
-    const context = memory.context || 'No previous search.'
-    const question = memory.question
-    return { context, question }
+\`\`\`yaml
+action: answer
+reason: Why the available research is sufficient
+\`\`\`
+
+Use only the keys shown for the selected action. Do not write text outside the block.
+`)
+  const decision = parseDecision(response)
+  console.log(`Reason: ${decision.reason}`)
+
+  if (decision.action === 'search') {
+    context.state.searchQuery = decision.searchQuery
+    console.log(`Searching for: ${decision.searchQuery}`)
+  } else {
+    console.log('Research is sufficient; preparing the final answer.')
   }
 
-  async exec(input: PrepResult) {
-    const { context, question } = input
-    const now = new Date()
-    console.log('Deciding whether to search or answer the question...')
+  context.emit(decision.action)
+})
 
-    const prompt = `
-        ### Context
-        Current date is ${now.toISOString()}
-        You are helpful assistance that can searching the web to gather real time data.
-        Question: ${question}
-        Context: ${context}
+export const search = node<AgentState>(async (context) => {
+  const query = context.state.searchQuery
+  if (query === undefined) throw new Error('searchQuery is missing')
 
-        ### Action Space
-        [1] search
-            description: look up for more information on internet
-            parameter:
-                - query (str): what to search for
-        [2] answer
-            description: answer the question based on the context
-            parameter:
-                - answer (str): the answer to the question
-        
-        ### Next Action
-        Decide the next action based on the context and available actions.
-        Return your response in this format:
+  console.log('Calling web search tool.')
+  const results = await webSearch(query)
+  context.state.research = `${context.state.research ?? ''}\n\nSearch: ${query}\nResults: ${JSON.stringify(results)}`
+  context.emit('decide')
+})
 
-        \`\`\`yaml
-        thinking: |
-            <your step-by-step reasoning process>
-        action: search OR answer
-        reason: <why you chose this action>
-        answer: <if action is answer>
-        searchQuery: <specific search query if action is search>
-        \`\`\`
+export const answer = node<AgentState>(async (context) => {
+  const response = await callLLM(`
+Answer this question using the research below.
 
-        IMPORTANT: Make sure to:
-        1. Use proper indentation (4 spaces) for all multi-line fields
-        2. Use the | character for multi-line text fields
-        3. Keep single-line fields without the | character
-        4. thinking about search query, make sure that you understand the question and use query that appropriate for search engine, not just copying the question
-        `
-    const response = await callLLM([{ role: 'user', content: prompt }])
-    if (!response?.includes('```yaml')) {
-      throw new Error('LLM response missing YAML block')
-    }
-
-    const yamlStr = response.split('```yaml')[1].split('```')[0].trim()
-    return parse(yamlStr) as LLMDecision
-  }
-
-  async post(memory: Memory<SearchAgentGlobalStore>, prepRes: PrepResult, execRes: LLMDecision) {
-    if (!prepRes) {
-      console.log('No context or question provided.')
-      this.trigger('error')
-      return
-    }
-
-    if (!execRes) {
-      console.log('No decision made.')
-      this.trigger('error')
-      return
-    }
-
-    if (execRes.action === 'search') {
-      memory.searchQuery = execRes.searchQuery
-      console.log(`Searching for: ${execRes.searchQuery}`)
-      console.log(`Reason: ${execRes.reason}`)
-    } else {
-      memory.answer = execRes.answer // Persist final answer
-      console.log(`Answering: ${execRes.answer}`)
-      console.log(`Reason: ${execRes.reason}`)
-    }
-
-    this.trigger(execRes.action)
-  }
-}
-
-// Define allowed actions for SearchNode
-type SearchNodeActions = ['decide', 'error']
-
-export class SearchNode extends Node<SearchAgentGlobalStore, string, SearchResult[], SearchNodeActions> {
-  async prep(memory: Memory<SearchAgentGlobalStore>) {
-    return memory.searchQuery
-  }
-
-  async exec(searchQuery: string) {
-    console.log(`Calling web search tool.`)
-    return await webSearch(searchQuery)
-  }
-
-  async post(memory: Memory<SearchAgentGlobalStore>, prepRes: string, execRes: SearchResult[]) {
-    if (!prepRes) {
-      console.log('No search query provided.')
-      this.trigger('error')
-      return
-    }
-
-    if (!execRes) {
-      console.log('No search results found.')
-      this.trigger('error')
-      return
-    }
-
-    const previous = memory.context || ''
-    memory.context = previous + '\n\nSearch: ' + memory.searchQuery + '\nResult :' + JSON.stringify(execRes)
-    this.trigger('decide')
-  }
-}
-
-// Define allowed actions for AnswerNode
-type AnswerNodeActions = ['done', 'error']
-
-export class AnswerNode extends Node<SearchAgentGlobalStore, PrepResult, string | null, AnswerNodeActions> {
-  async prep(memory: Memory<SearchAgentGlobalStore>) {
-    const context = memory.context || 'No previous context.'
-    const question = memory.question
-    return { question, context }
-  }
-
-  async exec(input: PrepResult) {
-    const { question, context } = input
-    console.log('Answering the question...')
-    const prompt = `
-        ### Context
-        Based on the following information, answer the question.
-        Question: ${question}
-        Research: ${context}
-        
-        ## Your Answer:
-        Provide a comprehensive answer using the research results.
-        `
-    const response = await callLLM([{ role: 'user', content: prompt }])
-    return response
-  }
-
-  async post(memory: Memory<SearchAgentGlobalStore>, prepRes: PrepResult, execRes: string | null) {
-    if (!prepRes) {
-      console.log('No answer provided.')
-      this.trigger('error')
-      return
-    }
-
-    if (!execRes) {
-      console.log('No answer generated.')
-      this.trigger('error')
-      return
-    }
-
-    memory.answer = execRes
-    console.log(`Final Answer: ${execRes}`)
-    this.trigger('done')
-  }
-}
+Question: ${context.state.question}
+Research: ${context.state.research ?? 'No previous search.'}
+`)
+  context.state.answer = response
+  console.log(`Final Answer: ${response}`)
+})

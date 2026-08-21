@@ -1,21 +1,22 @@
-from caskada import Flow
-from mapreduce import mapreduce
-from nodes import CrawlWebsiteNode, AnalyzeContentNode, GenerateReportNode
+from caskada import Flow, node
+from nodes import analyze_page, crawl_website, dispatch_pages, generate_report
 
 
-def create_flow() -> Flow:
-    """Create and configure the crawling flow
-    
-    Returns:
-        Flow: Configured flow ready to run
-    """
-    # Create nodes
-    crawl = CrawlWebsiteNode()
-    analyze = AnalyzeContentNode()
-    report = GenerateReportNode()
-    
-    # Connect nodes
-    crawl >> mapreduce(analyze) >> report
-    
-    # Create flow starting with crawl
-    return Flow(start=crawl)
+def combine_pages(context, result):
+    # Replace every worker terminal with one input for the report node.
+    context.emit(input=list(result.outputs))
+
+
+def create_flow():
+    crawl = node(crawl_website)
+    dispatch = node(dispatch_pages)
+    analyze = node(analyze_page)
+    report = node(generate_report)
+
+    dispatch.link(analyze, "page")
+    analysis = Flow(dispatch, combine=combine_pages)
+
+    crawl.link(analysis)
+    analysis.link(report)
+
+    return Flow(crawl)

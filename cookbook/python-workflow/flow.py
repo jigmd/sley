@@ -1,19 +1,8 @@
 from caskada import Flow
-from nodes import GenerateOutline, WriteSimpleContent, ApplyStyle
+from nodes import apply_style, generate_outline, write_content
 
-def create_article_flow():
-    """
-    Create and configure the article writing workflow
-    """
-    # Create node instances
-    outline_node = GenerateOutline()
-    write_node = WriteSimpleContent()
-    style_node = ApplyStyle()
-    
-    # Connect nodes in sequence
-    outline_node >> write_node >> style_node
-    
-    # Create flow starting with outline node
-    article_flow = Flow(start=outline_node)
-    
-    return article_flow
+# A successful node with no emission follows its unlabelled link.
+generate_outline.link(write_content)
+write_content.link(apply_style)
+
+article_flow = Flow(generate_outline)

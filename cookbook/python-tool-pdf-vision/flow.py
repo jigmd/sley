@@ -1,10 +1,11 @@
-from caskada import Flow
-from nodes import TriggerPDFNode, ProcessPDFNode
+from caskada import Context, Flow, ScopeResult
+from nodes import dispatch_pdfs, process_pdf
 
-def create_vision_flow():
-    """Create a flow for batch PDF processing with Vision API"""
-    trigger_node = TriggerPDFNode()
-    process_node = ProcessPDFNode()
 
-    trigger_node >> process_node
-    return Flow(start=trigger_node)
+def collect_results(context: Context, result: ScopeResult) -> None:
+    context.state["results"] = list(result.outputs)
+    # Zero emissions preserve the workers' hard End terminals after aggregation.
+
+
+dispatch_pdfs.link(process_pdf, "process")
+vision_flow = Flow(dispatch_pdfs, combine=collect_results)

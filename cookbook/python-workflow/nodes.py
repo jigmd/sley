@@ -1,130 +1,72 @@
-import re
-from caskada import Node
-from utils import call_llm
 import yaml
+from caskada import Context, node
+from utils import call_llm
 
-class GenerateOutline(Node):
-    async def prep(self, shared):
-        return shared["topic"]
-    
-    async def exec(self, topic):
-        prompt = f"""
+
+@node
+def generate_outline(context: Context) -> None:
+    topic = context.state["topic"]
+    response = call_llm(
+        f"""
 Create a simple outline for an article about {topic}.
-Include at most 3 main sections (no subsections).
+Include at most 3 main sections and no subsections.
 
-Output the sections in YAML format as shown below:
+Return this YAML inside a ```yaml code block:
 
-```yaml
 sections:
-    - |
-        First section 
-    - |
-        Second section
-    - |
-        Third section
-```
-
-IMPORTANT: Make sure to:
-1. Use proper indentation (4 spaces) for all multi-line fields
-2. Use the | character for multi-line text fields
-3. Keep single-line fields without the | character
-4. Your answer must be wrapped in yaml code block or it will result in an error. Do not forget to include the ```yaml sequence at the beginning and end it with ```.
+  - First section
+  - Second section
+  - Third section
 """
-        response = call_llm(prompt)
-        assert "```yaml" in response, "Response must contain yaml block"
-        yaml_str = response.split("```yaml")[1].split("```")[0].strip()
-        structured_result = yaml.safe_load(yaml_str)
-        return structured_result
-    
-    async def post(self, shared, prep_res, exec_res):
-        # Store the structured data
-        shared["outline_yaml"] = exec_res
-        
-        # Extract sections
-        sections = exec_res["sections"]
-        shared["sections"] = sections
-        
-        # Format for display
-        formatted_outline = "\n".join([f"{i+1}. {section}" for i, section in enumerate(sections)])
-        shared["outline"] = formatted_outline
-        
-        # Display the results
-        print("\n===== OUTLINE (YAML) =====\n")
-        print(yaml.dump(exec_res, default_flow_style=False))
-        print("\n===== PARSED OUTLINE =====\n")
-        print(formatted_outline)
-        print("\n=========================\n")
-        
-class WriteSimpleContent(Node):
-    async def prep(self, shared):
-        # Get the list of sections to process
-        return getattr(shared, "sections", [])
-    
-    async def exec(self, sections):
-        all_sections_content = []
-        section_contents = {}
-        
-        for section in sections:
-            prompt = f"""
-Write a short paragraph (MAXIMUM 100 WORDS) about this section:
+    )
+    yaml_text = response.split("```yaml", 1)[1].split("```", 1)[0]
+    outline = yaml.safe_load(yaml_text)
+    sections = outline["sections"]
+
+    context.state["sections"] = sections
+    context.state["outline"] = "\n".join(
+        f"{number}. {section}" for number, section in enumerate(sections, start=1)
+    )
+
+    print("\n===== OUTLINE =====\n")
+    print(context.state["outline"])
+
+
+@node
+def write_content(context: Context) -> None:
+    section_contents = {}
+    for section in context.state["sections"]:
+        section_contents[section] = call_llm(
+            f"""
+Write a short paragraph of at most 100 words about this section:
 
 {section}
 
-Requirements:
-- Explain the idea in simple, easy-to-understand terms
-- Use everyday language, avoiding jargon
-- Keep it very concise (no more than 100 words)
-- Include one brief example or analogy
+Use everyday language and include one brief example or analogy.
 """
-            content = call_llm(prompt)
-            section_contents[section] = content
-            all_sections_content.append(f"## {section}\n\n{content}\n")
-        
-        return sections, section_contents, "\n".join(all_sections_content)
-    
-    async def post(self, shared, prep_res, exec_res):
-        sections, section_contents, draft = exec_res
-        
-        # Store the section contents and draft
-        shared["section_contents"] = section_contents
-        shared["draft"] = draft
-        
-        print("\n===== SECTION CONTENTS =====\n")
-        for section, content in section_contents.items():
-            print(f"--- {section} ---")
-            print(content)
-            print()
-        print("===========================\n")
-        
-class ApplyStyle(Node):
-    async def prep(self, shared):
-        """
-        Get the draft from shared data
-        """
-        return shared["draft"]
-    
-    async def exec(self, draft):
-        """
-        Apply a specific style to the article
-        """
-        prompt = f"""
-        Rewrite the following draft in a conversational, engaging style:
-        
-        {draft}
-        
-        Make it:
-        - Conversational and warm in tone
-        - Include rhetorical questions that engage the reader
-        - Add analogies and metaphors where appropriate
-        - Include a strong opening and conclusion
-        """
-        return call_llm(prompt)
-    
-    async def post(self, shared, prep_res, exec_res):
-        """
-        Store the final article in shared data
-        """
-        shared["final_article"] = exec_res
-        print("\n===== FINAL ARTICLE =====\n")
-        print(exec_res)
-        print("\n========================\n")
+        )
+
+    context.state["section_contents"] = section_contents
+    context.state["draft"] = "\n\n".join(
+        f"## {section}\n\n{content}" for section, content in section_contents.items()
+    )
+
+    print("\n===== SECTION CONTENTS =====\n")
+    for section, content in section_contents.items():
+        print(f"--- {section} ---\n{content}\n")
+
+
+@node
+def apply_style(context: Context) -> None:
+    context.state["final_article"] = call_llm(
+        f"""
+Rewrite this draft in a conversational, engaging style:
+
+{context.state["draft"]}
+
+Include a strong opening and conclusion.
+"""
+    )
+
+    print("\n===== FINAL ARTICLE =====\n")
+    print(context.state["final_article"])

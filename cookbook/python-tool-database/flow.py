@@ -1,16 +1,11 @@
 from caskada import Flow
-from nodes import InitDatabaseNode, CreateTaskNode, ListTasksNode
+from nodes import create_task, initialize_database, list_tasks
 
-def create_database_flow():
-    """Create a flow for database operations"""
-    
-    # Create nodes
-    init_db = InitDatabaseNode()
-    create_task = CreateTaskNode()
-    list_tasks = ListTasksNode()
-    
-    # Connect nodes
-    init_db >> create_task >> list_tasks
-    
-    # Create and return flow
-    return Flow(start=init_db)
+
+def build_flow() -> Flow:
+    initialize_database.link(create_task)
+    create_task.link(list_tasks)
+    return Flow(initialize_database)
+
+
+database_flow = build_flow()

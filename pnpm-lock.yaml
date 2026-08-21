@@ -41,7 +41,7 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(debug@4.4.3)
       caskada:
-        specifier: workspace:*
+        specifier: ^3.0.0
         version: link:../../typescript
       openai:
         specifier: ^7.4.0
@@ -63,7 +63,7 @@ importers:
   cookbook/typescript-chat:
     dependencies:
       caskada:
-        specifier: workspace:*
+        specifier: ^3.0.0
         version: link:../../typescript
       openai:
         specifier: ^7.4.0

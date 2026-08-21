@@ -1,78 +1,30 @@
-from typing import Dict, List
+import yaml
 from utils.call_llm import call_llm
 
-def analyze_results(query: str, results: List[Dict]) -> Dict:
-    """Analyze search results using LLM
-    
-    Args:
-        query (str): Original search query
-        results (List[Dict]): Search results to analyze
-        
-    Returns:
-        Dict: Analysis including summary and key points
-    """
-    # Format results for prompt
-    formatted_results = []
-    for i, result in enumerate(results, 1):
-        formatted_results.append(f"""
-Result {i}:
-Title: {result['title']}
-Snippet: {result['snippet']}
-URL: {result['link']}
-""")
-    formatted_results_text = "\n".join(formatted_results)
 
+def analyze_results(query: str, results: list[dict]) -> dict:
+    formatted = "\n".join(
+        f"{index}. {result['title']}\n{result['snippet']}\n{result['link']}"
+        for index, result in enumerate(results, 1)
+    )
     prompt = f"""
-Analyze these search results for the query: "{query}"
+Analyze these search results for the query "{query}":
 
-{formatted_results_text}
+{formatted}
 
-Please provide:
-1. A concise summary of the findings (2-3 sentences)
-2. Key points or facts (up to 5 bullet points)
-3. Suggested follow-up queries (2-3)
-
-Output in YAML format:
+Return a YAML code block with this shape:
 ```yaml
-summary: >
-    brief summary here
+summary: brief summary
 key_points:
-    - point 1
-    - point 2
+  - point 1
 follow_up_queries:
-    - query 1
-    - query 2
+  - next query
 ```
-
-IMPORTANT: Make sure to:
-1. Use proper indentation (4 spaces) for all multi-line fields
-2. Use the | character for multi-line text fields
-3. Keep single-line fields without the | character
-4. Your answer must be wrapped in yaml code block or it will result in an error. Do not forget to include the ```yaml sequence at the beginning and end it with ```.
 """
-    
-    try:
-        response = call_llm(prompt)
-        assert "```yaml" in response, "Response must contain yaml block"
-        # Extract YAML between code fences
-        yaml_str = response.split("```yaml")[1].split("```")[0].strip()
-        
-        import yaml
-        analysis = yaml.safe_load(yaml_str)
-        
-        # Validate required fields
-        assert "summary" in analysis
-        assert "key_points" in analysis
-        assert "follow_up_queries" in analysis
-        assert isinstance(analysis["key_points"], list)
-        assert isinstance(analysis["follow_up_queries"], list)
-        
-        return analysis
-        
-    except Exception as e:
-        print(f"Error analyzing results: {str(e)}")
-        return {
-            "summary": "Error analyzing results",
-            "key_points": [],
-            "follow_up_queries": []
-        }
+    response = call_llm(prompt)
+    if "```yaml" not in response:
+        raise ValueError("response must contain a YAML block")
+    analysis = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
+    if not isinstance(analysis, dict):
+        raise TypeError("analysis must be a mapping")
+    return analysis

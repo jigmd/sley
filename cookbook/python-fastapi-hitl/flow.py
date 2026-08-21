@@ -1,18 +1,13 @@
 from caskada import Flow
-from nodes import ProcessNode, ReviewNode, ResultNode
+from nodes import process, review, show_result
 
-def create_feedback_flow():
-    """Creates the minimal feedback workflow."""
-    process_node = ProcessNode()
-    review_node = ReviewNode()
-    result_node = ResultNode()
+# A successful process call emits nothing, so it follows this unlabelled link.
+process.link(review)
+review.link(show_result, "approved")
+review.link(process, "rejected")
 
-    # Define transitions
-    process_node >> review_node
-    review_node - "approved" >> result_node
-    review_node - "rejected" >> process_node # Loop back
+feedback_flow = Flow(process)
 
-    # Create the Flow
-    flow = Flow(start=process_node)
-    print("Minimal feedback flow created.")
-    return flow
+
+def create_feedback_flow() -> Flow:
+    return feedback_flow

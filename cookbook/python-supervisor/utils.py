@@ -1,21 +1,26 @@
-from openai import OpenAI
 import os
-from duckduckgo_search import DDGS
 
-def call_llm(prompt):    
+from duckduckgo_search import DDGS
+from openai import OpenAI
+
+
+def call_llm(prompt):
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
-    r = client.chat.completions.create(
+    response = client.chat.completions.create(
         model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
     )
-    return r.choices[0].message.content
+    return response.choices[0].message.content
+
 
 def search_web(query):
     results = DDGS().text(query, max_results=5)
-    # Convert results to a string
-    results_str = "\n\n".join([f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}" for r in results])
-    return results_str
-    
+    return "\n\n".join(
+        f"Title: {result['title']}\nURL: {result['href']}\nSnippet: {result['body']}"
+        for result in results
+    )
+
+
 if __name__ == "__main__":
     print("## Testing call_llm")
     prompt = "In a few words, what is the meaning of life?"

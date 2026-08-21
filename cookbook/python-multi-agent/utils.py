@@ -1,14 +1,11 @@
 import os
-from openai import OpenAI
 
-def call_llm(prompt):    
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
-    r = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
+from openai import AsyncOpenAI
+
+
+async def call_llm(prompt: str) -> str:
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}]
     )
-    return r.choices[0].message.content
-
-# Example usage
-if __name__ == "__main__":
-    print(call_llm("Tell me a short joke")) 
+    return response.choices[0].message.content or ""

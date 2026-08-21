@@ -1,66 +1,26 @@
 ---
-complexity: 10.5
+complexity: 7
 ---
 
-# Parallel Image Processor
+# Sequential and Parallel Nested Flows
 
-Demonstrates how a batch ParallelFlow processes multiple images with multiple filters >8x faster than sequential processing.
+This example builds the same reusable image-processing Flow twice. One outer
+Flow has `concurrency=1`; the other has `concurrency=9`.
 
-## Features
+Each emitted image/filter input starts a nested Flow:
 
-```mermaid
-graph TD
-    subgraph ParallelFlow[Image Processing Flow]
-        subgraph Flow[Per Image-Filter Flow]
-            A[Load Image] --> B[Apply Filter]
-            B --> C[Save Image]
-        end
-    end
+```text
+load -> apply filter -> save -> end(path)
 ```
 
-- Processes images with multiple filters in parallel
-- Applies three different filters (grayscale, blur, sepia)
-- Shows significant speed improvement over sequential processing
-- Manages system resources with semaphores
+The graph and handlers do not change between the sequential and parallel runs.
+Only the owning Flow's local concurrency cap changes. Fresh node occurrences are
+created for each graph because links belong to occurrences, not handler
+functions.
 
-## Run It
+## Run
 
 ```bash
 pip install -r requirements.txt
 python main.py
 ```
-
-## Output
-
-```=== Processing Images in Parallel ===
-Parallel Image Processor
-------------------------------
-Found 3 images:
-- images/bird.jpg
-- images/cat.jpg
-- images/dog.jpg
-
-Running sequential batch flow...
-Processing 3 images with 3 filters...
-Total combinations: 9
-Loading image: images/bird.jpg
-Applying grayscale filter...
-Saved: output/bird_grayscale.jpg
-...etc
-
-Timing Results:
-Sequential batch processing: 13.76 seconds
-Parallel batch processing: 1.71 seconds
-Speedup: 8.04x
-
-Processing complete! Check the output/ directory for results.
-```
-
-## Key Points
-
-- **Sequential**: Total time = sum of all item times
-
-  - Good for: Rate-limited APIs, maintaining order
-
-- **Parallel**: Total time ≈ longest single item time
-  - Good for: I/O-bound tasks, independent operations

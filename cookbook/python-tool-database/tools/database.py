@@ -1,13 +1,15 @@
 import sqlite3
-from typing import List, Tuple, Any
 
-def execute_sql(query: str, params: Tuple = None) -> List[Tuple[Any, ...]]:
+
+def execute_sql(
+    query: str, params: tuple[object, ...] | None = None
+) -> list[tuple[object, ...]]:
     """Execute a SQL query and return results
-    
+
     Args:
         query (str): SQL query to execute
         params (tuple, optional): Query parameters to prevent SQL injection
-        
+
     Returns:
         list: Query results as a list of tuples
     """
@@ -23,6 +25,7 @@ def execute_sql(query: str, params: Tuple = None) -> List[Tuple[Any, ...]]:
         return result
     finally:
         conn.close()
+
 
 def init_db():
     """Initialize database with example table"""

@@ -1,78 +1,22 @@
 ---
-complexity: 6
+complexity: 5
 ---
 
 # Web Search with Analysis
 
-A web search tool built with Caskada that performs searches using SerpAPI and analyzes results using LLM.
+This linear Flow separates orchestration from tools:
 
-## Features
+1. `search` calls SerpAPI and stores the results.
+2. Its unlabelled link runs `analyze`, which asks an LLM for a YAML summary.
 
-- Web search using Google via SerpAPI
-- Extracts titles, snippets, and links
-- Analyzes search results using GPT-4 to provide:
-  - Result summaries
-  - Key points/facts
-  - Suggested follow-up queries
-- Clean command-line interface
+The Caskada handlers in `nodes.py` make the workflow visible; API-specific code
+stays in `tools/`.
 
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Set required API keys:
-   ```bash
-   export SERPAPI_API_KEY='your-serpapi-key'
-   export OPENAI_API_KEY='your-openai-key'
-   ```
-
-## Usage
-
-Run the search tool:
+## Run
 
 ```bash
+export SERPAPI_API_KEY="your-serpapi-key"
+export OPENAI_API_KEY="your-openai-key"
+pip install -r requirements.txt
 python main.py
 ```
-
-You will be prompted to:
-
-1. Enter your search query
-2. Specify number of results to fetch (default: 5)
-
-The tool will then:
-
-1. Perform the search using SerpAPI
-2. Analyze results using GPT-4
-3. Present a summary with key points and follow-up queries
-
-## Project Structure
-
-```
-python-tool-search/
-├── tools/
-│   ├── search.py      # SerpAPI search functionality
-│   └── parser.py      # Result analysis using LLM
-├── utils/
-│   └── call_llm.py    # LLM API wrapper
-├── nodes.py           # Caskada nodes
-├── flow.py           # Flow configuration
-├── main.py           # Main script
-└── requirements.txt   # Dependencies
-```
-
-## Limitations
-
-- Requires SerpAPI subscription
-- Rate limited by both APIs
-- Basic error handling
-- Text results only
-
-## Dependencies
-
-- caskada: Flow-based processing
-- google-search-results: SerpAPI client
-- openai: GPT-4 API access
-- pyyaml: YAML processing
