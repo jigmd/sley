@@ -19,6 +19,8 @@
   tests add dynamic JavaScript, Promise, browser, and static typing coverage.
 - Invalid public options fail immediately. Application throws become runtime
   `Failure` records only where retry or recovery can act on them.
+- Initial state is a plain string-keyed object; invalid containers fail before
+  callbacks run.
 
 ## Work Guidance
 

@@ -19,6 +19,7 @@
   add host-language validation, asyncio, and typing coverage.
 - Public definitions fail immediately on invalid values. Application failures
   become runtime `Failure` records only where retry or recovery can act on them.
+- Compilation revalidates reachable mutable definitions before snapshotting.
 
 ## Work Guidance
 
@@ -33,7 +34,8 @@
 - Preserve `caskada/py.typed` so installed mypy and Pyright users receive the
   verified inline types.
 - Let `BaseException` keep native behavior. Catch ordinary application
-  exceptions only at callbacks and declared policy boundaries.
+  exceptions only at callbacks and declared policy boundaries, and always close
+  the callback Context before propagation.
 - Raise on impossible compiled states; do not hide runtime defects in fallback
   outcomes.
 

@@ -89,16 +89,16 @@ Invalid definitions fail when constructed or compiled. `compile()` snapshots
 the reachable topology and validates it. Later mutations of definitions do not
 change a compiled Flow. Definitions and compiled Flows hold no run state.
 
-`describe()` returns the compiled elements, links, entry, exits, and policies in
-plain immutable records suitable for inspection and visualization. It is not a
-run trace.
+`describe()` returns the compiled elements, links, entry, exits, and scalar
+limits in fresh, detached plain records suitable for inspection and
+visualization. It is not a run trace.
 
 ## State and input
 
 Each run shallow-copies its initial top-level mapping once. Python uses an
-ordinary `dict`; TypeScript uses an ordinary object. All activations in that run
-share the copied top-level state and its nested references. The caller's
-top-level mapping is not mutated.
+ordinary `dict`; TypeScript accepts a plain object and uses an ordinary object.
+All activations in that run share the copied top-level state and its nested
+references. The caller's top-level mapping is not mutated.
 
 `context.input` is the message for one branch. The root input is absent. An
 emission without a new input forwards the current input. State and input are
@@ -217,6 +217,11 @@ being admitted and already-running local work is awaited. The Flow's
 emissions replace the scope failure and route from the Flow element. Zero
 emissions propagate the failure. Settled terminals are exposed on
 `ScopeFailure`; recovery does not pretend they never happened.
+
+When a failed nested Flow has settled terminals, those terminals propagate with
+the failure into each enclosing scope's `ScopeFailure` and the final `Failed`
+result. Explicit recovery emissions replace them like any other settled
+terminals.
 
 `Failure` is a small immutable record containing an id, kind, message, cause,
 scope id, activation id, element id, attempt, and optional previous failure.

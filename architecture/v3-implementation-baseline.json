@@ -7,11 +7,11 @@
   "authority": [
     {
       "path": "architecture/rfcs/0001-caskada-v3-runtime.md",
-      "sha256": "be208fe399442102715442114c142aa2f92ae55de2c9737a55f27f7d362424e2"
+      "sha256": "98e4f358e67984cc00ea58a8aafa2fb471c54c876f8d3b2b1d72cdb671ebc1a5"
     },
     {
       "path": "architecture/v3-architecture-verdict.md",
-      "sha256": "567d850c3e2cc971d98121cdb0e30a852b78b609504a92a231434aaaed6919d9"
+      "sha256": "e2c699a396169de54443389618756911dfed2542678ffe27c7b5f99736ab0b7a"
     },
     {
       "path": "conformance/fixture.schema.json",
@@ -19,11 +19,11 @@
     },
     {
       "path": "conformance/fixtures/runtime.json",
-      "sha256": "e38a03e277f2c1fb147b04144ca93d629e6ab14e13235bbfa42558ba088e68f1"
+      "sha256": "347e192957ba669c118d5f667839583e6d0246e3475493fe97096329245b56f7"
     },
     {
       "path": "conformance/coverage.md",
-      "sha256": "1ea564581d3dd80712779d45254e75465ff00073bd8701ff0b39f1bff65096ff"
+      "sha256": "7113ecb555a7a0303959beac5aedd195153d183e05bdcc0cdede257757f534be"
     }
   ],
   "verification_tools": [
@@ -33,11 +33,11 @@
     },
     {
       "path": "conformance/run-python.py",
-      "sha256": "0521715169dcf407ae40a4246bdf48c773469007fbc0f330123a0c1a17a7d474"
+      "sha256": "fb716abd39d5d06e941b6439b3f955d519e117ef9a2edb3692f9d20fa48a110c"
     },
     {
       "path": "conformance/run-typescript.mts",
-      "sha256": "f946ab186c04af71cf72e409e06aef7d630c1d97e7060879ddc334b16791cf2c"
+      "sha256": "92552aa9d0b375420bfc3212372a6d3186150589a5ede802f3338dc8d0074dc4"
     },
     {
       "path": "conformance/run-all.py",

@@ -28,7 +28,8 @@ at settlement. Retained aliases remain live references, not snapshots.
 
 Top-level state supports normal record operations. Python uses a new `dict`;
 TypeScript uses a new object created from the initial object's enumerable own
-properties. Top-level state keys must be strings.
+properties. TypeScript rejects arrays, class instances, and collection objects
+such as `Map`; top-level state keys must be strings in both ports.
 
 ## Shared-State Concurrency
 

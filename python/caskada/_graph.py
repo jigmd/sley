@@ -81,6 +81,7 @@ class Node(GraphElement[StateT], Generic[StateT, InputT]):
         retry: RetryPolicy,
         recover: NodeRecoveryHandler[StateT, InputT] | None,
     ) -> None:
+        _validate_node(handler, retry, recover)
         super().__init__(name)
         self.handler = handler
         self.retry = retry
@@ -118,18 +119,12 @@ def node(
     Node[StateT, InputT] | Callable[[NodeHandler[StateT, InputT]], Node[StateT, InputT]]
 ):
     policy = RetryPolicy() if retry is None else retry
-    if not isinstance(policy, RetryPolicy):
-        raise GraphDefinitionError("node retry must be a RetryPolicy")
-    if recover is not None and not callable(recover):
-        raise GraphDefinitionError("Node.recover must be callable")
-    if name is not None:
-        _nonempty_string(name, "Node.name")
 
     def create(callback: NodeHandler[StateT, InputT]) -> Node[StateT, InputT]:
-        if not callable(callback):
-            raise GraphDefinitionError("node handler must be callable")
         inferred = getattr(callback, "__name__", "anonymous")
-        resolved_name = name or (inferred if isinstance(inferred, str) else "anonymous")
+        resolved_name = name if name is not None else inferred
+        if not isinstance(resolved_name, str):
+            resolved_name = "anonymous"
         return Node(callback, name=resolved_name, retry=policy, recover=recover)
 
     if handler is _MISSING:
@@ -149,23 +144,9 @@ class Flow(GraphElement[StateT], Generic[StateT]):
         combine: FlowCombineHandler[StateT] | None = None,
         recover: FlowRecoveryHandler[StateT] | None = None,
     ) -> None:
-        if not isinstance(entry, GraphElement):
-            raise GraphDefinitionError("Flow.entry must be a Node or Flow")
-        if isinstance(exits, (str, bytes)):
-            raise GraphDefinitionError("Flow.exits must be an iterable of actions")
-        captured_exits = tuple(
-            _nonempty_string(action, "Flow exit") for action in exits
+        captured_exits = _validate_flow(
+            entry, exits, concurrency, max_activations, combine, recover
         )
-        if len(set(captured_exits)) != len(captured_exits):
-            raise GraphDefinitionError("Flow.exits contains a duplicate action")
-        _positive_integer(concurrency, "Flow.concurrency")
-        if max_activations is not None:
-            _positive_integer(max_activations, "Flow.max_activations")
-        if combine is not None and not callable(combine):
-            raise GraphDefinitionError("Flow.combine must be callable")
-        if recover is not None and not callable(recover):
-            raise GraphDefinitionError("Flow.recover must be callable")
-
         super().__init__(name)
         self.entry = entry
         self.exits = captured_exits
@@ -275,6 +256,14 @@ class _Compiler:
         )
 
     def _compile_scope(self, scope: _ScopeWork) -> None:
+        exits = _validate_flow(
+            scope.flow.entry,
+            scope.flow.exits,
+            scope.flow.concurrency,
+            scope.flow.max_activations,
+            scope.flow.combine,
+            scope.flow.recover,
+        )
         element_ids: dict[GraphElement[Any], int] = {}
         elements: list[GraphElement[Any]] = []
 
@@ -313,6 +302,7 @@ class _Compiler:
             )
             element_id = element_ids[element]
             if isinstance(element, Node):
+                _validate_node(element.handler, element.retry, element.recover)
                 self.placements[element_id] = _CompiledPlacement(
                     element_id,
                     "node",
@@ -342,12 +332,46 @@ class _Compiler:
             scope.parent_scope_id,
             entry_id,
             scope.flow.name,
-            scope.flow.exits,
+            exits,
             scope.flow.concurrency,
             scope.flow.max_activations,
             scope.flow.combine,
             scope.flow.recover,
         )
+
+
+def _validate_node(handler: object, retry: object, recover: object | None) -> None:
+    if not callable(handler):
+        raise GraphDefinitionError("node handler must be callable")
+    if not isinstance(retry, RetryPolicy):
+        raise GraphDefinitionError("node retry must be a RetryPolicy")
+    if recover is not None and not callable(recover):
+        raise GraphDefinitionError("Node.recover must be callable")
+
+
+def _validate_flow(
+    entry: object,
+    exits: object,
+    concurrency: object,
+    max_activations: object | None,
+    combine: object | None,
+    recover: object | None,
+) -> tuple[Action, ...]:
+    if not isinstance(entry, GraphElement):
+        raise GraphDefinitionError("Flow.entry must be a Node or Flow")
+    if isinstance(exits, (str, bytes)) or not isinstance(exits, Iterable):
+        raise GraphDefinitionError("Flow.exits must be an iterable of actions")
+    captured_exits = tuple(_nonempty_string(action, "Flow exit") for action in exits)
+    if len(set(captured_exits)) != len(captured_exits):
+        raise GraphDefinitionError("Flow.exits contains a duplicate action")
+    _positive_integer(concurrency, "Flow.concurrency")
+    if max_activations is not None:
+        _positive_integer(max_activations, "Flow.max_activations")
+    if combine is not None and not callable(combine):
+        raise GraphDefinitionError("Flow.combine must be callable")
+    if recover is not None and not callable(recover):
+        raise GraphDefinitionError("Flow.recover must be callable")
+    return captured_exits
 
 
 def _compile(root: Flow[StateT]) -> _CompiledSnapshot:

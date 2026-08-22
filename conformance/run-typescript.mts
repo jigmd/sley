@@ -271,6 +271,26 @@ async function nestedEnd(): Promise<RunResult<State>> {
   return new Flow(child).start({}).result()
 }
 
+async function nestedFailureTerminals(): Promise<RunResult<State>> {
+  const source = node<State>((context) => {
+    context.emit(undefined, 1)
+    context.emit(undefined, 2)
+  })
+  source.link(
+    node<State, number>((context) => {
+      if (context.input === 1) context.end(context.input)
+      else throw new Error('failed')
+    }),
+  )
+  return new Flow(new Flow(source), {
+    recover(context, failure) {
+      context.state.settled = failure.terminals.map((terminal) => terminal.output)
+    },
+  })
+    .start({})
+    .result()
+}
+
 const cases: Record<string, () => Promise<RunResult<State>>> = {
   implicit_link: implicitLink,
   named_input: namedInput,
@@ -290,6 +310,7 @@ const cases: Record<string, () => Promise<RunResult<State>>> = {
   activation_limit: activationLimit,
   local_concurrency: localConcurrency,
   nested_end: nestedEnd,
+  nested_failure_terminals: nestedFailureTerminals,
 }
 
 const document = JSON.parse(readFileSync(process.argv[2]!, 'utf8')) as { cases: { id: string }[] }

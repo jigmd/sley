@@ -137,6 +137,8 @@ describe('v3 state, input, and control', () => {
     let calls = 0
     const flow = new Flow(node<State>(() => void calls++))
     assert.throws(() => flow.start([] as never), TypeError)
+    assert.throws(() => flow.start(new Map() as never), /plain object/)
+    assert.throws(() => flow.start(new Date() as never), /plain object/)
     assert.throws(() => flow.start({ [Symbol('key')]: true } as never), TypeError)
     assert.equal(calls, 0)
   })
@@ -145,6 +147,25 @@ describe('v3 state, input, and control', () => {
     const then = () => 'application value'
     const state = await new Flow(node<{ then: unknown }>(() => {})).run({ then })
     assert.equal(state.then, then)
+  })
+
+  it('settles run when a handler freezes ordinary state', async () => {
+    const state = await new Flow(
+      node<Record<string, unknown>>((context) => {
+        Object.freeze(context.state)
+      }),
+    ).run({})
+    assert.equal(Object.isFrozen(state), true)
+  })
+
+  it('rejects an immutable callable then state instead of hanging', async () => {
+    const then = () => 'application value'
+    const flow = new Flow(
+      node<{ then: unknown }>((context) => {
+        Object.freeze(context.state)
+      }),
+    )
+    await assert.rejects(flow.run({ then }), /callable then property must remain mutable/)
   })
 
   it('replaces and forwards branch input', async () => {

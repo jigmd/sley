@@ -154,7 +154,11 @@ class CompiledFlowImpl<State extends object> implements CompiledFlow<State> {
         if (result.status === 'failed') {
           reject(new RunError(result))
         } else {
-          resolveState(resolve, result.state)
+          try {
+            resolveState(resolve, result.state)
+          } catch (cause) {
+            reject(cause)
+          }
         }
       }, reject)
     })

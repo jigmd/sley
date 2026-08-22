@@ -251,6 +251,25 @@ async def nested_end() -> RunResult[Any]:
     return await Flow(child).start({}).result()
 
 
+async def nested_failure_terminals() -> RunResult[Any]:
+    def dispatch(context: Context[dict[str, Any]]) -> None:
+        context.emit(input=1)
+        context.emit(input=2)
+
+    def work(context: Context[dict[str, Any], int]) -> None:
+        if context.input == 1:
+            context.end(context.input)
+        else:
+            raise ValueError("failed")
+
+    def recover(context: Context[dict[str, Any]], failure: ScopeFailure) -> None:
+        context.state["settled"] = [item.output for item in failure.terminals]
+
+    source = node(dispatch)
+    source.link(node(work))
+    return await Flow(Flow(source), recover=recover).start({}).result()
+
+
 CASES = {
     "implicit_link": implicit_link,
     "named_input": named_input,
@@ -270,6 +289,7 @@ CASES = {
     "activation_limit": activation_limit,
     "local_concurrency": local_concurrency,
     "nested_end": nested_end,
+    "nested_failure_terminals": nested_failure_terminals,
 }
 
 

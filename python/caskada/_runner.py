@@ -91,6 +91,7 @@ class _Run:
             )
             for activation, outcome in zip(batch, outcomes, strict=True):
                 if isinstance(outcome, _FailureSignal):
+                    terminals.extend(outcome.terminals)
                     if failure is None:
                         failure = outcome
                     continue
@@ -167,7 +168,10 @@ class _Run:
             )
             if isinstance(child, _ScopeFailed):
                 return _FailureSignal(
-                    child.failure, activation.activation_id, activation.input
+                    child.failure,
+                    activation.activation_id,
+                    activation.input,
+                    terminals=child.terminals,
                 )
             return self._route_child(
                 scope, runtime_scope_id, placement, activation, child.terminals
@@ -353,8 +357,9 @@ class _Run:
                 raise _InvalidOutcome("callbacks must return None")
             return context.close()
         except Exception as cause:  # noqa: BLE001 - callback is user code
-            context.close()
             return cause
+        finally:
+            context.close()
 
     def _route_intents(
         self,
@@ -593,6 +598,7 @@ class _FailureSignal:
     activation_id: int | None
     input: object
     result: ScopeResult | None = None
+    terminals: tuple[Terminal, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)

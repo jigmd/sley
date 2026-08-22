@@ -54,6 +54,10 @@ related reports as runtime defects:
   schemas. Missing Python mapping keys raise `KeyError`; missing TypeScript
   properties normally produce `undefined`. Applications validate trust
   boundaries rather than the runtime imposing proxies or cross-link schemas.
+- **Host-language invalid-call behavior:** portable control calls have the same
+  meaning, but invalid Python arity is a native `TypeError` while TypeScript
+  validates dynamic arguments as `invalid_outcome`. Invalid calls are outside
+  the portable author contract.
 - **Borrowed mutable state and effects:** only the initial top-level state is
   shallow-copied. Nested references remain shared, concurrent writes require
   application coordination, and retries do not roll back state or external
@@ -62,6 +66,10 @@ related reports as runtime defects:
   logging, persistence, and cancellation use host-language or service-client
   facilities. Their absence from Caskada is intentional unless concrete usage
   justifies a separate RFC.
+- **TypeScript Promise assimilation:** `run()` temporarily masks an application
+  state field named `then` when it is callable. Making that callable property
+  immutable before completion makes `run()` reject; `start().result()` remains
+  available without Promise-projecting the state itself.
 
 ## Current Evidence
 

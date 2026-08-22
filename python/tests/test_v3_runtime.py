@@ -11,6 +11,7 @@ from caskada import (
     DuplicateLinkError,
     Flow,
     GraphDefinitionError,
+    Node,
     RetryPolicy,
     RunError,
     ScopeFailure,
@@ -45,6 +46,7 @@ class DefinitionTests(unittest.TestCase):
         handler = lambda _context: None
         invalid = (
             lambda: node(object()),
+            lambda: Node(object(), name="invalid", retry=RetryPolicy(), recover=None),
             lambda: node(handler, name=""),
             lambda: node(handler, retry=object()),
             lambda: node(handler, recover=object()),
@@ -102,6 +104,10 @@ class DefinitionTests(unittest.TestCase):
         self.assertEqual(flow.exits, ("done",))
         self.assertEqual(flow.concurrency, 3)
         self.assertEqual(flow.max_activations, 10)
+
+        flow.concurrency = 0
+        with self.assertRaises(GraphDefinitionError):
+            flow.compile()
 
         invalid = (
             lambda: Flow(object()),
@@ -188,6 +194,25 @@ class ExecutionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(TypeError):
             flow.start({1: "not a string"})  # type: ignore[dict-item]
         self.assertEqual(calls, 0)
+
+    async def test_native_cancellation_closes_callback_context(self) -> None:
+        retained: list[Context[dict[str, Any]]] = []
+        started = asyncio.Event()
+
+        async def handler(context: Context[dict[str, Any]]) -> None:
+            retained.append(context)
+            started.set()
+            await asyncio.Event().wait()
+
+        handle = Flow(node(handler)).start({})
+        waiter = asyncio.create_task(handle.result())
+        await started.wait()
+        waiter.cancel()
+
+        with self.assertRaises(asyncio.CancelledError):
+            await waiter
+        with self.assertRaisesRegex(RuntimeError, "closed"):
+            retained[0].emit()
 
     async def test_branch_input_can_be_replaced_and_forwarded(self) -> None:
         seen: list[object] = []

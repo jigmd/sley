@@ -186,6 +186,16 @@
         "state": {},
         "terminals": [{ "type": "end", "action": null, "has_output": true, "output": 7, "sequence": 1, "source_activation_id": 3 }]
       }
+    },
+    {
+      "id": "nested_failure_terminals",
+      "requirement": "Settled terminals from a failed child Flow remain visible to enclosing recovery and the final result.",
+      "expected": {
+        "status": "failed",
+        "state": { "settled": [1] },
+        "terminals": [{ "type": "end", "action": null, "has_output": true, "output": 1, "sequence": 1, "source_activation_id": 4 }],
+        "failure": { "kind": "handler", "attempt": 1, "previous_kind": null }
+      }
     }
   ]
 }

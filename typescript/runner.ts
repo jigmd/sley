@@ -86,6 +86,7 @@ class Run<State extends object> {
 
       for (const outcome of outcomes) {
         if (outcome.failed) {
+          terminals.push(...outcome.terminals)
           failure ??= outcome
           continue
         }
@@ -138,7 +139,7 @@ class Run<State extends object> {
       // ponytail: recurse by Flow depth; use an explicit stack only if real
       // workflows reach the JavaScript call-stack limit.
       const child = await this.runScope(placement.ownedScopeId, activation.activationId, activation.input)
-      if (child.failed) return this.signal(child.failure, activation.activationId, activation.input)
+      if (child.failed) return this.signal(child.failure, activation.activationId, activation.input, null, child.terminals)
       return this.routeChild(scope, runtimeScopeId, placement, activation, child.terminals)
     }
 
@@ -451,8 +452,14 @@ class Run<State extends object> {
     })
   }
 
-  private signal(failure: Failure, activationId: number | null, input: unknown, result: ScopeResult | null = null): FailureSignal {
-    return { failed: true, failure, activationId, input, result }
+  private signal(
+    failure: Failure,
+    activationId: number | null,
+    input: unknown,
+    result: ScopeResult | null = null,
+    terminals: readonly Terminal[] = [],
+  ): FailureSignal {
+    return { failed: true, failure, activationId, input, result, terminals }
   }
 
   private activation(elementId: number, input: unknown): Activation {
@@ -518,6 +525,7 @@ interface FailureSignal {
   readonly activationId: number | null
   readonly input: unknown
   readonly result: ScopeResult | null
+  readonly terminals: readonly Terminal[]
 }
 
 interface ScopeSuccess {

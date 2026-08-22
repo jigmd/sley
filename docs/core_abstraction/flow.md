@@ -54,6 +54,9 @@ A nested Flow exit is then resolved through the Flow occurrence's links in its
 parent. Hard End terminals bypass links and propagate through enclosing
 boundaries unless a combiner replaces them.
 
+Settled terminals from a failed nested Flow also remain visible to enclosing
+Flow recovery and in the final failed result unless recovery replaces them.
+
 ## Structured Completion
 
 A Flow does not finish when its first branch settles. It waits until every
