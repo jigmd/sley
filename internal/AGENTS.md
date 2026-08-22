@@ -30,6 +30,9 @@
   release gates do not prevent freezing an implementation baseline.
 - Prefer the smallest complete semantic model. New concepts and special cases
   must reduce overall implementation and authoring complexity, not merely move it.
+- Record intentional behavior ceilings and application-owned responsibilities
+  in architecture decisions so issue triage can distinguish defects from
+  optimization or feature requests.
 
 ## Verification
 

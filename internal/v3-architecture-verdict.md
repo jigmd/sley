@@ -1,7 +1,7 @@
 # V3 Architecture Verdict
 
 - Status: lean runtime accepted; implementation complete
-- Date: 2026-08-21
+- Date: 2026-08-22
 - Authority: [RFC 0001](rfcs/0001-caskada-v3-runtime.md)
 
 ## Verdict
@@ -39,6 +39,28 @@ Each port keeps four responsibilities visible:
 Standard-library and platform collections, queues, tasks, and timers take
 precedence over custom equivalents. Invalid public input and impossible runtime
 states fail immediately.
+
+## Intentional Tradeoffs
+
+These are accepted simplicity boundaries and should be checked before treating
+related reports as runtime defects:
+
+- **Bounded-wave concurrency:** each Flow admits up to its local `concurrency`
+  limit and waits for that wave before admitting more. The contract guarantees
+  an upper bound, not work-conserving scheduling or fairness. Improving
+  utilization requires measured need and must preserve the small runner.
+- **Host-language data behavior:** Caskada validates control, not application
+  schemas. Missing Python mapping keys raise `KeyError`; missing TypeScript
+  properties normally produce `undefined`. Applications validate trust
+  boundaries rather than the runtime imposing proxies or cross-link schemas.
+- **Borrowed mutable state and effects:** only the initial top-level state is
+  shallow-copied. Nested references remain shared, concurrent writes require
+  application coordination, and retries do not roll back state or external
+  effects.
+- **Application-owned operations:** provider timeouts, shared rate limits,
+  logging, persistence, and cancellation use host-language or service-client
+  facilities. Their absence from Caskada is intentional unless concrete usage
+  justifies a separate RFC.
 
 ## Current Evidence
 
