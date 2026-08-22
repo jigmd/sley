@@ -42,9 +42,10 @@
 - Run `pnpm --dir typescript test` for definition, routing, state/input,
   terminals, nested Flow, combine, atomic control, results, retry, recovery,
   concurrency, and cycle limits.
-- Run strict `tsc` over `typescript/tsconfig.json`, including
-  `tests/runtime.v3.types.ts`.
 - Build ESM, CommonJS, and declarations with `pnpm --dir typescript build`.
+- Run strict `tsc` over `typescript/tsconfig.json` after the build so typed
+  cookbook projects can resolve the linked local package; the check includes
+  `tests/runtime.v3.types.ts`.
 - Run `python typescript/tests/run-browser-v3.py` inside `shell.nix`; the bundle
   must contain no Node.js built-in import.
 - Run `python3 conformance/run-all.py` after shared semantic changes.

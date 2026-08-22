@@ -2,6 +2,7 @@
   "schema_version": 1,
   "revision": "lean-v3",
   "accepted_on": "2026-08-22",
+  "reviewed_revision": "96a0bff508e3389979f58554149391257fb457ef",
   "status": "accepted_implementation_baseline",
   "hash_algorithm": "sha256",
   "authority": [
@@ -11,7 +12,7 @@
     },
     {
       "path": "architecture/v3-architecture-verdict.md",
-      "sha256": "e2c699a396169de54443389618756911dfed2542678ffe27c7b5f99736ab0b7a"
+      "sha256": "e6c26bdcd7b2fc4ecea3f61611593d37fe7d20ee474d9661349002445fabf092"
     },
     {
       "path": "conformance/fixture.schema.json",
