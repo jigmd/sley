@@ -9,12 +9,12 @@
 - Owns the Python public API, runtime internals, packaging, inline types, and
   Python-specific tests.
 - `caskada/__init__.py` is the public facade. `_contracts.py` owns public values,
-  `_definition.py` graph definitions and compilation, `_state.py` state capture,
-  and `_scheduling.py` graph execution.
+  `_graph.py` graph definitions and compilation, `_context.py` callback-local
+  control, `_state.py` state capture, and `_runner.py` graph execution.
 
 ## Local Contracts
 
-- `internal/rfcs/0001-caskada-v3-runtime.md` is normative.
+- `architecture/rfcs/0001-caskada-v3-runtime.md` is normative.
 - Shared semantics consume language-neutral conformance fixtures. Python tests
   add host-language validation, asyncio, and typing coverage.
 - Public definitions fail immediately on invalid values. Application failures
@@ -25,8 +25,10 @@
 - Keep `caskada/__init__.py` to imports and `__all__`; scheduler logic is private.
 - Keep the shipped runner smaller than its verification. Use ordinary `dict`,
   `asyncio` tasks, lists, and tuples before custom runtime machinery.
-- Definitions store no invocation state. `_scheduling.py` is the only activation
+- Definitions store no invocation state. `_runner.py` is the only activation
   and scope orchestrator; leaf modules do not call back into it.
+- `_context.py` only validates callback control and records `emit` and `end`
+  intents; it does not route or schedule them.
 - `_state.py` performs only start-boundary validation and a native shallow copy.
 - Preserve `caskada/py.typed` so installed mypy and Pyright users receive the
   verified inline types.

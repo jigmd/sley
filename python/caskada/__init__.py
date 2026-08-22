@@ -1,5 +1,5 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-# Copyright (c) 2025, Victor Duarte
+# Copyright (c) 2026, Victor Duarte
 from ._contracts import (
     Action,
     CaskadaError,
@@ -19,7 +19,7 @@ from ._contracts import (
     ScopeResult,
     Terminal,
 )
-from ._definition import (
+from ._graph import (
     CompiledDescription,
     CompiledFlow,
     Flow,

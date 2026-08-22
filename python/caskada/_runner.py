@@ -1,12 +1,13 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-# Copyright (c) 2025, Victor Duarte
+# Copyright (c) 2026, Victor Duarte
 from __future__ import annotations
 
 import asyncio
 import inspect
 from dataclasses import dataclass
-from typing import Any, Literal, TypeVar
+from typing import Any, TypeVar
 
+from ._context import _Context, _Intent, _InvalidOutcome
 from ._contracts import (
     Action,
     Completed,
@@ -20,7 +21,7 @@ from ._contracts import (
     ScopeResult,
     Terminal,
 )
-from ._definition import (
+from ._graph import (
     _CompiledPlacement,
     _CompiledScope,
     _CompiledSnapshot,
@@ -30,104 +31,10 @@ StateT = TypeVar("StateT")
 _MISSING = object()
 
 
-class _InvalidOutcome(Exception):
-    pass
-
-
-@dataclass(frozen=True, slots=True)
-class _Intent:
-    kind: Literal["emit", "end"]
-    action: Action | None
-    value: object
-    has_value: bool
-
-
-class _Context:
-    def __init__(self, state: object, input: object) -> None:
-        self._state = state
-        self._input = input
-        self._intents: list[_Intent] = []
-        self._open = True
-
-    @property
-    def state(self) -> object:
-        self._check_open()
-        return self._state
-
-    @property
-    def input(self) -> object:
-        self._check_open()
-        return self._input
-
-    def emit(
-        self,
-        action: object = _MISSING,
-        input: object = _MISSING,
-    ) -> None:
-        self._check_open()
-        public_action: str | None = None
-        if action is not _MISSING:
-            if not isinstance(action, str) or not action:
-                raise _InvalidOutcome("emit action must be a nonempty string")
-            public_action = action
-        value = self._input if input is _MISSING else input
-        self._intents.append(_Intent("emit", public_action, value, True))
-
-    def end(self, output: object = _MISSING) -> None:
-        self._check_open()
-        self._intents.append(
-            _Intent(
-                "end",
-                None,
-                None if output is _MISSING else output,
-                output is not _MISSING,
-            )
-        )
-
-    def close(self) -> tuple[_Intent, ...]:
-        self._open = False
-        return tuple(self._intents)
-
-    def _check_open(self) -> None:
-        if not self._open:
-            raise RuntimeError("Context is closed")
-
-
-@dataclass(frozen=True, slots=True)
-class _Activation:
-    activation_id: int
-    element_id: int
-    input: object
-
-
-@dataclass(frozen=True, slots=True)
-class _Next:
-    element_id: int
-    input: object
-
-
-@dataclass(frozen=True, slots=True)
-class _Success:
-    items: tuple[Terminal | _Next, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class _FailureSignal:
-    failure: Failure
-    activation_id: int | None
-    input: object
-    result: ScopeResult | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class _ScopeSuccess:
-    terminals: tuple[Terminal, ...]
-
-
-@dataclass(frozen=True, slots=True)
-class _ScopeFailed:
-    terminals: tuple[Terminal, ...]
-    failure: Failure
+def _start(snapshot: _CompiledSnapshot, state: StateT) -> _Handle:
+    loop = asyncio.get_running_loop()
+    task = loop.create_task(_Run(snapshot, state).execute())
+    return _Handle(task)
 
 
 class _Run:
@@ -662,6 +569,43 @@ class _Run:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class _Activation:
+    activation_id: int
+    element_id: int
+    input: object
+
+
+@dataclass(frozen=True, slots=True)
+class _Next:
+    element_id: int
+    input: object
+
+
+@dataclass(frozen=True, slots=True)
+class _Success:
+    items: tuple[Terminal | _Next, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _FailureSignal:
+    failure: Failure
+    activation_id: int | None
+    input: object
+    result: ScopeResult | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class _ScopeSuccess:
+    terminals: tuple[Terminal, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _ScopeFailed:
+    terminals: tuple[Terminal, ...]
+    failure: Failure
+
+
 class _Handle:
     def __init__(self, task: asyncio.Task[RunResult[Any]]) -> None:
         self._task = task
@@ -671,9 +615,3 @@ class _Handle:
 
     async def result(self) -> RunResult[Any]:
         return await self._task
-
-
-def _start(snapshot: _CompiledSnapshot, state: StateT) -> _Handle:
-    loop = asyncio.get_running_loop()
-    task = loop.create_task(_Run(snapshot, state).execute())
-    return _Handle(task)

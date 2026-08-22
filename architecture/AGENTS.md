@@ -1,4 +1,4 @@
-# Internal Architecture
+# Architecture
 
 ## Purpose
 

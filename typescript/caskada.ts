@@ -1,8 +1,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-// Copyright (c) 2025, Victor Duarte
+// Copyright (c) 2026, Victor Duarte
 
-export { CaskadaError, DuplicateLinkError, GraphDefinitionError, RunError } from './internal/contracts.js'
-export { Flow, GraphElement, Node, node } from './internal/definition.js'
+export { CaskadaError, DuplicateLinkError, GraphDefinitionError, RunError } from './contracts.js'
+export { Flow, GraphElement, Node, node } from './graph.js'
 
 export type {
   Action,
@@ -23,6 +23,6 @@ export type {
   ScopeFailure,
   ScopeResult,
   Terminal,
-} from './internal/contracts.js'
+} from './contracts.js'
 
-export type { CompiledDescription, CompiledFlow, FlowOptions, Link, NodeOptions } from './internal/definition.js'
+export type { CompiledDescription, CompiledFlow, FlowOptions, Link, NodeOptions } from './graph.js'

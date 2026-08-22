@@ -11,7 +11,7 @@ from reference import load_fixture
 
 ROOT = Path(__file__).parent.parent
 FIXTURE = ROOT / "conformance" / "fixtures" / "runtime.json"
-BASELINE = ROOT / "internal" / "v3-implementation-baseline.json"
+BASELINE = ROOT / "architecture" / "v3-implementation-baseline.json"
 
 
 def run_json(command: list[str]) -> list[dict[str, Any]]:

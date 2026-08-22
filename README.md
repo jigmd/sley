@@ -162,7 +162,7 @@ the completed or failed result, including state and settled terminals.
 - [Core concepts](https://github.com/skadaai/caskada/blob/main/docs/core_abstraction/index.md)
 - [Cookbook](https://github.com/skadaai/caskada/tree/main/cookbook)
 - [Migration from v2](https://github.com/skadaai/caskada/blob/main/docs/guides/migration.md)
-- [Normative v3 runtime contract](https://github.com/skadaai/caskada/blob/main/internal/rfcs/0001-caskada-v3-runtime.md)
+- [Normative v3 runtime contract](https://github.com/skadaai/caskada/blob/main/architecture/rfcs/0001-caskada-v3-runtime.md)
 
 ## License
 

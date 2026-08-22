@@ -1,5 +1,5 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-// Copyright (c) 2025, Victor Duarte
+// Copyright (c) 2026, Victor Duarte
 
 export function captureInitialState<State extends object>(initialState: Readonly<State>): State {
   if (typeof initialState !== 'object' || initialState === null || Array.isArray(initialState)) {

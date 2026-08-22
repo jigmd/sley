@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
   "revision": "lean-v3",
-  "accepted_on": "2026-08-21",
+  "accepted_on": "2026-08-22",
   "status": "accepted_implementation_baseline",
   "hash_algorithm": "sha256",
   "authority": [
     {
-      "path": "internal/rfcs/0001-caskada-v3-runtime.md",
+      "path": "architecture/rfcs/0001-caskada-v3-runtime.md",
       "sha256": "be208fe399442102715442114c142aa2f92ae55de2c9737a55f27f7d362424e2"
     },
     {
-      "path": "internal/v3-architecture-verdict.md",
-      "sha256": "8123e51f5f12aa5541074d422c56def460c3c243a3214151c85aeb21268e546b"
+      "path": "architecture/v3-architecture-verdict.md",
+      "sha256": "e081af3afdd4eef9fdcd10dea72537873b5ff6a9ae1fc362d13faa6bcbc101fa"
     },
     {
       "path": "conformance/fixture.schema.json",
@@ -41,7 +41,7 @@
     },
     {
       "path": "conformance/run-all.py",
-      "sha256": "bb2b41bf345532b16a442aeb651df0ae32a5fe5ad64ac150b2da3fda2ebd8cc8"
+      "sha256": "a9b60114ba1cb457a43ea1578a6a3fabb5d4414ce682ba83a4acc98bed4ff778"
     }
   ]
 }

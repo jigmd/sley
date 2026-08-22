@@ -8,13 +8,13 @@
 
 - Owns the TypeScript public API, runtime internals, package output,
   browser-compatibility checks, and TypeScript-specific tests.
-- `caskada.ts` is the public facade. `internal/contracts.ts` owns public values,
-  `definition.ts` graph definitions and compilation, `state.ts` state capture,
-  and `scheduling.ts` graph execution.
+- `caskada.ts` is the public facade. `contracts.ts` owns public values,
+  `graph.ts` graph definitions and compilation, `context.ts` callback-local
+  control, `state.ts` state capture, and `runner.ts` graph execution.
 
 ## Local Contracts
 
-- `internal/rfcs/0001-caskada-v3-runtime.md` is normative.
+- `architecture/rfcs/0001-caskada-v3-runtime.md` is normative.
 - Shared semantics consume language-neutral conformance fixtures. TypeScript
   tests add dynamic JavaScript, Promise, browser, and static typing coverage.
 - Invalid public options fail immediately. Application throws become runtime
@@ -25,9 +25,11 @@
 - Keep `caskada.ts` to intentional exports; scheduler logic is private.
 - Keep the shipped runner smaller than its verification. Use native objects,
   arrays, Maps, Promises, and timers before custom runtime machinery.
-- Definitions store no invocation state. `internal/scheduling.ts` is the only
+- Definitions store no invocation state. `runner.ts` is the only
   activation and scope orchestrator.
-- `internal/state.ts` performs only start-boundary validation, native shallow
+- `context.ts` only validates callback control and records `emit` and `end`
+  intents; it does not route or schedule them.
+- `state.ts` performs only start-boundary validation, native shallow
   copy, and temporary Promise-thenable masking.
 - Preserve browser compatibility and avoid Node.js runtime imports.
 - Catch application values only at callbacks and declared policy boundaries.

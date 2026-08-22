@@ -110,7 +110,7 @@ When the user requests a durable behavior change, record it here or in the relev
   reference interpreters, and cross-port snapshot verification.
 - `cookbook/AGENTS.md` owns instructional examples, cookbook project structure,
   and pedagogy-first quality rules.
-- `internal/AGENTS.md` owns normative specifications, decision records,
+- `architecture/AGENTS.md` owns normative specifications, decision records,
   implementation baselines, release-readiness evidence, and prototype audits.
 - `python/AGENTS.md` owns the Python runtime, package surface, and Python-side
   conformance verification.

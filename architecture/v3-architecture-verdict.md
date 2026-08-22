@@ -29,12 +29,13 @@ a separate RFC. No scaffolding for a hypothetical feature belongs in v3.
 
 ## Accepted Module Shape
 
-Each port keeps four responsibilities visible:
+Each port keeps five responsibilities visible:
 
 1. public contracts and facade;
 2. inert graph definition, compilation, and description;
-3. native shallow state capture;
-4. one activation and Flow-scope runner.
+3. callback-local control validation and intent buffering;
+4. native shallow state capture;
+5. one activation and Flow-scope runner.
 
 Standard-library and platform collections, queues, tasks, and timers take
 precedence over custom equivalents. Invalid public input and impossible runtime
@@ -64,7 +65,7 @@ related reports as runtime defects:
 
 ## Current Evidence
 
-Both ports implement the lean contract in five files. Python passes runtime,
+Both ports implement the lean contract in six files. Python passes runtime,
 Ruff, strict mypy, Pyright, sdist, and wheel checks. TypeScript passes runtime,
 strict declarations, ESM, CommonJS, and package-build checks. Eighteen exact
 shared scenarios pass through both public packages. Author documentation now

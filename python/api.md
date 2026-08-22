@@ -1,7 +1,7 @@
 # Python API
 
 The package requires Python 3.13 or newer. The normative contract is
-[RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).
+[RFC 0001](../architecture/rfcs/0001-caskada-v3-runtime.md).
 
 ## Graphs
 

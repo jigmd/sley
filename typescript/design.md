@@ -1,12 +1,13 @@
 # TypeScript Runtime Design
 
-The TypeScript port is five production files:
+The TypeScript port is six production files:
 
 - `caskada.ts` declares the public facade;
-- `internal/contracts.ts` holds public values and callback types;
-- `internal/definition.ts` builds and snapshots graphs;
-- `internal/state.ts` validates and shallow-copies initial state;
-- `internal/scheduling.ts` executes activations and Flow scopes.
+- `contracts.ts` holds public values and callback types;
+- `graph.ts` builds and snapshots graphs;
+- `context.ts` validates callback control and buffers intents;
+- `state.ts` validates and shallow-copies initial state;
+- `runner.ts` executes activations and Flow scopes.
 
 Definitions contain callbacks, policies, and links but no run state. Compilation
 assigns placement ids and snapshots every reachable scope. Each invocation owns
@@ -33,4 +34,4 @@ fallback workflow outcomes. The core has no Node.js imports and remains browser
 compatible.
 
 The authoritative behavior is
-[RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).
+[RFC 0001](../architecture/rfcs/0001-caskada-v3-runtime.md).

@@ -1,12 +1,13 @@
 # Python Runtime Design
 
-The Python port is five production files:
+The Python port is six production files:
 
 - `__init__.py` declares the public facade;
 - `_contracts.py` holds public values and callback protocols;
-- `_definition.py` builds and snapshots graphs;
+- `_graph.py` builds and snapshots graphs;
+- `_context.py` validates callback control and buffers intents;
 - `_state.py` validates and shallow-copies initial state;
-- `_scheduling.py` executes activations and Flow scopes.
+- `_runner.py` executes activations and Flow scopes.
 
 Definitions contain callbacks, policies, and links but no run state. Compilation
 assigns placement ids and snapshots every reachable scope. Each invocation owns
@@ -29,4 +30,4 @@ task cancellation, keep native behavior. Impossible compiled states raise
 immediately instead of being converted into graceful fallback results.
 
 The authoritative behavior is
-[RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).
+[RFC 0001](../architecture/rfcs/0001-caskada-v3-runtime.md).

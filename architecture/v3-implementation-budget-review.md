@@ -1,15 +1,15 @@
 # V3 Implementation Budget Review
 
 - Status: accepted
-- Date: 2026-08-21
+- Date: 2026-08-22
 
 Tests, conformance tools, and cookbook examples are excluded. This budget is
 for shipped runtime source because that is the code every maintainer must carry.
 
 | Port       | Production files | Physical lines | Status            |
 | ---------- | ---------------: | -------------: | ----------------- |
-| Python     |                5 |          1,349 | Lean rewrite done |
-| TypeScript |                5 |          1,245 | Lean rewrite done |
+| Python     |                6 |          1,360 | Lean rewrite done |
+| TypeScript |                6 |          1,250 | Lean rewrite done |
 
 Python previously used nine files and 5,415 physical lines. Its public facade
 now exports 24 names instead of roughly 100. The runner uses ordinary
@@ -21,6 +21,10 @@ facade now exports eight values; `CompiledFlow` is a type-only interface so
 compiled scheduler records do not leak through declarations. Timing,
 observation, cancellation, logging-adapter, and failure helper modules were
 deleted.
+
+Each port uses one small `context` module for callback-local validation and
+intent buffering. Graph compilation and runner execution remain cohesive
+rather than being split into utility or type-only layers.
 
 ## Budget Rule
 

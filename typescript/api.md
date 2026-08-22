@@ -1,7 +1,7 @@
 # TypeScript API
 
 The package provides ESM, CommonJS, and declarations. The normative contract is
-[RFC 0001](../internal/rfcs/0001-caskada-v3-runtime.md).
+[RFC 0001](../architecture/rfcs/0001-caskada-v3-runtime.md).
 
 ## Graphs
 

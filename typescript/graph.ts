@@ -1,8 +1,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-// Copyright (c) 2025, Victor Duarte
+// Copyright (c) 2026, Victor Duarte
 
 import { DuplicateLinkError, GraphDefinitionError, RunError } from './contracts.js'
-import { startRuntime } from './scheduling.js'
+import { startRuntime } from './runner.js'
 import { captureInitialState, resolveState } from './state.js'
 
 import type {
@@ -54,14 +54,6 @@ export interface NodeOptions<State extends object = Record<string, unknown>, Inp
   readonly recover?: NodeRecoveryHandler<State, Input>
 }
 
-interface NodeData {
-  readonly handler: NodeHandler<any, any>
-  readonly retry: NormalizedRetryPolicy
-  readonly recover: NodeRecoveryHandler<any, any> | undefined
-}
-
-const nodeData = new WeakMap<Node<any, any>, NodeData>()
-
 export class Node<State extends object = Record<string, unknown>, Input = unknown> extends GraphElement<State> {
   constructor(handler: NodeHandler<State, Input>, options: NodeOptions<State, Input> = {}) {
     if (typeof handler !== 'function') throw new GraphDefinitionError('node handler must be a function')
@@ -78,6 +70,13 @@ export class Node<State extends object = Record<string, unknown>, Input = unknow
   }
 }
 
+export function node<State extends object = Record<string, unknown>, Input = unknown>(
+  handler: NodeHandler<State, Input>,
+  options: NodeOptions<State, Input> = {},
+): Node<State, Input> {
+  return new Node(handler, options)
+}
+
 export interface FlowOptions<State extends object = Record<string, unknown>> {
   readonly name?: string
   readonly exits?: readonly Action[]
@@ -86,17 +85,6 @@ export interface FlowOptions<State extends object = Record<string, unknown>> {
   readonly combine?: FlowCombineHandler<State>
   readonly recover?: FlowRecoveryHandler<State>
 }
-
-interface FlowData {
-  readonly entry: GraphElement<any>
-  readonly exits: readonly Action[]
-  readonly concurrency: number
-  readonly maxActivations: number | undefined
-  readonly combine: FlowCombineHandler<any> | undefined
-  readonly recover: FlowRecoveryHandler<any> | undefined
-}
-
-const flowData = new WeakMap<Flow<any>, FlowData>()
 
 export class Flow<State extends object = Record<string, unknown>> extends GraphElement<State> {
   constructor(entry: GraphElement<State>, options: FlowOptions<State> = {}) {
@@ -217,6 +205,24 @@ export interface CompiledDescription {
   readonly scopes: readonly Record<string, unknown>[]
   readonly elements: readonly Record<string, unknown>[]
 }
+
+interface NodeData {
+  readonly handler: NodeHandler<any, any>
+  readonly retry: NormalizedRetryPolicy
+  readonly recover: NodeRecoveryHandler<any, any> | undefined
+}
+
+interface FlowData {
+  readonly entry: GraphElement<any>
+  readonly exits: readonly Action[]
+  readonly concurrency: number
+  readonly maxActivations: number | undefined
+  readonly combine: FlowCombineHandler<any> | undefined
+  readonly recover: FlowRecoveryHandler<any> | undefined
+}
+
+const nodeData = new WeakMap<Node<any, any>, NodeData>()
+const flowData = new WeakMap<Flow<any>, FlowData>()
 
 interface ScopeWork {
   readonly scopeId: number
@@ -346,13 +352,6 @@ function describe(snapshot: CompiledSnapshot): CompiledDescription {
       ...(element.retry === undefined ? { owned_scope_id: element.ownedScopeId } : { max_attempts: element.retry.maxAttempts }),
     })),
   }
-}
-
-export function node<State extends object = Record<string, unknown>, Input = unknown>(
-  handler: NodeHandler<State, Input>,
-  options: NodeOptions<State, Input> = {},
-): Node<State, Input> {
-  return new Node(handler, options)
 }
 
 function normalizeRetry(value: unknown): NormalizedRetryPolicy {

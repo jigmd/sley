@@ -1,5 +1,5 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
-# Copyright (c) 2025, Victor Duarte
+# Copyright (c) 2026, Victor Duarte
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
@@ -87,6 +87,56 @@ class Node(GraphElement[StateT], Generic[StateT, InputT]):
         self.recover = recover
 
 
+@overload
+def node(
+    handler: NodeHandler[StateT, InputT],
+    /,
+    *,
+    name: str | None = None,
+    retry: RetryPolicy | None = None,
+    recover: NodeRecoveryHandler[StateT, InputT] | None = None,
+) -> Node[StateT, InputT]: ...
+
+
+@overload
+def node(
+    *,
+    name: str | None = None,
+    retry: RetryPolicy | None = None,
+    recover: NodeRecoveryHandler[StateT, InputT] | None = None,
+) -> Callable[[NodeHandler[StateT, InputT]], Node[StateT, InputT]]: ...
+
+
+def node(
+    handler: NodeHandler[StateT, InputT] | object = _MISSING,
+    /,
+    *,
+    name: str | None = None,
+    retry: RetryPolicy | None = None,
+    recover: NodeRecoveryHandler[StateT, InputT] | None = None,
+) -> (
+    Node[StateT, InputT] | Callable[[NodeHandler[StateT, InputT]], Node[StateT, InputT]]
+):
+    policy = RetryPolicy() if retry is None else retry
+    if not isinstance(policy, RetryPolicy):
+        raise GraphDefinitionError("node retry must be a RetryPolicy")
+    if recover is not None and not callable(recover):
+        raise GraphDefinitionError("Node.recover must be callable")
+    if name is not None:
+        _nonempty_string(name, "Node.name")
+
+    def create(callback: NodeHandler[StateT, InputT]) -> Node[StateT, InputT]:
+        if not callable(callback):
+            raise GraphDefinitionError("node handler must be callable")
+        inferred = getattr(callback, "__name__", "anonymous")
+        resolved_name = name or (inferred if isinstance(inferred, str) else "anonymous")
+        return Node(callback, name=resolved_name, retry=policy, recover=recover)
+
+    if handler is _MISSING:
+        return create
+    return create(cast(NodeHandler[StateT, InputT], handler))
+
+
 class Flow(GraphElement[StateT], Generic[StateT]):
     def __init__(
         self,
@@ -139,7 +189,7 @@ class CompiledFlow(Generic[StateT]):
         self._snapshot = snapshot
 
     def start(self, initial_state: StateT) -> RunHandle[StateT]:
-        from ._scheduling import _start
+        from ._runner import _start
 
         return _start(self._snapshot, _capture_initial_state(initial_state))
 
@@ -344,53 +394,3 @@ def _describe(snapshot: _CompiledSnapshot) -> CompiledDescription:
             for element in snapshot.placements
         ],
     }
-
-
-@overload
-def node(
-    handler: NodeHandler[StateT, InputT],
-    /,
-    *,
-    name: str | None = None,
-    retry: RetryPolicy | None = None,
-    recover: NodeRecoveryHandler[StateT, InputT] | None = None,
-) -> Node[StateT, InputT]: ...
-
-
-@overload
-def node(
-    *,
-    name: str | None = None,
-    retry: RetryPolicy | None = None,
-    recover: NodeRecoveryHandler[StateT, InputT] | None = None,
-) -> Callable[[NodeHandler[StateT, InputT]], Node[StateT, InputT]]: ...
-
-
-def node(
-    handler: NodeHandler[StateT, InputT] | object = _MISSING,
-    /,
-    *,
-    name: str | None = None,
-    retry: RetryPolicy | None = None,
-    recover: NodeRecoveryHandler[StateT, InputT] | None = None,
-) -> (
-    Node[StateT, InputT] | Callable[[NodeHandler[StateT, InputT]], Node[StateT, InputT]]
-):
-    policy = RetryPolicy() if retry is None else retry
-    if not isinstance(policy, RetryPolicy):
-        raise GraphDefinitionError("node retry must be a RetryPolicy")
-    if recover is not None and not callable(recover):
-        raise GraphDefinitionError("Node.recover must be callable")
-    if name is not None:
-        _nonempty_string(name, "Node.name")
-
-    def create(callback: NodeHandler[StateT, InputT]) -> Node[StateT, InputT]:
-        if not callable(callback):
-            raise GraphDefinitionError("node handler must be callable")
-        inferred = getattr(callback, "__name__", "anonymous")
-        resolved_name = name or (inferred if isinstance(inferred, str) else "anonymous")
-        return Node(callback, name=resolved_name, retry=policy, recover=recover)
-
-    if handler is _MISSING:
-        return create
-    return create(cast(NodeHandler[StateT, InputT], handler))
