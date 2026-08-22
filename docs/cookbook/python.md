@@ -32,6 +32,7 @@ you need; complexity metadata is a rough navigation aid, not a quality score.
 | [Majority Vote](https://github.com/skadaai/caskada/tree/main/cookbook/python-majority-vote)                              |          6 | Combining several terminal outputs          |
 | [Explicit Map/Reduce](https://github.com/skadaai/caskada/tree/main/cookbook/python-map-reduce)                           |          8 | Map and Reduce as visible application nodes |
 | [Nested Batch](https://github.com/skadaai/caskada/tree/main/cookbook/python-nested-batch)                                |        9.5 | Two levels of scoped fan-out and combine    |
+| [Partial Batch Recovery](https://github.com/skadaai/caskada/tree/main/cookbook/python-resilient-batch)                   |          6 | Flow recovery with settled branch terminals |
 
 ## Agents and Reasoning
 

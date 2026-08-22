@@ -132,6 +132,11 @@
       "command": ["python", "main.py"],
       "expect_stdout": ["Index created", "Generated Answer", "Cookbook smoke response"]
     },
+    "python-resilient-batch": {
+      "runtime": "python",
+      "command": ["python", "main.py"],
+      "expect_stdout": ["Imported record 1", "Recovery kept 1 completed record", "Run status: completed"]
+    },
     "python-streamlit-hitl": {
       "runtime": "python",
       "driver": "streamlit_hitl",
@@ -212,11 +217,21 @@
       "command": ["./node_modules/.bin/tsx", "main.ts"],
       "expect_stdout": ["Final Answer: Cookbook smoke response"]
     },
+    "typescript-batch": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Checked Database", "Healthy: Database, Search", "Unhealthy: Queue"]
+    },
     "typescript-chat": {
       "runtime": "typescript",
       "command": ["./node_modules/.bin/tsx", "chat.ts"],
       "stdin": "exit\n",
       "expect_stdout": ["Welcome to the chat", "Goodbye"]
+    },
+    "typescript-resilient-batch": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Imported record 1", "Recovery kept 1 completed record", "Run status: completed"]
     }
   }
 }

@@ -77,6 +77,7 @@ Both ports implement the lean contract in six files. Python passes runtime,
 Ruff, strict mypy, Pyright, sdist, and wheel checks. TypeScript passes runtime,
 strict declarations, ESM, CommonJS, and package-build checks. Nineteen exact
 shared scenarios pass through both public packages. Author documentation now
-matches the retained surface, and all 38 cookbook contracts execute their real
-graphs. Three independent critics found no blocker or major issue in revision
+matches the retained surface. The previously verified 38 cookbook contracts are
+unchanged, and three added batch examples pass isolated installation runs.
+Three independent critics found no blocker or major issue in revision
 `96a0bff508e3389979f58554149391257fb457ef`.

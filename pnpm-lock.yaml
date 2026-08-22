@@ -60,6 +60,22 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  cookbook/typescript-batch:
+    dependencies:
+      caskada:
+        specifier: ^3.0.0
+        version: link:../../typescript
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.3
+        version: 24.13.3
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.12
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   cookbook/typescript-chat:
     dependencies:
       caskada:
@@ -72,6 +88,19 @@ importers:
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.12
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  cookbook/typescript-resilient-batch:
+    dependencies:
+      caskada:
+        specifier: ^3.0.0
+        version: link:../../typescript
+    devDependencies:
       tsx:
         specifier: ^4.23.12
         version: 4.23.12
