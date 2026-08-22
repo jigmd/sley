@@ -12,6 +12,7 @@ Thumbs.db
 
 
 # IDE specific files
+.cache
 .codex
 .idea/
 .vscode/

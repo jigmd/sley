@@ -80,6 +80,8 @@ Default section order:
 - The root pnpm workspace links matching local package versions during repository
   development. Example package manifests must retain publishable semver ranges so
   they also install correctly outside the workspace.
+- `shell.nix` provides Python Playwright and Chromium so the TypeScript browser
+  snapshot runs directly inside the development shell.
 
 ## User Preferences
 

@@ -43,8 +43,8 @@
 - Run strict `tsc` over `typescript/tsconfig.json`, including
   `tests/runtime.v3.types.ts`.
 - Build ESM, CommonJS, and declarations with `pnpm --dir typescript build`.
-- Run `typescript/tests/run-browser-v3.py` when Playwright Chromium is available;
-  the bundle must contain no Node.js built-in import.
+- Run `python typescript/tests/run-browser-v3.py` inside `shell.nix`; the bundle
+  must contain no Node.js built-in import.
 - Run `python3 conformance/run-all.py` after shared semantic changes.
 
 ## Child DOX Index

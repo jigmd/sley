@@ -70,5 +70,4 @@ Ruff, strict mypy, Pyright, sdist, and wheel checks. TypeScript passes runtime,
 strict declarations, ESM, CommonJS, and package-build checks. Eighteen exact
 shared scenarios pass through both public packages. Author documentation now
 matches the retained surface, and all 38 cookbook contracts execute their real
-graphs. Browser-host verification and independent review remain release gates,
-not implementation work.
+graphs. Independent review remains a release gate, not implementation work.

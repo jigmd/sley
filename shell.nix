@@ -1,8 +1,6 @@
 { pkgs ? import <nixpkgs> {} }:
 
-let
-  venvDir = "./.venv";
-in pkgs.mkShell {
+pkgs.mkShell {
   nativeBuildInputs = with pkgs.buildPackages; [
     ncurses
     openssh
@@ -13,9 +11,13 @@ in pkgs.mkShell {
   ];
 
   packages = [
+    pkgs.chromium
     (pkgs.python3.withPackages (python-pkgs: [
+      python-pkgs.playwright
       python-pkgs.pytest
       python-pkgs.pytest-asyncio
     ]))
   ];
+
+  CASKADA_BROWSER_EXECUTABLE = "${pkgs.chromium}/bin/chromium";
 }
