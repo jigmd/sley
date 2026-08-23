@@ -4,7 +4,7 @@ machine-display: false
 
 # Migrating from Caskada v2 to Sley
 
-Sley is a deliberate successor to Caskada v2. Migrate one Flow at a time and
+Sley is a fork and deliberate successor to Caskada v2. Migrate one Flow at a time and
 test its routing, state, retry, and terminal behavior before composing it into a
 larger graph.
 

@@ -2,6 +2,9 @@
 
 A structured graph runtime for Python and TypeScript.
 
+Sley is a fork of Caskada. It keeps that history visible while taking the graph
+runtime forward under its own package and project identity.
+
 <p align="center">
   <a href="https://pypi.org/project/sley"><img src="https://img.shields.io/pypi/v/sley?logo=python&label=Python&style=flat-square" alt="Python package"></a>
   <a href="https://www.npmjs.com/package/sley"><img src="https://img.shields.io/npm/v/sley?logo=typescript&label=TypeScript&style=flat-square" alt="TypeScript package"></a>

@@ -9,6 +9,9 @@ Sley is a structured graph runtime for Python and TypeScript. It runs
 ordinary functions as nodes in nested directed graphs and stays independent of
 LLM providers, databases, web frameworks, and application schemas.
 
+Sley is a fork of Caskada. It keeps that history visible while taking the graph
+runtime forward under its own package and project identity.
+
 A sley is the moving loom frame that carries the reed, keeps warp threads
 separated, and advances the fabric. To sley also means threading the warp in a
 prescribed pattern: the graph defines that pattern, branches and state are its

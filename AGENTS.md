@@ -79,6 +79,8 @@ Default section order:
 
 - The product is Sley. Published packages, import roots, and the reserved CLI
   name are `sley`; the canonical repository is `github.com/jigmd/sley`.
+- Sley is a fork of Caskada. Preserve Caskada names, versions, and descriptions
+  in historical records; distinguish that history from current Sley surfaces.
 - The public website is undecided. Use the canonical repository rather than
   inventing or committing a website URL until that decision is made.
 - The root pnpm workspace links matching local package versions during repository
