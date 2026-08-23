@@ -3,7 +3,7 @@ import asyncio
 import streamlit as st
 from flow import finalization_flow, processing_flow
 
-st.title("Caskada HITL with Streamlit")
+st.title("Sley HITL with Streamlit")
 
 if "stage" not in st.session_state:
     st.session_state.stage = "initial"

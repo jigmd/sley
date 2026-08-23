@@ -1,6 +1,6 @@
 import asyncio
 
-from caskada import Flow, node
+from sley import Flow, node
 
 
 def dispatch(context):

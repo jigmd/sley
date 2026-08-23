@@ -1,4 +1,3 @@
-from caskada import Flow, node
 from nodes import (
     collect_evaluations,
     evaluate_resume,
@@ -6,6 +5,7 @@ from nodes import (
     read_resumes,
     reduce_results,
 )
+from sley import Flow, node
 
 
 def build_flow() -> Flow:

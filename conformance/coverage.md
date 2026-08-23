@@ -1,4 +1,4 @@
-# V3 Conformance Coverage
+# Conformance Coverage
 
 | Case                       | RFC behavior                                    |
 | -------------------------- | ----------------------------------------------- |

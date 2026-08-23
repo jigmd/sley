@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import answer, capture_audio, speak, transcribe
+from sley import Flow
 
 capture_audio.link(transcribe)
 transcribe.link(answer)

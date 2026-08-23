@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import debug_sql, execute_sql, generate_sql, get_schema
+from sley import Flow
 
 get_schema.link(generate_sql)
 generate_sql.link(execute_sql)

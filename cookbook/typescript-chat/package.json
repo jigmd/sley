@@ -15,7 +15,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "caskada": "^3.0.0",
+    "sley": "^0.0.1",
     "openai": "^7.4.0"
   }
 }

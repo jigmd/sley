@@ -19,5 +19,5 @@ pkgs.mkShell {
     ]))
   ];
 
-  CASKADA_BROWSER_EXECUTABLE = "${pkgs.chromium}/bin/chromium";
+  SLEY_BROWSER_EXECUTABLE = "${pkgs.chromium}/bin/chromium";
 }

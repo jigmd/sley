@@ -1,7 +1,7 @@
 import sqlite3
 
 import yaml
-from caskada import Context, node
+from sley import Context, node
 from utils import call_llm
 
 

@@ -9,7 +9,7 @@ from typing import Any
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "python"))
 
-from caskada import (
+from sley import (
     Context,
     Flow,
     RetryPolicy,

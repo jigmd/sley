@@ -11,7 +11,7 @@ from reference import load_fixture
 
 ROOT = Path(__file__).parent.parent
 FIXTURE = ROOT / "conformance" / "fixtures" / "runtime.json"
-BASELINE = ROOT / "architecture" / "v3-implementation-baseline.json"
+BASELINE = ROOT / "architecture" / "implementation-baseline.json"
 
 
 def run_json(command: list[str]) -> list[dict[str, Any]]:
@@ -62,7 +62,7 @@ def main() -> None:
     compare("TypeScript", typescript, expected)
     compare("cross-port", python, typescript)
     verify_baseline()
-    print(f"Conformance: {len(cases)} retained v3 cases passed in both ports")
+    print(f"Conformance: {len(cases)} cases passed in both ports")
 
 
 if __name__ == "__main__":

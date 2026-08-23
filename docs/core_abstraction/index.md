@@ -1,13 +1,13 @@
 # Core Model
 
-Caskada has four author-facing parts:
+Sley has four author-facing parts:
 
-| Part                        | Responsibility                                                                     |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| [Node](node.md)             | Run one ordinary function with retry and recovery policy                           |
-| [Context](context.md)       | Expose state, branch input, and buffered control during one callback                |
-| [State and Input](state.md) | Separate run-wide facts from branch-specific values                                |
-| [Flow](flow.md)             | Own graph topology, a structured scope, concurrency, and branch combination        |
+| Part                        | Responsibility                                                              |
+| --------------------------- | --------------------------------------------------------------------------- |
+| [Node](node.md)             | Run one ordinary function with retry and recovery policy                    |
+| [Context](context.md)       | Expose state, branch input, and buffered control during one callback        |
+| [State and Input](state.md) | Separate run-wide facts from branch-specific values                         |
+| [Flow](flow.md)             | Own graph topology, a structured scope, concurrency, and branch combination |
 
 The graph describes allowed control movement. Application data is not inferred
 from that graph: handlers decide whether a value belongs in shared state or in
@@ -16,7 +16,7 @@ one branch's input.
 ## One Small Example
 
 ```python
-from caskada import Context, Flow, node
+from sley import Context, Flow, node
 
 
 @node

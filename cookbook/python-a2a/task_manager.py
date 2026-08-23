@@ -25,8 +25,8 @@ from flow import agent_flow
 logger = logging.getLogger(__name__)
 
 
-class CaskadaTaskManager(InMemoryTaskManager):
-    """Bridge between an A2A task and the Caskada Flow."""
+class SleyTaskManager(InMemoryTaskManager):
+    """Bridge between an A2A task and the Sley Flow."""
 
     SUPPORTED_CONTENT_TYPES: ClassVar[list[str]] = ["text", "text/plain"]
 
@@ -75,7 +75,7 @@ class CaskadaTaskManager(InMemoryTaskManager):
                 result=self.append_task_history(task, params.historyLength),
             )
         except Exception as error:
-            logger.exception("Caskada failed for task %s", params.id)
+            logger.exception("Sley failed for task %s", params.id)
             message = Message(
                 role="agent", parts=[TextPart(text=f"Agent execution failed: {error}")]
             )

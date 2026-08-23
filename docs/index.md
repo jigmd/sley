@@ -1,13 +1,18 @@
 ---
-title: Caskada
+title: Sley
 machine-display: false
 ---
 
-# Caskada
+# Sley
 
-Caskada is a structured workflow runtime for Python and TypeScript. It runs
+Sley is a structured graph runtime for Python and TypeScript. It runs
 ordinary functions as nodes in nested directed graphs and stays independent of
 LLM providers, databases, web frameworks, and application schemas.
+
+A sley is the moving loom frame that carries the reed, keeps warp threads
+separated, and advances the fabric. To sley also means threading the warp in a
+prescribed pattern: the graph defines that pattern, branches and state are its
+threads, and a completed run is the woven result.
 
 ## What It Provides
 
@@ -30,13 +35,13 @@ LLM providers, databases, web frameworks, and application schemas.
 7. `run(initial_state)` returns the completed state; `start(initial_state)`
    exposes the full completed or failed result.
 
-Caskada validates its graph and control protocol. Application data keeps normal
+Sley validates its graph and control protocol. Application data keeps normal
 host-language behavior: static types can describe it, but runtime schema
 validation remains application code.
 
 ## Continue
 
-- [Install Caskada](installation.md)
+- [Install Sley](installation.md)
 - [Build your first Flow](getting_started.md)
 - [Understand the core model](core_abstraction/index.md)
 - [Browse complete examples](../cookbook/)

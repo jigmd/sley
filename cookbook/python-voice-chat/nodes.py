@@ -2,7 +2,7 @@ import io
 
 import scipy.io.wavfile
 import soundfile
-from caskada import Context, node
+from sley import Context, node
 from utils.audio_utils import play_audio_data, record_audio
 from utils.call_llm import call_llm
 from utils.speech_to_text import speech_to_text_api

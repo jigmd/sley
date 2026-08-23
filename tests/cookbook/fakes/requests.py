@@ -11,7 +11,7 @@ class Response:
     def __init__(self, url):
         page = "two" if url.endswith("/page-2") else "one"
         link = "" if page == "two" else '<a href="/page-2">Next page</a>'
-        self.text = f"<html><title>Cookbook page {page}</title><body>Offline Caskada content.{link}</body></html>"
+        self.text = f"<html><title>Cookbook page {page}</title><body>Offline Sley content.{link}</body></html>"
 
     def raise_for_status(self):
         return None

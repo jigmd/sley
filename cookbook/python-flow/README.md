@@ -4,7 +4,7 @@ complexity: 4
 
 # Text Converter Flow
 
-This project demonstrates an interactive text transformation tool built with Caskada.
+This project demonstrates an interactive text transformation tool built with Sley.
 
 ## Run
 
@@ -50,7 +50,7 @@ Here's what each node does:
 Welcome to Text Converter!
 =========================
 
-Enter text to convert: Caskada is a 100-line LLM framework
+Enter text to convert: Sley is a 100-line LLM framework
 
 Choose transformation:
 1. Convert to UPPERCASE
@@ -61,7 +61,7 @@ Choose transformation:
 
 Your choice (1-5): 1
 
-Result: CASKADA IS A 100-LINE LLM FRAMEWORK
+Result: SLEY IS A 100-LINE LLM FRAMEWORK
 
 Convert another text? (y/n): n
 

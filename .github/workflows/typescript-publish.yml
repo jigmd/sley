@@ -12,8 +12,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write        # Required to push tags and commit version updates
-      id-token: write        # Required for npm Trusted Publishing (OIDC)
+      contents: write # Required to push tags and commit version updates
+      id-token: write # Required for npm Trusted Publishing (OIDC)
     environment: npm
 
     steps:
@@ -130,19 +130,19 @@ jobs:
           tag_name: typescript-v${{ steps.version.outputs.new_version }}
           name: TypeScript Package v${{ steps.version.outputs.new_version }}
           body: |
-            ## Caskada TypeScript Package v${{ steps.version.outputs.new_version }}
+            ## Sley TypeScript Package v${{ steps.version.outputs.new_version }}
 
             ${{ steps.changelog_text.outputs.changelog }}
 
             ### Installation
 
-            npm install caskada@${{ steps.version.outputs.new_version }}
-            pnpm add caskada@${{ steps.version.outputs.new_version }}
-            yarn add caskada@${{ steps.version.outputs.new_version }}
+            npm install sley@${{ steps.version.outputs.new_version }}
+            pnpm add sley@${{ steps.version.outputs.new_version }}
+            yarn add sley@${{ steps.version.outputs.new_version }}
 
             ### NPM Package
 
-            📦 [View on NPM](https://www.npmjs.com/package/caskada/v/${{ steps.version.outputs.new_version }})
+            📦 [View on NPM](https://www.npmjs.com/package/sley/v/${{ steps.version.outputs.new_version }})
           draft: false
           prerelease: false
 

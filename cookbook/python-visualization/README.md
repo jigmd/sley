@@ -4,7 +4,7 @@ complexity: 7
 
 # Flow Visualization
 
-Generate Mermaid text and an interactive D3 graph from a compiled Caskada
+Generate Mermaid text and an interactive D3 graph from a compiled Sley
 Flow.
 
 The important API is:

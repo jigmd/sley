@@ -4,8 +4,8 @@ import asyncio
 import unittest
 from typing import Any
 
-import caskada
-from caskada import (
+import sley
+from sley import (
     Completed,
     Context,
     DuplicateLinkError,
@@ -22,8 +22,8 @@ from caskada import (
 
 class DefinitionTests(unittest.TestCase):
     def test_public_surface_is_explicit_and_small(self) -> None:
-        public = {name for name in vars(caskada) if not name.startswith("_")}
-        self.assertEqual(public, set(caskada.__all__))
+        public = {name for name in vars(sley) if not name.startswith("_")}
+        self.assertEqual(public, set(sley.__all__))
         self.assertLessEqual(len(public), 24)
 
     def test_node_supports_direct_and_decorator_forms(self) -> None:

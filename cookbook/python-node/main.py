@@ -5,7 +5,7 @@ from flow import flow
 
 async def main() -> None:
     text = """
-    Caskada is a structured graph runtime. Functions perform work, links choose
+    Sley is a structured graph runtime. Functions perform work, links choose
     what runs next, and Flows define execution boundaries.
     """
 

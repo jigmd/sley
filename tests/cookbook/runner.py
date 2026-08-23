@@ -129,13 +129,13 @@ def _link_typescript_workspace(name: str, project_dir: Path) -> None:
     )
     staged_modules = project_dir / "node_modules"
     shutil.copytree(source_modules, staged_modules, symlinks=True)
-    staged_caskada = staged_modules / "caskada"
-    if staged_caskada.is_symlink():
-        staged_caskada.unlink()
-    elif staged_caskada.exists():
-        raise ContractError(f"{name}: expected caskada dependency to be a symlink")
+    staged_sley = staged_modules / "sley"
+    if staged_sley.is_symlink():
+        staged_sley.unlink()
+    elif staged_sley.exists():
+        raise ContractError(f"{name}: expected sley dependency to be a symlink")
     os.symlink(
-        staged_workspace / "typescript", staged_caskada, target_is_directory=True
+        staged_workspace / "typescript", staged_sley, target_is_directory=True
     )
 
 
@@ -185,7 +185,7 @@ def _environment(api_url: str) -> dict[str, str]:
         {
             "PYTHONPATH": python_path,
             "PYTHONUNBUFFERED": "1",
-            "CASKADA_COOKBOOK_TEST": "1",
+            "SLEY_COOKBOOK_TEST": "1",
             "OPENAI_API_KEY": "cookbook-test-key",
             "OPENAI_BASE_URL": f"{api_url}/v1",
             "ANTHROPIC_API_KEY": "cookbook-test-key",
@@ -230,7 +230,7 @@ def run_project(name: str, *, install: bool = False, keep: bool = False) -> None
         raise ContractError(f"unknown cookbook project: {name}")
     contract = catalog[name]
 
-    temp_context = tempfile.TemporaryDirectory(prefix=f"caskada-{name}-")
+    temp_context = tempfile.TemporaryDirectory(prefix=f"sley-{name}-")
     temp_root = Path(temp_context.name)
     project_dir = _stage_project(name, temp_root)
     try:

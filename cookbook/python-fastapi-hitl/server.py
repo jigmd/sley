@@ -11,7 +11,7 @@ from flow import create_feedback_flow
 from pydantic import BaseModel, Field
 
 HERE = Path(__file__).parent
-app = FastAPI(title="Caskada Feedback Loop")
+app = FastAPI(title="Sley Feedback Loop")
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=HERE / "templates")
 tasks = {}

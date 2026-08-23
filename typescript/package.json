@@ -1,28 +1,28 @@
 {
-  "name": "caskada",
-  "version": "3.0.0",
+  "name": "sley",
+  "version": "0.0.1",
   "type": "module",
-  "types": "./dist/caskada.d.ts",
+  "types": "./dist/sley.d.ts",
   "exports": {
     ".": {
       "types": {
-        "import": "./dist/caskada.d.ts",
-        "require": "./dist/caskada.d.cts"
+        "import": "./dist/sley.d.ts",
+        "require": "./dist/sley.d.cts"
       },
-      "import": "./dist/caskada.js",
-      "require": "./dist/caskada.cjs"
+      "import": "./dist/sley.js",
+      "require": "./dist/sley.cjs"
     }
   },
   "files": [
     "dist",
     "README.md"
   ],
-  "homepage": "https://skada.ai/caskada/",
-  "repository": "github:skadaai/caskada",
+  "homepage": "https://github.com/jigmd/sley",
+  "repository": "github:jigmd/sley",
   "bugs": {
-    "url": "https://github.com/skadaai/caskada/issues"
+    "url": "https://github.com/jigmd/sley/issues"
   },
-  "description": "Structured workflow runtime for Python and TypeScript.",
+  "description": "Structured graph runtime for Python and TypeScript.",
   "keywords": [
     "AI",
     "workflow",
@@ -38,7 +38,7 @@
   "scripts": {
     "build": "tsup && cp ../README.md ./README.md",
     "prepack": "pnpm run build",
-    "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx' node --test tests/*.v3.test.ts",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx' node --test tests/*.test.ts",
     "release": "pnpm run build && changeset publish"
   },
   "devDependencies": {

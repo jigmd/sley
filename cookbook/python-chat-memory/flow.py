@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import answer_question, archive_memory, read_question, retrieve_memory
+from sley import Flow
 
 read_question.link(retrieve_memory, "retrieve")
 retrieve_memory.link(answer_question, "answer")

@@ -1,9 +1,9 @@
-from caskada import Context, Flow, node
 from models import QuestionState
+from sley import Context, Flow, node
 from utils.call_llm import call_llm
 
 
-# @node turns an ordinary Python function into a Caskada node.
+# @node turns an ordinary Python function into a Sley node.
 @node
 def answer(context: Context[QuestionState]) -> None:
     # Every node in this run can read and update context.state.

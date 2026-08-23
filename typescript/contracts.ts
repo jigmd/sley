@@ -4,14 +4,14 @@
 export type Action = string
 export type MaybePromise<T> = T | PromiseLike<T>
 
-export class CaskadaError extends Error {
+export class SleyError extends Error {
   constructor(message = '', options?: ErrorOptions) {
     super(message, options)
     this.name = new.target.name
   }
 }
 
-export class GraphDefinitionError extends CaskadaError {}
+export class GraphDefinitionError extends SleyError {}
 export class DuplicateLinkError extends GraphDefinitionError {}
 
 export interface Context<State extends object = Record<string, unknown>, Input = unknown> {
@@ -95,7 +95,7 @@ export interface Failed<State extends object = Record<string, unknown>> {
 
 export type RunResult<State extends object = Record<string, unknown>> = Completed<State> | Failed<State>
 
-export class RunError<State extends object = Record<string, unknown>> extends CaskadaError {
+export class RunError<State extends object = Record<string, unknown>> extends SleyError {
   readonly result: Failed<State>
 
   constructor(result: Failed<State>) {

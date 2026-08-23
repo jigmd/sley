@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import * as caskada from '../caskada'
-import { DuplicateLinkError, Flow, GraphDefinitionError, node, RunError } from '../caskada'
+import * as sley from '../sley'
+import { DuplicateLinkError, Flow, GraphDefinitionError, node, RunError } from '../sley'
 
-import type { Context, ScopeFailure, ScopeResult } from '../caskada'
+import type { Context, ScopeFailure, ScopeResult } from '../sley'
 
 interface State {
   [key: string]: unknown
@@ -11,16 +11,16 @@ interface State {
   nested?: string[]
 }
 
-describe('v3 graph definitions', () => {
+describe('graph definitions', () => {
   it('exports only the intentional runtime values', () => {
-    assert.deepEqual(Object.keys(caskada).sort(), [
-      'CaskadaError',
+    assert.deepEqual(Object.keys(sley).sort(), [
       'DuplicateLinkError',
       'Flow',
       'GraphDefinitionError',
       'GraphElement',
       'Node',
       'RunError',
+      'SleyError',
       'node',
     ])
   })
@@ -110,7 +110,7 @@ describe('v3 graph definitions', () => {
   })
 })
 
-describe('v3 state, input, and control', () => {
+describe('state, input, and control', () => {
   it('uses one shallow-copied state object per run', async () => {
     const initial: State = { count: 0, nested: [] }
     const seen: State[] = []
@@ -239,7 +239,7 @@ describe('v3 state, input, and control', () => {
   })
 })
 
-describe('v3 Flow completion', () => {
+describe('Flow completion', () => {
   it('fans out and combines output-bearing terminals', async () => {
     const dispatch = node<State>((context) => {
       for (const value of [1, 2, 3]) context.emit('work', value)
@@ -345,7 +345,7 @@ describe('v3 Flow completion', () => {
   })
 })
 
-describe('v3 results, retry, and recovery', () => {
+describe('results, retry, and recovery', () => {
   it('defers start and returns one stable result', async () => {
     let calls = 0
     const handle = new Flow(
@@ -540,7 +540,7 @@ describe('v3 results, retry, and recovery', () => {
   })
 })
 
-describe('v3 local scheduling', () => {
+describe('local scheduling', () => {
   it('honors Flow-local concurrency', async () => {
     let active = 0
     let peak = 0

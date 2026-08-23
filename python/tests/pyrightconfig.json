@@ -1,7 +1,5 @@
 {
-  "include": [
-    "v3_typing.py"
-  ],
+  "include": ["typing.py"],
   "extraPaths": [".."],
   "typeCheckingMode": "strict",
   "pythonVersion": "3.13",

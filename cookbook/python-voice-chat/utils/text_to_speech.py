@@ -15,7 +15,7 @@ def text_to_speech_api(text: str) -> bytes:
 
 
 if __name__ == "__main__":
-    text = "Hello from Caskada! This is a direct text-to-speech test."
+    text = "Hello from Sley! This is a direct text-to-speech test."
     output = "tts_output.mp3"
     print(f"Synthesizing: {text}")
     audio = text_to_speech_api(text)

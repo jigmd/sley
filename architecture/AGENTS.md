@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- Hold Caskada's normative specifications, architecture decisions, accepted
+- Hold Sley's normative specifications, architecture decisions, accepted
   implementation baselines, and non-normative design evidence.
 
 ## Ownership

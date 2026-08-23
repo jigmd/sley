@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import process, review, show_result
+from sley import Flow
 
 # A successful process call emits nothing, so it follows this unlabelled link.
 process.link(review)

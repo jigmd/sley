@@ -1,4 +1,4 @@
-# Caskada V3 Conformance
+# Sley Conformance
 
 `fixtures/runtime.json` names the portable scenarios and their exact normalized
 snapshots. `run-python.py` and `run-typescript.mts` build each scenario through

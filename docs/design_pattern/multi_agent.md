@@ -1,7 +1,7 @@
 # Multi-Agent
 
 Multi-agent systems are nested role workflows with explicit messages and
-control paths. Caskada does not require an Agent base class.
+control paths. Sley does not require an Agent base class.
 
 ```mermaid
 flowchart LR

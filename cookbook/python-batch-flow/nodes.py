@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from caskada import Context
 from PIL import Image, ImageEnhance, ImageFilter
+from sley import Context
 
 
 def dispatch(context: Context) -> None:

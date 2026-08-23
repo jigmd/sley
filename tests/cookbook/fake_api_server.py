@@ -15,7 +15,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from typing import Any, Iterator
 
-
 FIXTURE_TIMESTAMP = 1_700_000_000
 
 
@@ -49,7 +48,7 @@ name: Jane Cookbook
 email: jane@example.test
 experience:
   - title: Engineer
-    company: Caskada
+    company: Sley
 skill_indexes:
   - 5
   - 6
@@ -95,14 +94,14 @@ key_points:
   - The fake search result was parsed
   - The analysis flow completed
 follow_up_queries:
-  - caskada examples
-  - caskada documentation
+  - sley examples
+  - sley documentation
 ```"""
     if "analyze this webpage content" in lowered:
         return """```yaml
 summary: Cookbook page summary
 topics:
-  - caskada
+  - sley
   - testing
 content_type: article
 ```"""
@@ -117,15 +116,15 @@ thinking: The fixture has enough context to answer directly.
 action: answer
 reason: No external search is necessary for the smoke test.
 answer: Cookbook smoke response
-search_query: caskada smoke test
-searchQuery: caskada smoke test
+search_query: sley smoke test
+searchQuery: sley smoke test
 ```"""
     if "directly reply a single word" in lowered:
         return "nostalgic"
     if "generate hint for" in lowered:
         return "A fond backward feeling"
     if "please translate the following markdown" in lowered:
-        return "# Caskada\n\nTranslated cookbook smoke fixture.\n"
+        return "# Sley\n\nTranslated cookbook smoke fixture.\n"
 
     return "Cookbook smoke response"
 
@@ -141,7 +140,7 @@ def _wav_bytes() -> bytes:
 
 
 class _Handler(BaseHTTPRequestHandler):
-    server_version = "CaskadaCookbookFake/1"
+    server_version = "SleyCookbookFake/1"
 
     def log_message(self, _format: str, *_args: Any) -> None:
         return

@@ -57,7 +57,7 @@
     "python-communication": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "stdin": "hello caskada\nq\n",
+      "stdin": "hello sley\nq\n",
       "expect_stdout": ["Statistics:", "Total words: 2"]
     },
     "python-fastapi-hitl": {
@@ -68,8 +68,8 @@
     "python-flow": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "stdin": "hello caskada\n1\nn\n",
-      "expect_stdout": ["Result: HELLO CASKADA", "Thank you for using Text Converter"]
+      "stdin": "hello sley\n1\nn\n",
+      "expect_stdout": ["Result: HELLO SLEY", "Thank you for using Text Converter"]
     },
     "python-hello-world": {
       "runtime": "python",
@@ -188,7 +188,7 @@
     "python-tool-search": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "stdin": "caskada framework\n",
+      "stdin": "sley framework\n",
       "expect_stdout": ["Search Analysis", "Cookbook search summary"]
     },
     "python-visualization": {
@@ -205,7 +205,7 @@
       "runtime": "python",
       "command": ["python", "main.py"],
       "timeout": 60,
-      "expect_stdout": ["Starting Caskada Voice Chat", "CaptureAudioNode: Failed to capture audio"]
+      "expect_stdout": ["Starting Sley Voice Chat", "CaptureAudioNode: Failed to capture audio"]
     },
     "python-workflow": {
       "runtime": "python",

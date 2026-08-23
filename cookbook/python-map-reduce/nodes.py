@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import yaml
-from caskada import Context, ScopeResult
+from sley import Context, ScopeResult
 from utils import call_llm
 
 

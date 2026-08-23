@@ -1,6 +1,6 @@
-import { Flow, node } from '../caskada'
+import { Flow, node } from '../sley'
 
-import type { Context, Failure, RetryPolicy, RunResult, ScopeFailure, ScopeResult } from '../caskada'
+import type { Context, Failure, RetryPolicy, RunResult, ScopeFailure, ScopeResult } from '../sley'
 
 interface State {
   total?: number
@@ -17,7 +17,7 @@ const source = node<State>((context) => {
   context.emit(undefined, 2)
   context.end()
   context.end(undefined)
-  // @ts-expect-error reports are not part of the v3 Context
+  // @ts-expect-error reports are not part of Context
   context.report('removed')
 })
 

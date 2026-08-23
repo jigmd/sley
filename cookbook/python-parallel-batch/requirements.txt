@@ -1,2 +1,2 @@
-caskada>=3.0.0
+sley>=0.0.1
 anthropic>=0.122.0

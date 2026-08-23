@@ -2,7 +2,7 @@ import asyncio
 import sys
 
 import yaml
-from caskada import Context, Flow, node
+from sley import Context, Flow, node
 from utils import call_llm, call_tool, get_tools
 
 SERVER = "simple_server.py"

@@ -7,7 +7,7 @@ import socket
 
 random.random = lambda: 0.9
 
-if os.environ.get("CASKADA_COOKBOOK_TEST") == "1":
+if os.environ.get("SLEY_COOKBOOK_TEST") == "1":
     _real_connect = socket.socket.connect
 
     def _local_only_connect(sock, address):

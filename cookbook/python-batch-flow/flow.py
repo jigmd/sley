@@ -1,5 +1,5 @@
-from caskada import Flow, node
 from nodes import apply_filter, dispatch, load_image, save_image
+from sley import Flow, node
 
 
 def build_flow() -> Flow:

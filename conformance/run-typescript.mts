@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { Flow, node } from '../typescript/caskada.ts'
+import { Flow, node } from '../typescript/sley.ts'
 
-import type { Context, RunResult, ScopeFailure, ScopeResult, Terminal } from '../typescript/caskada.ts'
+import type { Context, RunResult, ScopeFailure, ScopeResult, Terminal } from '../typescript/sley.ts'
 
 interface State {
   [key: string]: unknown

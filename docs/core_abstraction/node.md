@@ -8,7 +8,7 @@ A Node is one configured occurrence of an ordinary handler function.
 {% tab title="Python" %}
 
 ```python
-from caskada import Context, node
+from sley import Context, node
 
 
 @node
@@ -23,7 +23,7 @@ decorator conveniences.
 {% tab title="TypeScript" %}
 
 ```typescript
-import { node } from 'caskada'
+import { node } from 'sley'
 
 const fetch = node<State>(async (context) => {
   context.state.document = await client.fetch(context.state.url)
@@ -38,7 +38,7 @@ branch input, or terminal output. Any other callback return value is an invalid
 outcome.
 
 `Node` itself is runtime-created and final. Subclass lifecycles are not part of
-v3.
+Sley.
 
 ## Occurrences And Reuse
 
@@ -90,7 +90,7 @@ State writes are immediate and are not rolled back when a callback fails.
 {% tab title="Python" %}
 
 ```python
-from caskada import RetryPolicy, node
+from sley import RetryPolicy, node
 
 fetch = node(
     fetch_handler,

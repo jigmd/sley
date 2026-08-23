@@ -1,4 +1,4 @@
-import { Flow } from 'caskada'
+import { Flow } from 'sley'
 import { answer, decide, search } from './nodes'
 
 decide.link(search, 'search')

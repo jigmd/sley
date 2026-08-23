@@ -12,11 +12,11 @@
 
 ## Local Contracts
 
-- Cookbook contracts execute the example's real entry point and real Caskada
+- Cookbook contracts execute the example's real entry point and real Sley
   graph from a staged project copy.
 - External API, search, audio, and network behavior is replaced only inside the
   test harness; teaching source must not contain smoke-test branches.
-- Installed runs resolve Caskada to the current checkout before validating each
+- Installed runs resolve Sley to the current checkout before validating each
   project's declared dependencies.
 
 ## Work Guidance

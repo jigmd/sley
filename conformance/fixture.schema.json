@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Caskada v3 conformance fixture",
+  "title": "Sley conformance fixture",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "cases"],

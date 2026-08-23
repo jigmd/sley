@@ -6,12 +6,12 @@ from flow import offline_flow, online_flow
 async def run_rag_demo():
     # Sample texts - specialized/fictional content that benefits from RAG
     texts = [
-        # Caskada framework
-        """Caskada is a 300-line minimalist LLM framework
+        # Sley framework
+        """Sley is a 300-line minimalist LLM framework
         Lightweight: Just 300 lines. Zero bloat, zero dependencies, zero vendor lock-in.
         Expressive: Everything you love—(Multi-)Agents, Workflow, RAG, and more.
         Agentic Coding: Let AI Agents (e.g., Cursor AI) build Agents—10x productivity boost!
-        To install, pip install caskada or just copy the source code (only 300 lines).""",
+        To install, pip install sley or just copy the source code (only 300 lines).""",
         # Fictional medical device
         """NeurAlign M7 is a revolutionary non-invasive neural alignment device.
         Targeted magnetic resonance technology increases neuroplasticity in specific brain regions.
@@ -39,10 +39,10 @@ async def run_rag_demo():
     ]
 
     print("=" * 50)
-    print("Caskada RAG Document Retrieval")
+    print("Sley RAG Document Retrieval")
     print("=" * 50)
 
-    default_query = "How to install Caskada?"
+    default_query = "How to install Sley?"
 
     query = default_query
     for arg in sys.argv[1:]:

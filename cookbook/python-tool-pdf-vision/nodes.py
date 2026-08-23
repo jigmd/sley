@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from caskada import Context, node
+from sley import Context, node
 from tools.pdf import pdf_to_images
 from tools.vision import extract_text_from_image
 

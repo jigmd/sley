@@ -7,11 +7,11 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from caskada import Flow
+from sley import Flow
 
 
 def flow_to_json(flow):
-    """Convert Caskada's compiled description into display data."""
+    """Convert Sley's compiled description into display data."""
     description = flow.compile().describe()
     elements = description["elements"]
 

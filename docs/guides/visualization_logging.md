@@ -4,7 +4,7 @@ machine-display: false
 
 # Inspection and Logging
 
-Caskada exposes a static graph description and structured final results.
+Sley exposes a static graph description and structured final results.
 Application logging uses the host language's normal logging tools.
 
 ## Inspect a Compiled Graph

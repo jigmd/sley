@@ -4,13 +4,13 @@ machine-display: false
 
 # Migrating from PocketFlow
 
-Modern Caskada uses the same small-graph idea but not PocketFlow's node
+Modern Sley uses the same small-graph idea but not PocketFlow's node
 lifecycle or shared-dictionary control conventions. Treat migration as an
 authoring-model conversion, not an import rename.
 
 ## Concept Map
 
-| PocketFlow                    | Caskada v3                                    |
+| PocketFlow                    | Sley                                          |
 | ----------------------------- | --------------------------------------------- |
 | `Node` / `AsyncNode` subclass | function wrapped with `node(...)`             |
 | `prep` + `exec` + `post`      | one sync or async handler                     |
@@ -40,7 +40,7 @@ class Summarize(AsyncNode):
         return "review"
 ```
 
-Caskada:
+Sley:
 
 ```python
 @node
@@ -52,7 +52,7 @@ async def summarize(context):
 ```
 
 The handler may be synchronous or asynchronous. Validate before effects and
-state writes. If retry is configured, Caskada retries the complete handler.
+state writes. If retry is configured, Sley retries the complete handler.
 
 ## Convert Data Passing
 
@@ -69,7 +69,7 @@ async def summarize_chunk(context):
     context.end(await model.summarize(context.input))
 ```
 
-Caskada shallow-copies the caller's top-level initial state and returns the
+Sley shallow-copies the caller's top-level initial state and returns the
 run-owned state when execution completes. Nested objects are still borrowed.
 
 ## Convert Batch Work

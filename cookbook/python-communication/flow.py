@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import count_words, read_text, show_stats
+from sley import Flow
 
 
 def build_flow() -> Flow:

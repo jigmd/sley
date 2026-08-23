@@ -1,4 +1,3 @@
-from caskada import Flow, node
 from nodes import (
     create_index,
     embed_documents,
@@ -7,6 +6,7 @@ from nodes import (
     process_chunk_documents,
     retrieve_document,
 )
+from sley import Flow, node
 
 
 def dispatch_documents(context):

@@ -17,7 +17,7 @@ nothing follows its unlabelled link, so the workflow needs no explicit control
 calls. The final node has no link, so its normal completion exits the Flow.
 
 `run()` returns the completed state. The caller must use that returned value
-because Caskada shallow-copies the initial top-level mapping.
+because Sley shallow-copies the initial top-level mapping.
 
 ## Run
 

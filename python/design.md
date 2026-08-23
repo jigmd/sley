@@ -30,4 +30,4 @@ task cancellation, keep native behavior. Impossible compiled states raise
 immediately instead of being converted into graceful fallback results.
 
 The authoritative behavior is
-[RFC 0001](../architecture/rfcs/0001-caskada-v3-runtime.md).
+[RFC 0001](../architecture/rfcs/0001-sley-runtime.md).

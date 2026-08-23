@@ -1,11 +1,11 @@
-# RFC 0001: Caskada v3 Graph Runtime
+# RFC 0001: Sley Graph Runtime
 
 - Status: accepted
-- Revised: 2026-08-21
+- Revised: 2026-08-23
 
 ## Decision
 
-Caskada v3 is a small structured graph runner. Its complete author model is:
+Sley is a small structured graph runner. Its complete author model is:
 
 ```text
 node(handler)                  wrap one callback
@@ -39,7 +39,7 @@ GraphElement, Link
 Failure, ScopeFailure, ScopeResult
 Terminal, EndTerminal, ExitTerminal
 RunHandle, RunResult, Completed, Failed
-CaskadaError, GraphDefinitionError, DuplicateLinkError, RunError
+SleyError, GraphDefinitionError, DuplicateLinkError, RunError
 CompiledDescription
 ```
 
@@ -108,7 +108,7 @@ separate by design:
 - use input for the item carried by one branch;
 - use an end output for a completed branch value intended for combination.
 
-Caskada validates its control protocol, not application schemas. Python retains
+Sley validates its control protocol, not application schemas. Python retains
 normal mapping behavior, including `KeyError` for a missing indexed key.
 TypeScript retains normal object behavior, including `undefined` for a missing
 property. Static types document payload agreements but do not validate runtime
@@ -279,7 +279,7 @@ not copied again at completion.
 
 ## Error behavior
 
-Caskada fails fast on invalid definitions, control arguments, handler return
+Sley fails fast on invalid definitions, control arguments, handler return
 values, unknown actions, policy return values, and broken internal invariants.
 It does not silently drop branches, coerce malformed values, or invent routes.
 
@@ -288,7 +288,7 @@ recovery policies can handle them. Unhandled failures become `Failed` results.
 
 ## Non-goals
 
-V3 does not include:
+Sley does not include:
 
 - observers, event streams, reports, built-in logging, or run statistics;
 - deadlines, node timeouts, grace periods, cancellation tokens, or abandonment;

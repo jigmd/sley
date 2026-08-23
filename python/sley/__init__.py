@@ -2,7 +2,6 @@
 # Copyright (c) 2026, Victor Duarte
 from ._contracts import (
     Action,
-    CaskadaError,
     Completed,
     Context,
     DuplicateLinkError,
@@ -17,6 +16,7 @@ from ._contracts import (
     RunResult,
     ScopeFailure,
     ScopeResult,
+    SleyError,
     Terminal,
 )
 from ._graph import (
@@ -31,7 +31,6 @@ from ._graph import (
 
 __all__ = (
     "Action",
-    "CaskadaError",
     "CompiledDescription",
     "CompiledFlow",
     "Completed",
@@ -52,6 +51,7 @@ __all__ = (
     "RunResult",
     "ScopeFailure",
     "ScopeResult",
+    "SleyError",
     "Terminal",
     "node",
 )

@@ -57,7 +57,7 @@ jobs:
           fi
           echo "Current version from setup.py: $CURRENT_VERSION"
 
-          pnpm pkg set name=caskada
+          pnpm pkg set name=sley
           pnpm pkg set "version=$CURRENT_VERSION" # Use extracted version
 
           echo "Running changeset version..."
@@ -152,16 +152,16 @@ jobs:
           tag_name: python-v${{ steps.version.outputs.new_version }}
           name: Python Package v${{ steps.version.outputs.new_version }}
           body: |
-            ## Caskada Python Package v${{ steps.version.outputs.new_version }}
+            ## Sley Python Package v${{ steps.version.outputs.new_version }}
 
             ${{ steps.changelog_text.outputs.changelog }}
 
             ### Installation
 
-            pip install caskada==${{ steps.version.outputs.new_version }}
+            pip install sley==${{ steps.version.outputs.new_version }}
 
             ### PyPI Package
-            🐍 [View on PyPI](https://pypi.org/project/caskada/${{ steps.version.outputs.new_version }}/)
+            🐍 [View on PyPI](https://pypi.org/project/sley/${{ steps.version.outputs.new_version }}/)
           draft: false
           prerelease: false
 

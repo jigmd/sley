@@ -1,6 +1,6 @@
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 
-import type { Context, ScopeFailure } from 'caskada'
+import type { Context, ScopeFailure } from 'sley'
 import type { BatchState, ImportedRecord, SourceRecord } from './types'
 
 const dispatch = node<BatchState>((context) => {

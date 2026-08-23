@@ -4,14 +4,14 @@
 
 A node handler should perform one recognizable unit of work. Put graph control in
 `context.emit(...)` and `context.end(...)`, and keep service clients and domain
-logic in ordinary functions that can be tested without Caskada.
+logic in ordinary functions that can be tested without Sley.
 
 Use nested Flows when a group of nodes has its own entry, exits, concurrency
 limit, or combine step. Do not create a Flow merely to group files.
 
 ## Choose One Data Channel Deliberately
 
-Caskada has three application-data channels:
+Sley has three application-data channels:
 
 - `context.state` is one shared top-level map for the run.
 - `context.input` is the value carried by the current branch.
@@ -22,7 +22,7 @@ Use state for run-wide facts and accumulated results. Use input for the specific
 item a branch is processing. Use End output when a parent Flow must join results
 from several branches.
 
-Caskada does not validate application schemas or prove payload compatibility
+Sley does not validate application schemas or prove payload compatibility
 across links. Validate dynamic input before writes or external effects:
 
 ```python

@@ -2,8 +2,8 @@ import asyncio
 from pathlib import Path
 
 import numpy as np
-from caskada import Context
 from PIL import Image, ImageFilter
+from sley import Context
 
 
 def dispatch(context: Context) -> None:

@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import approve, fetch, suggest
+from sley import Flow
 
 
 def build_flow() -> Flow:

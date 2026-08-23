@@ -7,7 +7,7 @@ async def main() -> None:
     state = await database_flow.run(
         {
             "task_title": "Example Task",
-            "task_description": "This is an example task created using Caskada",
+            "task_description": "This is an example task created using Sley",
         }
     )
 

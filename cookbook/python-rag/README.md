@@ -38,7 +38,7 @@ end instead of continuing to index creation.
 
 ## How It Works
 
-The magic happens through a two-phase pipeline implemented with Caskada:
+The magic happens through a two-phase pipeline implemented with Sley:
 
 ```mermaid
 graph TD
@@ -74,15 +74,15 @@ Here's what each part does:
 ✅ Created 1 document embeddings
 🔍 Creating search index...
 ✅ Index created with 5 vectors
-🔍 Embedding query: How to install Caskada?
+🔍 Embedding query: How to install Sley?
 🔎 Searching for relevant documents...
 📄 Retrieved document (index: 0, distance: 0.3427)
-📄 Most relevant text: "Caskada is a 300-line minimalist LLM framework
+📄 Most relevant text: "Sley is a 300-line minimalist LLM framework
         Lightweight: Just 300 lines. Zero bloat, zero dependencies, zero vendor lock-in.
         Expressive: Everything you love—(Multi-)Agents, Workflow, RAG, and more.
         Agentic Coding: Let AI Agents (e.g., Cursor AI) build Agents—10x productivity boost!
-        To install, pip install caskada or just copy the source code (only 300 lines)."
+        To install, pip install sley or just copy the source code (only 300 lines)."
 
 🤖 Generated Answer:
-To install Caskada, use the command `pip install caskada` or simply copy its 300 lines of source code.
+To install Sley, use the command `pip install sley` or simply copy its 300 lines of source code.
 ```

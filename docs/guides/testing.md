@@ -4,7 +4,7 @@ machine-display: false
 
 # Testing
 
-Test application logic as ordinary code. Test Caskada behavior through a real
+Test application logic as ordinary code. Test Sley behavior through a real
 Flow. `Context`, `RunHandle`, and compiled runtime objects are runtime-issued
 objects and should not be constructed by tests.
 
@@ -16,7 +16,7 @@ Inject a fake service, run the real graph, and assert the returned state:
 {% tab title="Python" %}
 
 ```python
-from caskada import Flow, node
+from sley import Flow, node
 
 
 async def test_answer_flow():
@@ -43,7 +43,7 @@ async def test_answer_flow():
 {% tab title="TypeScript" %}
 
 ```typescript
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 import { expect, it, vi } from 'vitest'
 
 it('answers a question', async () => {
@@ -125,6 +125,6 @@ Prefer semantic assertions over snapshots of the entire description. Full
 snapshots make harmless names or IDs expensive to change.
 
 Keep framework conformance tests separate from application tests. Application
-tests should prove the workflow's behavior; Caskada's own suite proves the
+tests should prove the workflow's behavior; Sley's own suite proves the
 retained routing, terminal, combine, retry, recovery, concurrency, and
 cross-language contracts.

@@ -2,9 +2,9 @@
 machine-display: false
 ---
 
-# Choosing Caskada
+# Choosing Sley
 
-Caskada is a structured workflow runtime. It provides graph definition,
+Sley is a structured graph runtime. It provides graph definition,
 branching, nested scopes, local concurrency and limits, retry and recovery, and
 structured results. It intentionally does not provide model clients,
 vector stores, tool registries, prompt templates, or domain-specific agent
@@ -12,7 +12,7 @@ classes.
 
 This is a tradeoff, not a claim that one framework fits every project.
 
-## What Caskada Optimizes For
+## What Sley Optimizes For
 
 ### A Small Authoring Model
 
@@ -32,7 +32,7 @@ Links authorize routing. A name with no link or declared Flow exit is an
 `unknown_action` failure. Fan-out is visible as several emissions, and fan-in is
 visible as a Flow combine callback.
 
-Caskada does not infer graph control from model output, object shape, or an
+Sley does not infer graph control from model output, object shape, or an
 integration wrapper.
 
 ### Structured Runtime Semantics
@@ -44,7 +44,7 @@ result rather than using native exceptions as the complete runtime protocol.
 ### Bring-Your-Own Integrations
 
 Application code calls provider SDKs and databases directly. This avoids a
-Caskada-specific wrapper layer, but it also means the application owns service
+Sley-specific wrapper layer, but it also means the application owns service
 configuration, runtime data validation, rate limiting, and fakes.
 
 ## Architectural Tradeoffs
@@ -61,7 +61,7 @@ configuration, runtime data validation, rate limiting, and fakes.
 
 ## Compare Against Your Requirements
 
-When evaluating Caskada, LangChain, LangGraph, CrewAI, AutoGen, PocketFlow, or a
+When evaluating Sley, LangChain, LangGraph, CrewAI, AutoGen, PocketFlow, or a
 custom scheduler, compare the current releases on these questions:
 
 1. **Control:** Is topology explicit, model-directed, or conversation-directed?
@@ -80,7 +80,7 @@ documentation rather than codebase-size or feature-count tables.
 
 ## Relationship to PocketFlow
 
-Caskada began from PocketFlow's graph-oriented minimalism but v3 has a different
+Sley began from PocketFlow's graph-oriented minimalism but has a different
 authoring and runtime contract. It uses function-first nodes, shared run state,
 branch input, buffered emissions, structured Flow combine, local limits, and
 cross-language result schemas.
@@ -88,9 +88,9 @@ cross-language result schemas.
 Migration is therefore a design conversion rather than an import rename. See
 [Migrating from PocketFlow](./guides/migrating_from_pocketflow.md).
 
-## When Caskada Fits
+## When Sley Fits
 
-Choose Caskada when the workflow graph and its runtime behavior should remain
+Choose Sley when the workflow graph and its runtime behavior should remain
 visible in application code, you want to bring your own integrations, and
 Python/TypeScript parity matters.
 

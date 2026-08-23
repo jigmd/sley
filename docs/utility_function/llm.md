@@ -5,7 +5,7 @@ machine-display: false
 
 # LLM Calls
 
-Put model SDK calls behind an application-owned interface. Caskada does not
+Put model SDK calls behind an application-owned interface. Sley does not
 require or provide an LLM wrapper.
 
 ## Define the Application Contract
@@ -36,7 +36,7 @@ and response extraction.
 {% tab title="Python" %}
 
 ```python
-from caskada import Flow, node
+from sley import Flow, node
 
 
 def create_answer_flow(model):
@@ -54,7 +54,7 @@ def create_answer_flow(model):
 {% tab title="TypeScript" %}
 
 ```typescript
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 
 interface State {
   question: string
@@ -79,9 +79,9 @@ not need to know about Context or graph topology.
 
 ## Operational Rules
 
-- Set a provider-side request timeout; Caskada does not interrupt synchronous
+- Set a provider-side request timeout; Sley does not interrupt synchronous
   blocking code.
-- Decide whether provider retries or Caskada whole-handler retries own each
+- Decide whether provider retries or Sley whole-handler retries own each
   failure. Avoid unbounded stacked retry policies.
 - Parse and validate structured model output before committing state.
 - Use idempotency keys for model APIs that can create durable side effects.

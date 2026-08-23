@@ -2,9 +2,9 @@
 complexity: 2.5
 ---
 
-# Caskada Hello World
+# Sley Hello World
 
-Your first Caskada application! This simple example demonstrates how to create a basic Caskada app from scratch.
+Your first Sley application! This simple example demonstrates how to create a basic Sley app from scratch.
 
 ## Run
 
@@ -21,7 +21,7 @@ python main.py
 .
 ├── docs/          # Documentation files
 ├── utils/         # Utility functions
-├── flow.py        # Caskada implementation
+├── flow.py        # Sley implementation
 ├── main.py        # Main application entry point
 ├── models.py      # Optional state typing
 └── README.md      # Project documentation
@@ -41,4 +41,4 @@ This is the typed example in this group. Its single state definition lives in
 
 ## Additional Resources
 
-- [Caskada Documentation](https://skadaai.gitbook.io/caskada/)
+- [Sley Documentation](https://github.com/jigmd/sley/tree/main/docs)

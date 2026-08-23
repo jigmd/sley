@@ -1,4 +1,4 @@
-caskada>=3.0.0
+sley>=0.0.1
 openai>=3.1.0
 fastmcp>=3.4.7
 mcp>=1.29.0,<2.0.0

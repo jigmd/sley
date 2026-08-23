@@ -1,5 +1,5 @@
-from caskada import Flow
 from nodes import answer, decide, search
+from sley import Flow
 
 
 def build_agent() -> Flow:

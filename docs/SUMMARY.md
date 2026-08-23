@@ -2,7 +2,7 @@
 
 ## Introduction
 
-- [What is Caskada?](index.md)
+- [What is Sley?](index.md)
 - [Installation](installation.md)
 - [Getting Started](getting_started.md)
 - [Comparison](comparison.md)
@@ -37,7 +37,7 @@
 - [Limits and Concurrency](guides/throttling.md)
 - [Inspection and Logging](guides/visualization_logging.md)
 - [Agentic Coding](guides/agentic_coding.md)
-- [Migrating from v2](guides/migration.md)
+- [Migrating from Caskada v2](guides/migration.md)
 - [Migrating from PocketFlow](guides/migrating_from_pocketflow.md)
 
 ## Application Utilities

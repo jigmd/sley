@@ -1,7 +1,7 @@
 import os
 
-from caskada import Flow, node
 from nodes import calculate_average, load_grades
+from sley import Flow, node
 
 
 def create_base_flow():

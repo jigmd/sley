@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- Teach Caskada patterns through code that fits in a reader's head.
+- Teach Sley patterns through code that fits in a reader's head.
 - Optimize for readability, ease of understanding, and progressive learning.
 
 ## Ownership
@@ -21,7 +21,7 @@
 - Do not add production-oriented retries, cancellation plumbing, schema
   validation, deterministic reconstruction, or error taxonomies unless that is
   the named subject of the example.
-- Keep the Caskada behavior being taught visible in the code. Supporting prose
+- Keep the Sley behavior being taught visible in the code. Supporting prose
   should clarify the example, not carry its central logic.
 - Keep dedicated map/reduce helpers or explicit Map and Reduce nodes only when
   that pattern is the lesson. Otherwise prefer a local Flow combiner when it
@@ -39,11 +39,11 @@
   and interactive exploration when they are part of what the example teaches.
 - Prompts whose responses are parsed by code must specify the exact response
   shape and validate required fields before changing state or control flow.
-- TypeScript cookbook manifests must use the published Caskada semver range so
+- TypeScript cookbook manifests must use the published Sley semver range so
   each project installs outside this repository; the root workspace may still
   prefer the matching local package during repository verification.
 - Keep external-service doubles in cookbook verification, not in the teaching
-  source. An example's smoke case must still execute its real Caskada graph.
+  source. An example's smoke case must still execute its real Sley graph.
 
 ## Work Guidance
 
@@ -52,13 +52,13 @@
 - Treat substantial line-count or concept growth as a design smell requiring
   explicit justification.
 - Scale comments with the learning path. Introductory examples explain basic
-  Caskada mechanics at the point of use; advanced examples assume earlier
+  Sley mechanics at the point of use; advanced examples assume earlier
   concepts and comment only the new mechanism they introduce.
 - Keep practical lessons near the code: READMEs should explain the primary
   mechanism, what the reader can observe, and the external concepts needed to
   experiment. Advanced examples may carry more explanation than basic examples.
 - External-integration utilities may include a small direct-execution demo when
-  it helps readers explore that service independently from the Caskada graph.
+  it helps readers explore that service independently from the Sley graph.
 - Put peripheral caveats in a short README note. Do not turn the main example
   into a catalog of edge cases.
 

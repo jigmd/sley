@@ -9,7 +9,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).parent.parent.parent
-ENTRY = ROOT / "typescript" / "tests" / "browser.v3.entry.ts"
+ENTRY = ROOT / "typescript" / "tests" / "browser.entry.ts"
 TSUP = ROOT / "typescript" / "node_modules" / ".bin" / "tsup"
 EXPECTED = {
     "outputs": [2, 4],
@@ -22,7 +22,7 @@ EXPECTED = {
 
 
 def main() -> None:
-    with tempfile.TemporaryDirectory(prefix="caskada-browser-") as directory:
+    with tempfile.TemporaryDirectory(prefix="sley-browser-") as directory:
         output = Path(directory)
         subprocess.run(
             [
@@ -53,7 +53,7 @@ def main() -> None:
             raise AssertionError("browser bundle contains a Node.js built-in import")
 
         with sync_playwright() as playwright:
-            executable_path = os.environ.get("CASKADA_BROWSER_EXECUTABLE")
+            executable_path = os.environ.get("SLEY_BROWSER_EXECUTABLE")
             browser = playwright.chromium.launch(
                 executable_path=executable_path,
                 headless=True,
@@ -62,14 +62,14 @@ def main() -> None:
                 page = browser.new_page()
                 page.add_script_tag(path=str(bundle))
                 page.wait_for_function(
-                    "globalThis.__caskadaV3BrowserResult !== undefined || "
-                    "globalThis.__caskadaV3BrowserError !== undefined",
+                    "globalThis.__sleyBrowserResult !== undefined || "
+                    "globalThis.__sleyBrowserError !== undefined",
                     timeout=10_000,
                 )
-                error = page.evaluate("globalThis.__caskadaV3BrowserError")
+                error = page.evaluate("globalThis.__sleyBrowserError")
                 if error is not None:
                     raise AssertionError(f"browser runtime failed: {error}")
-                observed = page.evaluate("globalThis.__caskadaV3BrowserResult")
+                observed = page.evaluate("globalThis.__sleyBrowserResult")
             finally:
                 browser.close()
 

@@ -40,12 +40,12 @@ importers:
       '@phukon/duckduckgo-search':
         specifier: ^1.2.0
         version: 1.2.0(debug@4.4.3)
-      caskada:
-        specifier: ^3.0.0
-        version: link:../../typescript
       openai:
         specifier: ^7.4.0
         version: 7.4.0(ws@8.21.3)
+      sley:
+        specifier: ^0.0.1
+        version: link:../../typescript
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -62,8 +62,8 @@ importers:
 
   cookbook/typescript-batch:
     dependencies:
-      caskada:
-        specifier: ^3.0.0
+      sley:
+        specifier: ^0.0.1
         version: link:../../typescript
     devDependencies:
       '@types/node':
@@ -78,12 +78,12 @@ importers:
 
   cookbook/typescript-chat:
     dependencies:
-      caskada:
-        specifier: ^3.0.0
-        version: link:../../typescript
       openai:
         specifier: ^7.4.0
         version: 7.4.0(ws@8.21.3)
+      sley:
+        specifier: ^0.0.1
+        version: link:../../typescript
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
@@ -97,8 +97,8 @@ importers:
 
   cookbook/typescript-resilient-batch:
     dependencies:
-      caskada:
-        specifier: ^3.0.0
+      sley:
+        specifier: ^0.0.1
         version: link:../../typescript
     devDependencies:
       tsx:

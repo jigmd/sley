@@ -1,6 +1,6 @@
-# Caskada Cookbook
+# Sley Cookbook
 
-The cookbook teaches Caskada through small projects that fit in a reader's head.
+The cookbook teaches Sley through small projects that fit in a reader's head.
 Each project has one primary lesson and its own README.
 
 ## Suggested Learning Path
@@ -18,11 +18,14 @@ Each project has one primary lesson and its own README.
 7. [`python-supervisor`](./python-supervisor): named nested-Flow exits and
    supervision.
 
-The two TypeScript examples cover the same authoring model:
+The TypeScript examples cover the same authoring model:
 
 - [`typescript-chat`](./typescript-chat): a typed self-loop and hard terminal.
 - [`typescript-agent`](./typescript-agent): typed state and a named decision
   loop.
+- [`typescript-batch`](./typescript-batch): concurrent fan-out and combine.
+- [`typescript-resilient-batch`](./typescript-resilient-batch): Flow recovery
+  with settled branch terminals.
 
 ## Find an Example
 
@@ -37,9 +40,9 @@ production-readiness score.
 
 Examples prefer readable, recognizable code over generalized helpers or
 production scaffolding. External services are replaced by test-owned fakes in
-verification, while teaching source executes the real Caskada graph.
+verification, while teaching source executes the real Sley graph.
 
 Comments scale with the learning path: introductory examples explain basic
-Caskada mechanics, and advanced examples explain only the new mechanism they
+Sley mechanics, and advanced examples explain only the new mechanism they
 introduce. Types are used when they clarify a lesson and are kept in one file so
 readers can skip them.

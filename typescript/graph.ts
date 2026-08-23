@@ -16,7 +16,7 @@ import type {
   RunHandle,
 } from './contracts.js'
 
-const stateInvariant: unique symbol = Symbol('caskada.state')
+const stateInvariant: unique symbol = Symbol('sley.state')
 
 export interface Link<State extends object = Record<string, unknown>> {
   readonly action: Action | null

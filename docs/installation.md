@@ -6,38 +6,38 @@ machine-display: false
 
 ## Python
 
-Caskada requires Python 3.13 or newer.
+Sley requires Python 3.13 or newer.
 
 ```bash
-pip install caskada
+pip install sley
 ```
 
 ## TypeScript And JavaScript
 
 ```bash
-npm install caskada
+npm install sley
 ```
 
 The package provides ESM and CommonJS exports plus TypeScript declarations.
 
 ```typescript
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 ```
 
 Browser applications can use the ESM bundle from a CDN:
 
 ```html
 <script type="module">
-  import { Flow, node } from 'https://unpkg.com/caskada@3/dist/caskada.js'
+  import { Flow, node } from 'https://unpkg.com/sley@0.0.1/dist/sley.js'
 </script>
 ```
 
 ## Source Installations
 
 The implementation entry points are
-[`python/caskada/__init__.py`](https://github.com/skadaai/caskada/blob/main/python/caskada/__init__.py)
+[`python/sley/__init__.py`](https://github.com/jigmd/sley/blob/main/python/sley/__init__.py)
 and
-[`typescript/caskada.ts`](https://github.com/skadaai/caskada/blob/main/typescript/caskada.ts).
+[`typescript/sley.ts`](https://github.com/jigmd/sley/blob/main/typescript/sley.ts).
 Use the packages for normal applications so Python receives PEP 561 typing and
 TypeScript receives declarations, exports, and release metadata.
 

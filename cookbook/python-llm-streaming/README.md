@@ -4,7 +4,7 @@ complexity: 4
 
 # LLM Streaming and Interruption
 
-One Caskada node prints an OpenAI stream while a small listener thread waits for
+One Sley node prints an OpenAI stream while a small listener thread waits for
 ENTER. The example keeps user-driven stream interruption inside the tool code;
 the Flow itself remains a normal one-node workflow.
 

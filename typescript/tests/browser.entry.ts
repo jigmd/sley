@@ -1,12 +1,12 @@
-import { Flow, node } from '../caskada'
+import { Flow, node } from '../sley'
 
-import type { Context, ScopeResult } from '../caskada'
+import type { Context, ScopeResult } from '../sley'
 
 type State = { total?: number; value?: number }
 
 type BrowserGlobals = typeof globalThis & {
-  __caskadaV3BrowserResult?: Record<string, unknown>
-  __caskadaV3BrowserError?: string
+  __sleyBrowserResult?: Record<string, unknown>
+  __sleyBrowserError?: string
 }
 
 void (async () => {
@@ -32,7 +32,7 @@ void (async () => {
     }),
   ).run({})
 
-  ;(globalThis as BrowserGlobals).__caskadaV3BrowserResult = {
+  ;(globalThis as BrowserGlobals).__sleyBrowserResult = {
     status: result.status,
     total: result.state.total,
     outputs: result.terminals.filter((terminal) => terminal.hasOutput).map((terminal) => terminal.output),
@@ -41,5 +41,5 @@ void (async () => {
     processType: typeof (globalThis as { process?: unknown }).process,
   }
 })().catch((error: unknown) => {
-  ;(globalThis as BrowserGlobals).__caskadaV3BrowserError = error instanceof Error ? (error.stack ?? error.message) : String(error)
+  ;(globalThis as BrowserGlobals).__sleyBrowserError = error instanceof Error ? (error.stack ?? error.message) : String(error)
 })

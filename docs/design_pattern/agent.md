@@ -25,12 +25,12 @@ agent = Flow(decide, max_activations=30)
 ## Responsibilities
 
 - The model or application chooses an action from the known action space.
-- Caskada resolves that action only through declared links or Flow exits.
+- Sley resolves that action only through declared links or Flow exits.
 - Tool nodes perform effects and record useful facts in state.
 - The decision node runs again after a tool when more work may be needed.
 - The answer leaf emits nothing and exits normally.
 
-Validate model-produced actions before emitting. An unknown Caskada action is a
+Validate model-produced actions before emitting. An unknown Sley action is a
 structured workflow failure, but a domain parser can provide a clearer error
 before control reaches the runtime.
 

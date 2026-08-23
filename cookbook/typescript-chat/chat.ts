@@ -1,5 +1,5 @@
 import readline from 'node:readline'
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 import { callLLM } from './utils'
 
 import type { ChatState } from './types'

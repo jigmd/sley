@@ -4,7 +4,7 @@ machine-display: false
 
 # Limits and Concurrency
 
-Caskada limits work inside each Flow. Provider quotas, request timeouts, and
+Sley limits work inside each Flow. Provider quotas, request timeouts, and
 limits shared across separate runs remain application concerns.
 
 ## Local Flow Concurrency

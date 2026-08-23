@@ -4,7 +4,7 @@ complexity: 9.5
 
 # Web Crawler with Content Analysis
 
-A Caskada flow that crawls a website, analyzes each page with an LLM, and
+A Sley flow that crawls a website, analyzes each page with an LLM, and
 assembles one report.
 
 ## Run
@@ -56,7 +56,7 @@ python-tool-crawler/
 
 ## Dependencies
 
-- Caskada: Flow-based processing
+- Sley: Flow-based processing
 - Requests: HTTP requests
 - Beautiful Soup: HTML parsing
 - OpenAI: GPT-4 API access

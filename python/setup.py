@@ -12,19 +12,19 @@ if not readme_path.exists() and this_directory.parent.joinpath("README.md").exis
 long_description = (
     readme_path.read_text(encoding="utf-8")
     if readme_path.exists()
-    else "Caskada is a structured workflow runtime for Python and TypeScript."
+    else "Sley is a structured graph runtime for Python and TypeScript."
 )
 
 setup(
-    name="caskada",
-    version="3.0.0",
-    packages=["caskada"],
-    package_data={"caskada": ["py.typed"]},
+    name="sley",
+    version="0.0.1",
+    packages=["sley"],
+    package_data={"sley": ["py.typed"]},
     author="Victor Duarte",
-    description="Structured workflow runtime for Python and TypeScript.",
+    description="Structured graph runtime for Python and TypeScript.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://skada.ai/caskada/",
+    url="https://github.com/jigmd/sley",
     license="MPL-2.0",
     python_requires=">=3.13",
     classifiers=[

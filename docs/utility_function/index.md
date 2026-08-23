@@ -4,7 +4,7 @@ machine-display: true
 
 # Utility Functions
 
-Caskada schedules application work but does not wrap model providers,
+Sley schedules application work but does not wrap model providers,
 databases, search APIs, or media services. Use their SDKs through ordinary
 functions or small client objects.
 
@@ -39,7 +39,7 @@ async def generate_answer(question: str, sources: list[str]) -> str: ...
 async function generateAnswer(question: string, sources: string[]): Promise<string>
 ```
 
-The function owns provider request shape. The Caskada handler owns when it is
+The function owns provider request shape. The Sley handler owns when it is
 called, where its result goes, and which graph route follows.
 
 Keep utility fakes in tests. Avoid placing provider response objects in shared

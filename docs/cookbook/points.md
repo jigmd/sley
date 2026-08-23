@@ -6,7 +6,7 @@ production readiness.
 
 ## Scoring
 
-### Caskada Concepts
+### Sley Concepts
 
 - 0.5 per distinct function-backed node in the primary graph.
 - 1 for named branching or a self-loop; 2 when both are central.

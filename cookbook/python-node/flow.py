@@ -1,5 +1,5 @@
-from caskada import Context, Failure, Flow, RetryPolicy, node
 from models import SummaryState
+from sley import Context, Failure, Flow, RetryPolicy, node
 from utils.call_llm import call_llm
 
 
@@ -15,7 +15,7 @@ def summarize(context: Context[SummaryState]) -> None:
 
 def use_fallback(context: Context[SummaryState], _failure: Failure) -> None:
     context.state["summary"] = "There was an error processing your request."
-    # An emission tells Caskada that recovery handled the failure.
+    # An emission tells Sley that recovery handled the failure.
     context.emit()
 
 

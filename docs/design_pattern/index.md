@@ -1,6 +1,6 @@
 # Design Patterns
 
-Caskada does not ship separate Agent, RAG, MapReduce, or Supervisor classes.
+Sley does not ship separate Agent, RAG, MapReduce, or Supervisor classes.
 Those patterns are graph shapes built from the same small runtime model.
 
 | Pattern                           | Graph Shape                              | Main Data Channel                                 |
@@ -14,4 +14,4 @@ Those patterns are graph shapes built from the same small runtime model.
 
 Choose a graph shape because it matches the problem, not because the runtime
 requires a named pattern. The [cookbook](../../cookbook/) contains complete
-examples and deliberately keeps application/provider helpers outside Caskada.
+examples and deliberately keeps application/provider helpers outside Sley.

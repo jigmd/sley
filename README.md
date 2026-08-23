@@ -1,34 +1,34 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/logo-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/logo-light.png">
-    <img width="280" alt="Caskada" src="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/logo-light.png">
-  </picture>
-</p>
+# Sley
+
+A structured graph runtime for Python and TypeScript.
 
 <p align="center">
-  A structured workflow runtime for Python and TypeScript.
+  <a href="https://pypi.org/project/sley"><img src="https://img.shields.io/pypi/v/sley?logo=python&label=Python&style=flat-square" alt="Python package"></a>
+  <a href="https://www.npmjs.com/package/sley"><img src="https://img.shields.io/npm/v/sley?logo=typescript&label=TypeScript&style=flat-square" alt="TypeScript package"></a>
+  <a href="https://github.com/jigmd/sley"><img src="https://img.shields.io/github/stars/jigmd/sley?logo=github&style=flat-square" alt="GitHub stars"></a>
 </p>
 
-<p align="center">
-  <a href="https://pypi.org/project/caskada"><img src="https://img.shields.io/pypi/v/caskada?logo=python&label=Python&style=flat-square" alt="Python package"></a>
-  <a href="https://www.npmjs.com/package/caskada"><img src="https://img.shields.io/npm/v/caskada?logo=typescript&label=TypeScript&style=flat-square" alt="TypeScript package"></a>
-  <a href="https://github.com/skadaai/caskada"><img src="https://img.shields.io/github/stars/skadaai/caskada?logo=github&style=flat-square" alt="GitHub stars"></a>
-</p>
-
-Caskada runs ordinary functions as nodes in nested directed graphs. It provides
+Sley runs ordinary functions as nodes in nested directed graphs. It provides
 explicit branching, structured fan-out and joining, retries, recovery, local
 concurrency, and typed execution results without depending on an LLM provider
 or application framework.
 
+## Why Sley
+
+A sley is the moving loom frame that carries the reed, keeps warp threads
+separated, and advances the fabric. To sley also means threading the warp in a
+prescribed pattern. The analogy is direct: the graph defines the pattern,
+branches and state are the threads, Sley executes their arrangement, and a
+completed run is the woven result.
+
 ## Install
 
 ```bash
-pip install caskada
+pip install sley
 ```
 
 ```bash
-npm install caskada
+npm install sley
 ```
 
 Python 3.13 or newer is required. The TypeScript package ships ESM and CommonJS
@@ -39,7 +39,7 @@ builds.
 ```python
 import asyncio
 
-from caskada import Context, Flow, node
+from sley import Context, Flow, node
 
 
 @node
@@ -59,7 +59,7 @@ asyncio.run(main())
 ## TypeScript
 
 ```typescript
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 
 interface State {
   question: string
@@ -119,12 +119,12 @@ Several `emit()` or `end()` calls in one handler create an atomic fan-out.
 ### Data
 
 `context.state` is the one mutable top-level map shared by every branch in one
-run. Caskada shallow-copies the caller's initial mapping once, so `run()` returns
+run. Sley shallow-copies the caller's initial mapping once, so `run()` returns
 the authoritative final state and does not mutate the caller's top-level map.
 Nested values remain shared references.
 
 `context.input` is the value carried by one branch. Omitted input forwards the
-current input. Caskada preserves application values but does not validate their
+current input. Sley preserves application values but does not validate their
 schema or prove payload compatibility between links.
 
 ### Flows And Combine
@@ -158,12 +158,12 @@ the completed or failed result, including state and settled terminals.
 
 ## Learn
 
-- [Getting started](https://github.com/skadaai/caskada/blob/main/docs/getting_started.md)
-- [Core concepts](https://github.com/skadaai/caskada/blob/main/docs/core_abstraction/index.md)
-- [Cookbook](https://github.com/skadaai/caskada/tree/main/cookbook)
-- [Migration from v2](https://github.com/skadaai/caskada/blob/main/docs/guides/migration.md)
-- [Normative v3 runtime contract](https://github.com/skadaai/caskada/blob/main/architecture/rfcs/0001-caskada-v3-runtime.md)
+- [Getting started](https://github.com/jigmd/sley/blob/main/docs/getting_started.md)
+- [Core concepts](https://github.com/jigmd/sley/blob/main/docs/core_abstraction/index.md)
+- [Cookbook](https://github.com/jigmd/sley/tree/main/cookbook)
+- [Migration from Caskada v2](https://github.com/jigmd/sley/blob/main/docs/guides/migration.md)
+- [Normative runtime contract](https://github.com/jigmd/sley/blob/main/architecture/rfcs/0001-sley-runtime.md)
 
 ## License
 
-Caskada is licensed under the Mozilla Public License 2.0.
+Sley is licensed under the Mozilla Public License 2.0.

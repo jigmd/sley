@@ -2,7 +2,7 @@
 title: 'Agentic Coding'
 ---
 
-# Agentic Coding with Caskada
+# Agentic Coding with Sley
 
 Use a short design document to keep a human and an implementation agent aligned.
 The document should explain the workflow well enough to review before code is
@@ -106,7 +106,7 @@ For each node, state:
 - whether it can create an End output;
 - fallible or irreversible operations it performs.
 
-Do not describe v3 nodes as preparation, execution, and post-processing phases.
+Do not describe Sley nodes as preparation, execution, and post-processing phases.
 There is one handler. Ordering inside that handler matters, especially because a
 retry repeats it from the beginning.
 
@@ -116,7 +116,7 @@ Use `context.state` for facts shared across the run, `context.input` for the
 current branch's work item, and `context.end(value)` for a completed branch value
 that a Flow may combine.
 
-Caskada does not validate application schemas or prove compatibility across
+Sley does not validate application schemas or prove compatibility across
 links. The design should name the node that validates each dynamic boundary.
 Static types document local expectations but do not replace runtime parsing.
 

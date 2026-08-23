@@ -1,6 +1,6 @@
 # Vector Search
 
-Vector indexes are application services. Caskada coordinates when they are
+Vector indexes are application services. Sley coordinates when they are
 built or queried; it does not prescribe an index product or storage model.
 
 ## Define a Small Interface

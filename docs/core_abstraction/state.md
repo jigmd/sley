@@ -1,6 +1,6 @@
 # State, Input, And Output
 
-Caskada separates application data into three roles.
+Sley separates application data into three roles.
 
 | Role                 | Surface                           | Lifetime                     |
 | -------------------- | --------------------------------- | ---------------------------- |
@@ -23,7 +23,7 @@ assert final["count"] >= 0
 assert final["settings"] is settings
 ```
 
-The final result exposes that same carrier; Caskada does not make another copy
+The final result exposes that same carrier; Sley does not make another copy
 at settlement. Retained aliases remain live references, not snapshots.
 
 Top-level state supports normal record operations. Python uses a new `dict`;
@@ -63,7 +63,7 @@ predecessor emits the matching shape.
 
 ## Host-Language Data Semantics
 
-Caskada validates its own state container and control protocol, not application
+Sley validates its own state container and control protocol, not application
 schemas.
 
 - Python `context.state["missing"]` raises `KeyError`; uncaught callback errors

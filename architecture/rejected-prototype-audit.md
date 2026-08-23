@@ -1,4 +1,4 @@
-# Rejected V3 Prototype Audit
+# Rejected Prototype Audit
 
 - Status: non-normative evidence
 - Date: 2026-08-20
@@ -27,7 +27,7 @@ cookbook authoring experiment is separate and remains useful design evidence.
   false result still passed. Several functions were duplicated after the runner.
 - Python and TypeScript restated scenarios separately instead of consuming one
   contract, allowing their assertions and author grammar to diverge.
-- Some handlers returned list-comprehension results even though successful v3
+- Some handlers returned list-comprehension results even though successful Sley
   callbacks return only `None` / `undefined`; the prototype silently ignored the
   invalid result.
 - Assertions accepted several statuses or failure kinds and lower-bounded stats

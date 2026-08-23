@@ -2,7 +2,7 @@
 
 The TypeScript port is six production files:
 
-- `caskada.ts` declares the public facade;
+- `sley.ts` declares the public facade;
 - `contracts.ts` holds public values and callback types;
 - `graph.ts` builds and snapshots graphs;
 - `context.ts` validates callback control and buffers intents;
@@ -34,4 +34,4 @@ fallback workflow outcomes. The core has no Node.js imports and remains browser
 compatible.
 
 The authoritative behavior is
-[RFC 0001](../architecture/rfcs/0001-caskada-v3-runtime.md).
+[RFC 0001](../architecture/rfcs/0001-sley-runtime.md).

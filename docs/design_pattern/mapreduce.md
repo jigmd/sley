@@ -1,6 +1,6 @@
 # Map Reduce
 
-Map/reduce is Caskada's fan-out plus structured-join shape.
+Map/reduce is Sley's fan-out plus structured-join shape.
 
 ```mermaid
 flowchart LR

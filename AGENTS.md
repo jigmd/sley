@@ -77,9 +77,15 @@ Default section order:
 
 ## Workspace Contract
 
+- The product is Sley. Published packages, import roots, and the reserved CLI
+  name are `sley`; the canonical repository is `github.com/jigmd/sley`.
+- The public website is undecided. Use the canonical repository rather than
+  inventing or committing a website URL until that decision is made.
 - The root pnpm workspace links matching local package versions during repository
   development. Example package manifests must retain publishable semver ranges so
   they also install correctly outside the workspace.
+- `docs/cookbook/` catalogs are curated navigation. Update them with relevant
+  cookbook changes instead of regenerating them from project README content.
 - `shell.nix` provides Python Playwright and Chromium so the TypeScript browser
   snapshot runs directly inside the development shell.
 
@@ -122,5 +128,4 @@ When the user requests a durable behavior change, record it here or in the relev
   TypeScript-side conformance verification.
 - Documentation outside an indexed child subtree, including `docs/`, remains
   root-owned.
-- Root-owned files include `README.md`, `LICENSE`, `banner.jpg`, and
-  `video-thumbnail.jpg`.
+- Root-owned files include `README.md` and `LICENSE`.

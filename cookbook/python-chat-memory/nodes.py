@@ -1,4 +1,4 @@
-from caskada import Context, node
+from sley import Context, node
 from utils.call_llm import call_llm
 from utils.get_embedding import get_embedding
 from utils.vector_index import add_vector, create_index, search_vectors

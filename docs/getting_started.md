@@ -13,7 +13,7 @@ flowchart LR
 ```python
 import asyncio
 
-from caskada import Context, Flow, node
+from sley import Context, Flow, node
 
 
 @node
@@ -42,7 +42,7 @@ asyncio.run(main())
 ## TypeScript
 
 ```typescript
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 
 interface State {
   question: string

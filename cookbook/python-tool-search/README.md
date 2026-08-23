@@ -9,7 +9,7 @@ This linear Flow separates orchestration from tools:
 1. `search` calls SerpAPI and stores the results.
 2. Its unlabelled link runs `analyze`, which asks an LLM for a YAML summary.
 
-The Caskada handlers in `nodes.py` make the workflow visible; API-specific code
+The Sley handlers in `nodes.py` make the workflow visible; API-specific code
 stays in `tools/`.
 
 ## Run

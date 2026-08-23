@@ -22,17 +22,17 @@ async def _a2a() -> None:
         TaskState,
         TextPart,
     )
-    from task_manager import CaskadaTaskManager
+    from task_manager import SleyTaskManager
 
     request = SendTaskRequest(
         id="cookbook-request",
         params=TaskSendParams(
             id="cookbook-task",
-            message=Message(role="user", parts=[TextPart(text="What is Caskada?")]),
+            message=Message(role="user", parts=[TextPart(text="What is Sley?")]),
             acceptedOutputModes=["text"],
         ),
     )
-    response = await CaskadaTaskManager().on_send_task(request)
+    response = await SleyTaskManager().on_send_task(request)
     assert response.error is None
     assert response.result is not None
     assert response.result.status.state == TaskState.COMPLETED

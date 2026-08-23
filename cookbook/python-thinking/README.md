@@ -26,7 +26,7 @@ python main.py
 
 ## How It Works
 
-The implementation uses a function-backed, self-looping Caskada node occurrence
+The implementation uses a function-backed, self-looping Sley node occurrence
 (`chain_of_thought`) that guides an LLM through a structured problem-solving
 process:
 
@@ -51,7 +51,7 @@ not call `end()` because this is an ordinary leaf, not a hard terminal carrying
 a branch output.
 
 The Flow keeps the original limit of 50 node visits as `max_activations=50` and
-makes up to three attempts at a failed thought. V3 retries the whole function,
+makes up to three attempts at a failed thought. Sley retries the whole function,
 so it stores the new thought only after the model response has been parsed.
 
 ## Comparison with Different Approaches

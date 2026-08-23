@@ -1,5 +1,5 @@
-from caskada import Flow, node
 from nodes import analyze_page, crawl_website, dispatch_pages, generate_report
+from sley import Flow, node
 
 
 def combine_pages(context, result):

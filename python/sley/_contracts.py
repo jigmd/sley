@@ -15,11 +15,11 @@ ContextInputT_co = TypeVar("ContextInputT_co", covariant=True, default=object)
 MaybeAwaitable: TypeAlias = T | Awaitable[T]
 
 
-class CaskadaError(Exception):
+class SleyError(Exception):
     pass
 
 
-class GraphDefinitionError(CaskadaError):
+class GraphDefinitionError(SleyError):
     pass
 
 
@@ -138,7 +138,7 @@ class Failed(Generic[StateT]):
 RunResult: TypeAlias = Completed[StateT] | Failed[StateT]
 
 
-class RunError(CaskadaError, Generic[StateT]):
+class RunError(SleyError, Generic[StateT]):
     def __init__(self, result: Failed[StateT]) -> None:
         super().__init__(result.failure.message)
         self.result = result

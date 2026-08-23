@@ -1,5 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises'
-import { Flow, node } from 'caskada'
+import { Flow, node } from 'sley'
 
 import type { BatchState, CheckResult, Service } from './types'
 

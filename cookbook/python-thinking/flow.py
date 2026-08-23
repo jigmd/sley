@@ -1,5 +1,5 @@
-from caskada import Flow, RetryPolicy, node
 from nodes import chain_of_thought
+from sley import Flow, RetryPolicy, node
 
 
 def create_chain_of_thought_flow():

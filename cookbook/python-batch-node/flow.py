@@ -1,5 +1,5 @@
-from caskada import Flow, node
 from nodes import dispatch_chunks, process_chunk, show_stats
+from sley import Flow, node
 
 
 def combine_chunks(context, result):

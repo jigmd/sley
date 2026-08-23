@@ -1,7 +1,7 @@
-# V3 Implementation Budget Review
+# Sley Implementation Budget Review
 
 - Status: accepted
-- Date: 2026-08-22
+- Date: 2026-08-23
 
 Tests, conformance tools, and cookbook examples are excluded. This budget is
 for shipped runtime source because that is the code every maintainer must carry.

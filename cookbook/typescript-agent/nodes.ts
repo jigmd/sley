@@ -1,4 +1,4 @@
-import { node } from 'caskada'
+import { node } from 'sley'
 import { parse } from 'yaml'
 import { callLLM, webSearch } from './utils'
 
