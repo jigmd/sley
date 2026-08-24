@@ -1,0 +1,80 @@
+name: Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'docs/**'
+      - 'cookbook/**/README.md'
+      - '.gitbook.yaml'
+      - '.github/scripts/check-doc-examples.js'
+      - '.github/scripts/check-docs.js'
+      - '.github/scripts/generate-examples.js'
+      - '.github/workflows/docs.yml'
+      - 'prettier.config.mjs'
+  push:
+    branches:
+      - main
+    paths:
+      - 'README.md'
+      - 'docs/**'
+      - 'cookbook/**/README.md'
+      - '.gitbook.yaml'
+      - '.github/scripts/check-doc-examples.js'
+      - '.github/scripts/check-docs.js'
+      - '.github/scripts/generate-examples.js'
+      - '.github/workflows/docs.yml'
+      - 'prettier.config.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
+
+      - uses: pnpm/action-setup@v6.0.10
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build TypeScript package
+        run: pnpm --dir typescript build
+
+      - name: Generate example catalogs
+        run: node .github/scripts/generate-examples.js
+
+      - name: Check documentation
+        run: node .github/scripts/check-docs.js
+
+      - name: Run documentation examples
+        run: node .github/scripts/check-doc-examples.js
+
+      - name: Check formatting
+        run: >-
+          pnpm exec prettier --check README.md docs .gitbook.yaml
+          .github/scripts/check-doc-examples.js .github/scripts/check-docs.js
+          .github/scripts/generate-examples.js .github/workflows/docs.yml
+          prettier.config.mjs
+
+      - name: Require generated catalogs in pull requests
+        if: github.event_name == 'pull_request'
+        run: git diff --exit-code -- docs/examples/python.md docs/examples/typescript.md
+
+      - name: Commit generated catalogs on main
+        if: github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
+        with:
+          commit_message: Update generated example catalogs [skip ci]
+          file_pattern: docs/examples/python.md docs/examples/typescript.md

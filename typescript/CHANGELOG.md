@@ -30,8 +30,8 @@
 - Aligned TypeScript runtime semantics and public result/event schemas with the
   Python implementation.
 
-See [Migrating from Caskada v2 to v3](../docs/guides/migration.md) for the
-authoring and behavior changes.
+See [Migrating from Caskada to Sley](../docs/about/migrate-from-caskada.md) for
+the authoring and behavior changes.
 
 ## 2.2.0
 

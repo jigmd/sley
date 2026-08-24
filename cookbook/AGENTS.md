@@ -34,8 +34,9 @@
   teaching choice, not mandatory ceremony in every example.
 - Keep project prose durable and lesson-focused. Mention implementation status
   or version migration only when that is the example's enduring subject.
-- Each project README's H1, `complexity` frontmatter, and lesson content feed the
-  generated sections of `docs/cookbook/python.md` or `typescript.md`.
+- Each project README's H1 and `complexity` frontmatter feed the generated
+  `docs/examples/` catalogs. `docs/examples/catalog.json` owns their teaching
+  order, primary lessons, and searchable Sley mechanism labels.
 - Simplify framework ceremony without erasing domain behavior or scenario
   complexity that makes the lesson observable. Preserve deliberate simulations
   and interactive exploration when they are part of what the example teaches.

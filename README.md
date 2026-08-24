@@ -42,17 +42,24 @@ builds.
 ```python
 import asyncio
 
-from sley import Context, Flow, node
+from sley import Flow, node
 
 
 @node
-async def answer(context: Context) -> None:
-    question = context.state["question"]
-    context.state["answer"] = await model.answer(question)
+def normalize(context):
+    context.state["question"] = context.state["question"].strip()
+
+
+@node
+def answer(context):
+    context.state["answer"] = f"You asked: {context.state['question']}"
+
+
+normalize.link(answer)
 
 
 async def main() -> None:
-    state = await Flow(answer).run({"question": "Why?"})
+    state = await Flow(normalize).run({"question": "  Why?  "})
     print(state["answer"])
 
 
@@ -69,13 +76,21 @@ interface State {
   answer?: string
 }
 
-const answer = node<State>(async (context) => {
-  context.state.answer = await model.answer(context.state.question)
+const normalize = node<State>((context) => {
+  context.state.question = context.state.question.trim()
 })
 
-const state = await new Flow(answer).run({ question: 'Why?' })
+const answer = node<State>((context) => {
+  context.state.answer = `You asked: ${context.state.question}`
+})
+
+normalize.link(answer)
+
+const state = await new Flow(normalize).run({ question: '  Why?  ' })
 console.log(state.answer)
 ```
+
+Both programs print `You asked: Why?`.
 
 ## Core Model
 
@@ -117,7 +132,9 @@ decide.link(publish)
   bypasses links. It does not stop the handler function, so use a normal
   `return` when later statements should not run.
 
-Several `emit()` or `end()` calls in one handler create an atomic fan-out.
+Several control calls create a buffered fan-out. Sley commits that buffer only
+after the handler returns normally; state writes and external effects are not
+rolled back.
 
 ### Data
 
@@ -138,7 +155,6 @@ optionally invokes one `combine` callback.
 ```python
 def combine(context, result):
     context.state["total"] = sum(result.outputs)
-    context.emit()
 
 
 batch = Flow(dispatch, combine=combine, concurrency=8)
@@ -162,10 +178,10 @@ the completed or failed result, including state and settled terminals.
 ## Learn
 
 - [Website](https://sley.jig.md)
-- [Getting started](https://github.com/jigmd/sley/blob/main/docs/getting_started.md)
-- [Core concepts](https://github.com/jigmd/sley/blob/main/docs/core_abstraction/index.md)
+- [Quickstart](https://github.com/jigmd/sley/blob/main/docs/quickstart.md)
+- [Core model](https://github.com/jigmd/sley/blob/main/docs/learn/core-model.md)
 - [Cookbook](https://github.com/jigmd/sley/tree/main/cookbook)
-- [Migration from Caskada v2](https://github.com/jigmd/sley/blob/main/docs/guides/migration.md)
+- [Migration from Caskada](https://github.com/jigmd/sley/blob/main/docs/about/migrate-from-caskada.md)
 - [Normative runtime contract](https://github.com/jigmd/sley/blob/main/architecture/rfcs/0001-sley-runtime.md)
 
 ## License

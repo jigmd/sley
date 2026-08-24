@@ -1,0 +1,39 @@
+root: ./docs/
+
+structure:
+  readme: README.md
+  summary: SUMMARY.md
+
+redirects:
+  installation: quickstart.md#install-sley
+  getting_started: quickstart.md
+  comparison: about/lineage.md
+  core_abstraction/index: learn/core-model.md
+  core_abstraction/node: learn/core-model.md
+  core_abstraction/context: learn/routing.md
+  core_abstraction/state: learn/data.md
+  core_abstraction/flow: learn/fan-out-and-combine.md
+  design_pattern/index: patterns.md
+  design_pattern/agent: patterns.md
+  design_pattern/workflow: patterns.md
+  design_pattern/rag: patterns.md
+  design_pattern/mapreduce: patterns.md
+  design_pattern/structure: patterns.md
+  design_pattern/multi_agent: patterns.md
+  cookbook/points: examples/README.md
+  cookbook/python: examples/python.md
+  cookbook/typescript: examples/typescript.md
+  guides/best_practices: guides/integration-boundaries.md
+  guides/testing: guides/testing.md
+  guides/throttling: guides/concurrency-and-cycles.md
+  guides/visualization_logging: guides/inspection.md
+  guides/agentic_coding: patterns.md
+  guides/migration: about/migrate-from-caskada.md
+  guides/migrating_from_pocketflow: about/migrate-from-pocketflow.md
+  utility_function/index: patterns.md
+  utility_function/llm: patterns.md
+  utility_function/websearch: patterns.md
+  utility_function/chunking: patterns.md
+  utility_function/embedding: patterns.md
+  utility_function/vector: patterns.md
+  utility_function/text_to_speech: patterns.md

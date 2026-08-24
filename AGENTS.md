@@ -85,9 +85,9 @@ Default section order:
 - The root pnpm workspace links matching local package versions during repository
   development. Example package manifests must retain publishable semver ranges so
   they also install correctly outside the workspace.
-- `docs/cookbook/` combines curated navigation with generated project lessons.
-  Keep the navigation tables intentional and regenerate the bounded lesson
-  sections from cookbook project READMEs.
+- `docs/examples/` combines curated teaching order with generated project
+  metadata. Keep the catalog intentional and regenerate it from cookbook README
+  titles and complexity plus the curated lesson labels.
 - `shell.nix` provides Python Playwright and Chromium so the TypeScript browser
   snapshot runs directly inside the development shell.
 
@@ -120,6 +120,8 @@ When the user requests a durable behavior change, record it here or in the relev
   reference interpreters, and cross-port snapshot verification.
 - `cookbook/AGENTS.md` owns instructional examples, cookbook project structure,
   and pedagogy-first quality rules.
+- `docs/AGENTS.md` owns public documentation structure, writing standards,
+  publishing contracts, and documentation verification.
 - `architecture/AGENTS.md` owns normative specifications, decision records,
   implementation baselines, release-readiness evidence, and prototype audits.
 - `python/AGENTS.md` owns the Python runtime, package surface, and Python-side
@@ -128,6 +130,4 @@ When the user requests a durable behavior change, record it here or in the relev
   contracts.
 - `typescript/AGENTS.md` owns the TypeScript runtime, package surface, and
   TypeScript-side conformance verification.
-- Documentation outside an indexed child subtree, including `docs/`, remains
-  root-owned.
 - Root-owned files include `README.md` and `LICENSE`.

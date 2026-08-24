@@ -1,130 +1,174 @@
 ---
-machine-display: false
+description: Test application logic directly, then run small real Sley graphs to verify routing, state, terminals, and failures.
 ---
 
-# Testing
+# Test a Flow
 
-Test application logic as ordinary code. Test Sley behavior through a real
-Flow. `Context`, `RunHandle`, and compiled runtime objects are runtime-issued
-objects and should not be constructed by tests.
+Test domain logic as ordinary code. Test graph behavior by running a real
+`Flow`. This keeps failures readable and avoids mocks that reproduce Sley's own
+runtime.
 
-## Test a Complete Small Flow
+## Start with one observable outcome
 
-Inject a fake service, run the real graph, and assert the returned state:
+The smallest useful graph test supplies state, runs the Flow, and asserts the
+returned state.
 
 {% tabs %}
 {% tab title="Python" %}
 
 ```python
+import asyncio
+
 from sley import Flow, node
 
 
-async def test_answer_flow():
-    calls = []
+def test_priority_route() -> None:
+    @node
+    def choose(context):
+        context.emit("priority" if context.state["amount"] >= 100 else "standard")
 
-    async def fake_model(question):
-        calls.append(question)
-        return "Paris"
+    @node
+    def priority(context):
+        context.state["lane"] = "priority"
 
-    async def answer(context):
-        context.state["answer"] = await fake_model(context.state["question"])
+    @node
+    def standard(context):
+        context.state["lane"] = "standard"
 
-    flow = Flow(node(answer))
-    initial_state = {"question": "Capital of France?"}
+    choose.link(priority, "priority")
+    choose.link(standard, "standard")
 
-    final_state = await flow.run(initial_state)
+    state = asyncio.run(Flow(choose).run({"amount": 125}))
 
-    assert final_state["answer"] == "Paris"
-    assert calls == ["Capital of France?"]
-    assert "answer" not in initial_state
+    assert state["lane"] == "priority"
+
+
+test_priority_route()
 ```
 
 {% endtab %}
 {% tab title="TypeScript" %}
 
 ```typescript
+import assert from 'node:assert/strict'
 import { Flow, node } from 'sley'
-import { expect, it, vi } from 'vitest'
 
-it('answers a question', async () => {
-  const model = vi.fn(async () => 'Paris')
-  const answer = node<{ question: string; answer?: string }>(async (context) => {
-    context.state.answer = await model(context.state.question)
+async function testPriorityRoute() {
+  const choose = node<{ amount: number; lane?: string }>((context) => {
+    context.emit(context.state.amount >= 100 ? 'priority' : 'standard')
+  })
+  const priority = node<{ amount: number; lane?: string }>((context) => {
+    context.state.lane = 'priority'
+  })
+  const standard = node<{ amount: number; lane?: string }>((context) => {
+    context.state.lane = 'standard'
   })
 
-  const initialState = { question: 'Capital of France?' }
-  const finalState = await new Flow(answer).run(initialState)
+  choose.link(priority, 'priority')
+  choose.link(standard, 'standard')
 
-  expect(finalState.answer).toBe('Paris')
-  expect(model).toHaveBeenCalledWith('Capital of France?')
-  expect(initialState).not.toHaveProperty('answer')
-})
+  const state = await new Flow(choose).run({ amount: 125 })
+
+  assert.equal(state.lane, 'priority')
+}
+
+await testPriorityRoute()
 ```
 
 {% endtab %}
 {% endtabs %}
 
-This tests the graph definition, state capture, handler, and normal Flow exit
-together without mocking framework internals.
+Save the example as `test_flow.py` or `test-flow.mts`, then run it with
+`python test_flow.py` or `node test-flow.mts`. It exits silently when the
+assertion passes.
 
-## Test Routing and Branch Data
+This test exercises the definition, route, handler, and state boundary together.
+It does not need a constructed `Context` or a mocked runner.
 
-Use observable application effects to assert which target ran. For fan-out,
-collect values in a Flow combine callback rather than coordinating test branches
-with shared counters.
+## Inspect failures without catching `RunError`
 
-Test these boundary cases explicitly when they matter:
+Use `start()` when the assertion concerns terminal or failure data:
 
-- zero emissions and the unlabelled link;
-- a named emission and its target;
-- an unknown action;
-- empty fan-out;
-- `end()` with no output versus `end(None)` / `end(undefined)`;
-- combine pass-through with zero emissions versus terminal replacement with one
-  or more emissions.
-
-## Test Failures Through `start()`
-
-`run()` raises `RunError` for a non-completed result. Use `start()` when the test
-needs the full result:
+{% tabs %}
+{% tab title="Python" %}
 
 ```python
-handle = flow.start(initial_state)
-result = await handle.result()
+import asyncio
 
-assert result.status == "failed"
-assert result.failure.kind == "handler"
-assert result.state["attempted"] is True
+from sley import Flow, node
+
+
+@node
+def validate(context):
+    context.state["validated"] = True
+    raise ValueError("amount must be positive")
+
+
+async def check_failure():
+    result = await Flow(validate).start({"amount": -1}).result()
+
+    assert result.status == "failed"
+    assert result.failure.kind == "handler"
+    assert result.state["validated"] is True
+
+
+asyncio.run(check_failure())
 ```
 
-Use the corresponding TypeScript `handle.result()` Promise. Assert structured
-failure kinds, details, and provenance rather than native exception messages.
-When testing the simple `run()` projection, `RunError.result` exposes the same
-structured data and its standard native cause points to the controlling
-application error when one exists.
+{% endtab %}
+{% tab title="TypeScript" %}
 
-## Test Retry and Recovery Boundaries
+```typescript
+import assert from 'node:assert/strict'
+import { Flow, node } from 'sley'
 
-Use a deterministic fake that fails a known number of times. Assert application
-calls and final state. Remember that retry re-enters the complete handler, so a
-test should catch accidental writes or effects before the fallible operation.
+interface State {
+  amount: number
+  validated?: boolean
+}
 
-For recovery, separately cover:
+const validate = node<State>((context) => {
+  context.state.validated = true
+  throw new Error('amount must be positive')
+})
 
-- recovery emits a replacement route;
-- recovery emits nothing and preserves the original failure;
-- recovery itself fails.
+const result = await new Flow(validate).start({ amount: -1 }).result()
 
-## Test Definitions Without Running
+assert.equal(result.status, 'failed')
+if (result.status === 'failed') {
+  assert.equal(result.failure.kind, 'handler')
+  assert.equal(result.state.validated, true)
+}
+```
 
-`flow.compile()` catches invalid topology, duplicate ownership, and invalid
-definition options. `flow.compile().describe()` returns a portable snapshot for
-asserting links, scope concurrency, declared exits, and activation limits.
+{% endtab %}
+{% endtabs %}
 
-Prefer semantic assertions over snapshots of the entire description. Full
-snapshots make harmless names or IDs expensive to change.
+Use `run()` in tests that care only about the completed state. Its `RunError`
+contains the same failed result when error throwing is the behavior under test.
 
-Keep framework conformance tests separate from application tests. Application
-tests should prove the workflow's behavior; Sley's own suite proves the
-retained routing, terminal, combine, retry, recovery, concurrency, and
-cross-language contracts.
+## Cover the boundaries your graph uses
+
+Do not turn every application into a copy of Sley's conformance suite. Add the
+cases that can change your workflow's outcome:
+
+- the unlabelled path and each named decision;
+- empty input when a dispatcher can emit no branches;
+- `end()` without output versus `end(None)` or `end(undefined)`;
+- combine pass-through versus terminal replacement;
+- the attempt on which retry succeeds or stops;
+- partial terminals visible to Flow recovery;
+- a cycle reaching its explicit activation limit.
+
+Compile-only tests are useful for topology policies. Assert the one field that
+matters, such as a scope's concurrency, instead of snapshotting the complete
+description. Element IDs and unrelated names should not make an application
+test noisy.
+
+Use a fake for an external service, not for Sley. Close over the fake or pass it
+through a small handler factory, then run the same graph topology as the
+application. The [Integration boundaries](integration-boundaries.md) guide
+shows that dependency shape.
+
+Next, learn how to [inspect topology and results](inspection.md) without
+treating logs as graph control.

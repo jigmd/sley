@@ -29,9 +29,9 @@ The TypeScript examples cover the same authoring model:
 
 ## Find an Example
 
-- [Python catalog](../docs/cookbook/python.md)
-- [TypeScript catalog](../docs/cookbook/typescript.md)
-- [Complexity rubric](../docs/cookbook/points.md)
+- [Choose an example](../docs/examples/README.md)
+- [Python catalog](../docs/examples/python.md)
+- [TypeScript catalog](../docs/examples/typescript.md)
 
 Complexity metadata estimates how much a reader must keep in mind. It is not a
 production-readiness score.
