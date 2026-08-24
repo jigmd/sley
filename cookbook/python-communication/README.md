@@ -1,57 +1,22 @@
 ---
-complexity: 5
+complexity: 4
 ---
 
-# Shared Store Communication
+# Shared Run State
 
-This example demonstrates the [Memory](https://skadaai.gitbook.io/caskada/core-abstraction/memory) concept in Caskada, specifically focusing on the Shared Store pattern.
+This word counter shows how nodes communicate through `context.state`.
+`read_text` initializes a nested statistics dictionary, `count_words` updates
+it, and `show_stats` reads it before linking back for another input.
 
-## Overview
+All nodes in one run see the same top-level state object. Sley shallow-copies
+the initial dictionary when `run()` starts and returns the run-owned state when
+the Flow finishes.
 
-The example implements a simple word counter that shows how nodes can communicate using a shared store. It demonstrates:
-
-- How to initialize and structure a shared store
-- How nodes can read from and write to the shared store
-- How to maintain state across multiple node executions
-- Best practices for shared store usage
-
-## Project Structure
-
-```
-python-communication/
-├── README.md
-├── requirements.txt
-├── main.py
-├── flow.py
-└── nodes.py
-```
-
-## Installation
+## Run
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Usage
-
-```bash
 python main.py
 ```
 
-Enter text when prompted. The program will:
-
-1. Count words in the text
-2. Store statistics in the shared store
-3. Display running statistics (total texts, total words, average)
-
-Enter 'q' to quit.
-
-## How it Works
-
-The example uses three nodes:
-
-1. `TextInput`: Reads user input and initializes the shared store
-2. `WordCounter`: Counts words and updates statistics in the shared store
-3. `ShowStats`: Displays statistics from the shared store
-
-This demonstrates how nodes can share and maintain state using the shared store pattern.
+Enter text to update the totals, or `q` to finish the Flow.

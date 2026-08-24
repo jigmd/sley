@@ -1,99 +1,133 @@
 {
   "nodes": [
     {
-      "id": 3,
-      "name": "ValidatePayment",
-      "group": 2
-    },
-    {
-      "id": 4,
-      "name": "ProcessPayment",
-      "group": 2
-    },
-    {
       "id": 5,
-      "name": "PaymentConfirmation",
+      "name": "Validate payment",
+      "group": 2
+    },
+    {
+      "id": 6,
+      "name": "Process payment",
       "group": 2
     },
     {
       "id": 7,
-      "name": "CheckStock",
-      "group": 6
+      "name": "Confirm payment",
+      "group": 2
     },
     {
       "id": 8,
-      "name": "ReserveItems",
-      "group": 6
+      "name": "Check stock",
+      "group": 3
     },
     {
       "id": 9,
-      "name": "UpdateInventory",
-      "group": 6
+      "name": "Reserve items",
+      "group": 3
+    },
+    {
+      "id": 10,
+      "name": "Update inventory",
+      "group": 3
     },
     {
       "id": 11,
-      "name": "CreateLabel",
-      "group": 10
+      "name": "Create label",
+      "group": 4
     },
     {
       "id": 12,
-      "name": "AssignCarrier",
-      "group": 10
+      "name": "Assign carrier",
+      "group": 4
     },
     {
       "id": 13,
-      "name": "SchedulePickup",
-      "group": 10
+      "name": "Schedule pickup",
+      "group": 4
+    }
+  ],
+  "flows": [
+    {
+      "id": 1,
+      "name": "Order pipeline",
+      "group": null
+    },
+    {
+      "id": 2,
+      "name": "Payment",
+      "group": 1
+    },
+    {
+      "id": 3,
+      "name": "Inventory",
+      "group": 1
+    },
+    {
+      "id": 4,
+      "name": "Shipping",
+      "group": 1
     }
   ],
   "links": [
     {
+      "source": 1,
+      "target": 2,
+      "action": "entry"
+    },
+    {
+      "source": 2,
+      "target": 5,
+      "action": "entry"
+    },
+    {
       "source": 3,
-      "target": 4,
-      "action": "default"
+      "target": 8,
+      "action": "entry"
     },
     {
       "source": 4,
-      "target": 5,
-      "action": "default"
+      "target": 11,
+      "action": "entry"
     },
     {
-      "source": 7,
-      "target": 8,
-      "action": "default"
+      "source": 2,
+      "target": 3,
+      "action": "unlabelled"
+    },
+    {
+      "source": 3,
+      "target": 4,
+      "action": "unlabelled"
+    },
+    {
+      "source": 5,
+      "target": 6,
+      "action": "unlabelled"
+    },
+    {
+      "source": 6,
+      "target": 7,
+      "action": "unlabelled"
     },
     {
       "source": 8,
       "target": 9,
-      "action": "default"
+      "action": "unlabelled"
+    },
+    {
+      "source": 9,
+      "target": 10,
+      "action": "unlabelled"
     },
     {
       "source": 11,
       "target": 12,
-      "action": "default"
+      "action": "unlabelled"
     },
     {
       "source": 12,
       "target": 13,
-      "action": "default"
+      "action": "unlabelled"
     }
-  ],
-  "group_links": [
-    {
-      "source": 2,
-      "target": 6,
-      "action": "default"
-    },
-    {
-      "source": 6,
-      "target": 10,
-      "action": "default"
-    }
-  ],
-  "flows": {
-    "1": "OrderFlow",
-    "2": "Flow",
-    "6": "Flow",
-    "10": "Flow"
-  }
+  ]
 }

@@ -1,54 +1,34 @@
-from caskada import Node
-from tools.search import SearchTool
+from sley import Context, node
 from tools.parser import analyze_results
-from typing import List, Dict
+from tools.search import search_web
 
-class SearchNode(Node):
-    """Node to perform web search using SerpAPI"""
-    
-    async def prep(self, shared):
-        return getattr(shared, "query"), getattr(shared, "num_results", 5)
-        
-    async def exec(self, inputs):
-        query, num_results = inputs
-        if not query:
-            return []
-            
-        searcher = SearchTool()
-        return searcher.search(query, num_results)
-        
-    async def post(self, shared, prep_res, exec_res):
-        shared["search_results"] = exec_res
 
-class AnalyzeResultsNode(Node):
-    """Node to analyze search results using LLM"""
-    
-    async def prep(self, shared):
-        return getattr(shared, "query"), getattr(shared, "search_results", [])
-        
-    async def exec(self, inputs):
-        query, results = inputs
-        if not results:
-            return {
-                "summary": "No search results to analyze",
-                "key_points": [],
-                "follow_up_queries": []
-            }
-            
-        return analyze_results(query, results)
-        
-    async def post(self, shared, prep_res, exec_res):
-        shared["analysis"] = exec_res
-        
-        # Print analysis
-        print("\nSearch Analysis:")
-        print("\nSummary:", exec_res["summary"])
-        
-        print("\nKey Points:")
-        for point in exec_res["key_points"]:
-            print(f"- {point}")
-            
-        print("\nSuggested Follow-up Queries:")
-        for query in exec_res["follow_up_queries"]:
-            print(f"- {query}")
-            
+@node
+def search(context: Context) -> None:
+    context.state["search_results"] = search_web(
+        context.state["query"], context.state["num_results"]
+    )
+
+
+@node
+def analyze(context: Context) -> None:
+    results = context.state["search_results"]
+    analysis = (
+        analyze_results(context.state["query"], results)
+        if results
+        else {
+            "summary": "No search results to analyze",
+            "key_points": [],
+            "follow_up_queries": [],
+        }
+    )
+    context.state["analysis"] = analysis
+
+    print("\nSearch Analysis:")
+    print("\nSummary:", analysis["summary"])
+    print("\nKey Points:")
+    for point in analysis["key_points"]:
+        print(f"- {point}")
+    print("\nSuggested Follow-up Queries:")
+    for query in analysis["follow_up_queries"]:
+        print(f"- {query}")

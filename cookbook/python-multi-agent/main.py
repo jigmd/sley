@@ -1,100 +1,74 @@
 import asyncio
-from caskada import Node, Flow
+
+from sley import Context, Flow, node
 from utils import call_llm
 
-class AsyncHinter(Node):
-    async def prep(self, shared):
-        # Wait for message from guesser (or empty string at start)
-        guess = await shared["hinter_queue"].get()
-        if guess == "GAME_OVER":
-            return None
-        return shared["target_word"], shared["forbidden_words"], getattr(shared, "past_guesses", [])
 
-    async def exec(self, inputs):
-        if inputs is None:
-            return None
-        target, forbidden, past_guesses = inputs
-        prompt = f"Generate hint for '{target}'\nForbidden words: {forbidden}"
-        if past_guesses:
-            prompt += f"\nPrevious wrong guesses: {past_guesses}\nMake hint more specific."
-        prompt += "\nUse at most 5 words."
-        
-        hint = call_llm(prompt)
-        print(f"\nHinter: Here's your hint - {hint}")
-        return hint
+@node
+async def hinter(context: Context) -> None:
+    guess = await context.state["hinter_queue"].get()
+    if guess == "GAME_OVER":
+        return
 
-    async def post(self, shared, prep_res, exec_res):
-        if exec_res is None:
-            return "end"
-        # Send hint to guesser
-        await shared["guesser_queue"].put(exec_res)
-        self.trigger("continue")
+    prompt = (
+        f"Generate hint for '{context.state['target_word']}'\n"
+        f"Forbidden words: {context.state['forbidden_words']}\n"
+        f"Previous wrong guesses: {context.state['past_guesses']}\n"
+        "Use at most 5 words."
+    )
+    hint = await call_llm(prompt)
+    print(f"\nHinter: Here's your hint - {hint}")
+    await context.state["guesser_queue"].put(hint)
+    context.emit("continue")
 
-class AsyncGuesser(Node):
-    async def prep(self, shared):
-        # Wait for hint from hinter
-        hint = await shared["guesser_queue"].get()
-        return hint, getattr(shared, "past_guesses", [])
 
-    async def exec(self, inputs):
-        hint, past_guesses = inputs
-        prompt = f"Given hint: {hint}, past wrong guesses: {past_guesses}, make a new guess. Directly reply a single word:"
-        guess = call_llm(prompt)
-        print(f"Guesser: I guess it's - {guess}")
-        return guess
+@node
+async def guesser(context: Context) -> None:
+    hint = await context.state["guesser_queue"].get()
+    prompt = (
+        f"Given hint: {hint}, past wrong guesses: {context.state['past_guesses']}, "
+        "make a new guess. Directly reply a single word:"
+    )
+    guess = await call_llm(prompt)
+    print(f"Guesser: I guess it's - {guess}")
 
-    async def post(self, shared, prep_res, exec_res):
-        # Check if guess is correct
-        if exec_res.lower() == shared["target_word"].lower():
-            print("Game Over - Correct guess!")
-            await shared["hinter_queue"].put("GAME_OVER")
-            return self.trigger("end")
-            
-        # Store the guess in shared state
-        if "past_guesses" not in shared:
-            shared["past_guesses"] = []
-        shared["past_guesses"].append(exec_res)
-        
-        # Send guess to hinter
-        await shared["hinter_queue"].put(exec_res)
-        self.trigger("continue")
+    if guess.lower() == context.state["target_word"].lower():
+        print("Game Over - Correct guess!")
+        await context.state["hinter_queue"].put("GAME_OVER")
+        return
 
-async def main():
-    # Set up game
-    shared = {
+    context.state["past_guesses"].append(guess)
+    await context.state["hinter_queue"].put(guess)
+    context.emit("continue")
+
+
+hinter.link(hinter, "continue")
+guesser.link(guesser, "continue")
+hinter_flow = Flow(hinter)
+guesser_flow = Flow(guesser)
+
+
+async def main() -> None:
+    shared_channels = {
         "target_word": "nostalgic",
         "forbidden_words": ["memory", "past", "remember", "feeling", "longing"],
+        "past_guesses": [],
         "hinter_queue": asyncio.Queue(),
-        "guesser_queue": asyncio.Queue()
+        "guesser_queue": asyncio.Queue(),
     }
-    
     print("=========== Taboo Game Starting! ===========")
-    print(f"Target word: {shared['target_word']}")
-    print(f"Forbidden words: {shared['forbidden_words']}")
+    print(f"Target word: {shared_channels['target_word']}")
+    print(f"Forbidden words: {shared_channels['forbidden_words']}")
     print("============================================")
 
-    # Initialize by sending empty guess to hinter
-    await shared["hinter_queue"].put("")
-
-    # Create nodes and flows
-    hinter = AsyncHinter()
-    guesser = AsyncGuesser()
-
-    # Set up flows
-    hinter_flow = Flow(start=hinter)
-    guesser_flow = Flow(start=guesser)
-
-    # Connect nodes to themselves for looping
-    hinter - "continue" >> hinter
-    guesser - "continue" >> guesser
-
-    # Run both agents concurrently
+    await shared_channels["hinter_queue"].put("")
+    # Each run copies the top-level map; the nested queues are deliberately shared.
     await asyncio.gather(
-        hinter_flow.run(shared),
-        guesser_flow.run(shared)
+        hinter_flow.run(shared_channels),
+        guesser_flow.run(shared_channels),
     )
-    
     print("=========== Game Complete! ===========")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

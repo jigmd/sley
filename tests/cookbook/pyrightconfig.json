@@ -1,0 +1,17 @@
+{
+  "include": ["../../cookbook/python-hello-world", "../../cookbook/python-node"],
+  "extraPaths": ["../../python"],
+  "executionEnvironments": [
+    {
+      "root": "../../cookbook/python-hello-world",
+      "extraPaths": ["../../python", "../../cookbook/python-hello-world"]
+    },
+    {
+      "root": "../../cookbook/python-node",
+      "extraPaths": ["../../python", "../../cookbook/python-node"]
+    }
+  ],
+  "typeCheckingMode": "strict",
+  "pythonVersion": "3.13",
+  "reportMissingTypeStubs": "none"
+}

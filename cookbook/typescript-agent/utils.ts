@@ -1,38 +1,22 @@
 import OpenAI from 'openai'
 import { DDGS } from '@phukon/duckduckgo-search'
 
-export interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-export async function callLLM(messages: Message[]) {
+export async function callLLM(prompt: string): Promise<string> {
   const client = new OpenAI(
     process.env.OPENROUTER_API_KEY
       ? {
           apiKey: process.env.OPENROUTER_API_KEY,
           baseURL: 'https://openrouter.ai/api/v1',
         }
-      : {
-          apiKey: process.env.OPENAI_API_KEY,
-        },
+      : { apiKey: process.env.OPENAI_API_KEY },
   )
-
   const response = await client.chat.completions.create({
     model: 'gpt-4o-mini',
-    messages: messages,
-    temperature: 0.7,
+    messages: [{ role: 'user', content: prompt }],
   })
-
-  return response.choices[0].message.content
+  return response.choices[0]?.message.content ?? ''
 }
 
 export async function webSearch(query: string) {
-  const ddgs = new DDGS()
-  const result = await ddgs.text({
-    keywords: query,
-    maxResults: 5,
-  })
-
-  return result
+  return new DDGS().text({ keywords: query, maxResults: 5 })
 }

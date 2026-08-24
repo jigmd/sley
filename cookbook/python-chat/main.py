@@ -1,59 +1,36 @@
-from caskada import Node, Flow
+import asyncio
+
+from sley import Context, Flow, node
 from utils import call_llm
 
-class ChatNode(Node):
-    async def prep(self, shared):
-        # Initialize messages if this is the first run
-        if "messages" not in shared:
-            shared["messages"] = []
-            print("Welcome to the chat! Type 'exit' to end the conversation.")
-        
-        # Get user input
-        user_input = input("\nYou: ")
-        
-        # Check if user wants to exit
-        if user_input.lower() == 'exit':
-            return None
-        
-        # Add user message to history
-        shared["messages"].append({"role": "user", "content": user_input})
-        
-        # Return all messages for the LLM
-        return shared["messages"]
 
-    async def exec(self, messages):
-        if messages is None:
-            return None
-        
-        # Call LLM with the entire conversation history
-        response = call_llm(messages)
-        return response
+@node
+def chat(context: Context) -> None:
+    messages = context.state.setdefault("messages", [])
+    if not messages:
+        print("Welcome to the chat! Type 'exit' to end the conversation.")
 
-    async def post(self, shared, prep_res, exec_res):
-        if prep_res is None or exec_res is None:
-            print("\nGoodbye!")
-            return None  # End the conversation
-        
-        # Print the assistant's response
-        print(f"\nAssistant: {exec_res}")
-        
-        # Add assistant message to history
-        shared["messages"].append({"role": "assistant", "content": exec_res})
-        
-        # Loop back to continue the conversation
-        self.trigger("continue")
+    user_input = input("\nYou: ")
+    if user_input.lower() == "exit":
+        print("\nGoodbye!")
+        return
 
-# Create the flow with self-loop
-chat_node = ChatNode()
-chat_node - "continue" >> chat_node  # Loop back to continue conversation
+    messages.append({"role": "user", "content": user_input})
+    response = call_llm(messages)
+    print(f"\nAssistant: {response}")
+    messages.append({"role": "assistant", "content": response})
 
-flow = Flow(start=chat_node)
+    # The named self-link starts the next turn with the same run state.
+    context.emit("continue")
 
-async def main():
-    shared = {}
-    await flow.run(shared)
 
-# Start the chat
+chat.link(chat, "continue")
+chat_flow = Flow(chat)
+
+
+async def main() -> None:
+    await chat_flow.run({})
+
+
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

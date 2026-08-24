@@ -1,32 +1,30 @@
-from caskada import Flow, Node
-from nodes import CSVProcessor, CSVTrigger
+from nodes import dispatch_chunks, process_chunk, show_stats
+from sley import Flow, node
 
-class ShowStats(Node):
-    """Node to display the final statistics."""
-    
-    async def prep(self, shared):
-        """Get statistics from shared store."""
-        return shared["statistics"]
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Display the statistics."""
-        stats = prep_res
-        print("\nFinal Statistics:")
-        print(f"- Total Sales: ${stats['total_sales']:,.2f}")
-        print(f"- Average Sale: ${stats['average_sale']:,.2f}")
-        print(f"- Total Transactions: {stats['total_transactions']:,}\n")
-        self.trigger("end")
+
+def combine_chunks(context, result):
+    # result.outputs contains values published by the workers' end(value) calls.
+    total_sales = sum(chunk["total_sales"] for chunk in result.outputs)
+    total_transactions = sum(chunk["num_transactions"] for chunk in result.outputs)
+
+    context.state["statistics"] = {
+        "total_sales": total_sales,
+        "average_sale": total_sales / total_transactions,
+        "total_transactions": total_transactions,
+    }
+
+    # Replace all worker terminals with one continuation to show_stats.
+    context.emit()
+
 
 def create_flow():
-    """Create and return the processing flow."""
-    # Create nodes
-    trigger = CSVTrigger(chunk_size=1000)
-    processor = CSVProcessor()
-    show_stats = ShowStats()
-    
-    # Connect nodes
-    trigger >> processor
-    processor - "show_stats" >> show_stats
-    
-    # Create and return flow
-    return Flow(start=trigger) 
+    dispatch = node(dispatch_chunks)
+    process = node(process_chunk)
+    show = node(show_stats)
+
+    dispatch.link(process, "chunk")
+    batch = Flow(dispatch, combine=combine_chunks)
+    # The combiner's unlabelled emission follows this link after the batch settles.
+    batch.link(show)
+
+    return Flow(batch)

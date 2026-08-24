@@ -1,21 +1,33 @@
 from pathlib import Path
+
 from setuptools import setup
 
 # Read the README.md for the long description
 this_directory = Path(__file__).parent
-long_description = (this_directory / "README.md").read_text(encoding="utf-8")
+readme_path = this_directory / "README.md"
+if not readme_path.exists() and this_directory.parent.joinpath("README.md").exists():
+    # The publish workflow copies README.md into this directory, while local
+    # source installs use the repository-level README.
+    readme_path = this_directory.parent / "README.md"
+long_description = (
+    readme_path.read_text(encoding="utf-8")
+    if readme_path.exists()
+    else "Sley is a structured graph runtime for Python and TypeScript."
+)
 
 setup(
-    name='caskada',
-    version='2.2.0',
-    py_modules=['caskada'],
+    name="sley",
+    version="0.0.1",
+    packages=["sley"],
+    package_data={"sley": ["py.typed"]},
     author="Victor Duarte",
-    description="Minimalist AI framework in 300 Lines. Enable LLMs to Program Themselves.",
+    description="Structured graph runtime for Python and TypeScript.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://skada.ai/caskada/",
-    license='MPL-2.0',
+    url="https://sley.jig.md",
+    license="MPL-2.0",
+    python_requires=">=3.13",
     classifiers=[
-        'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
+        "Programming Language :: Python :: 3.13",
     ],
 )

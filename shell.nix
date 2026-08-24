@@ -1,21 +1,23 @@
 { pkgs ? import <nixpkgs> {} }:
 
-let
-  venvDir = "./.venv";
-in pkgs.mkShell {
+pkgs.mkShell {
   nativeBuildInputs = with pkgs.buildPackages; [
     ncurses
     openssh
     git
-    corepack_latest
-    nodejs_24
+    corepack_24
+    nodejs-slim
     uv
   ];
 
   packages = [
+    pkgs.chromium
     (pkgs.python3.withPackages (python-pkgs: [
+      python-pkgs.playwright
       python-pkgs.pytest
       python-pkgs.pytest-asyncio
     ]))
   ];
+
+  SLEY_BROWSER_EXECUTABLE = "${pkgs.chromium}/bin/chromium";
 }

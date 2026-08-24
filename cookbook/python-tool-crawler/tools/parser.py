@@ -1,21 +1,14 @@
-from typing import Dict, List
+import yaml
 from utils.call_llm import call_llm
 
-def analyze_content(content: Dict) -> Dict:
-    """Analyze webpage content using LLM
-    
-    Args:
-        content (Dict): Webpage content with url, title and text
-        
-    Returns:
-        Dict: Analysis results including summary and topics
-    """
+
+def analyze_content(content):
     prompt = f"""
 Analyze this webpage content:
 
-Title: {content['title']}
-URL: {content['url']}
-Content: {content['text'][:2000]}  # Limit content length
+Title: {content["title"]}
+URL: {content["url"]}
+Content: {content["text"][:2000]}  # Limit content length
 
 Please provide:
 1. A brief summary (2-3 sentences)
@@ -38,42 +31,27 @@ IMPORTANT: Make sure to:
 3. Keep single-line fields without the | character
 4. Your answer must be wrapped in yaml code block or it will result in an error. Do not forget to include the ```yaml sequence at the beginning and end it with ```.
 """
-    
-    try:
-        response = call_llm(prompt)
-        assert "```yaml" in response, "Response must contain yaml block"
-        # Extract YAML between code fences
-        yaml_str = response.split("```yaml")[1].split("```")[0].strip()
-        
-        import yaml
-        analysis = yaml.safe_load(yaml_str)
-        
-        # Validate required fields
-        assert "summary" in analysis
-        assert "topics" in analysis
-        assert "content_type" in analysis
-        assert isinstance(analysis["topics"], list)
-        
-        return analysis
-        
-    except Exception as e:
-        print(f"Error analyzing content: {str(e)}")
-        return {
-            "summary": "Error analyzing content",
-            "topics": [],
-            "content_type": "unknown"
-        }
 
-def analyze_site(content: Dict) -> Dict:
-    """Analyze all crawled pages
-    
-    Args:
-        crawl_results (Dict): Crawled page contents
-        
-    Returns:
-        Dict: Original content with added analysis
-    """
-    if content and content.get("text"):
-        analysis = analyze_content(content)
-        content["analysis"] = analysis
-        return content
+    response = call_llm(prompt)
+    if "```yaml" not in response:
+        raise ValueError("analysis must contain a YAML block")
+    analysis = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
+    if not isinstance(analysis, dict):
+        raise ValueError("analysis must be a YAML mapping")
+    if not isinstance(analysis.get("summary"), str):
+        raise ValueError("analysis summary must be text")
+    topics = analysis.get("topics")
+    if not isinstance(topics, list) or not all(
+        isinstance(topic, str) for topic in topics
+    ):
+        raise ValueError("analysis topics must be a list of text")
+    if not isinstance(analysis.get("content_type"), str):
+        raise ValueError("analysis content_type must be text")
+    return analysis
+
+
+def analyze_site(content):
+    if not isinstance(content, dict) or not content.get("text"):
+        raise ValueError("page content must include text")
+    content["analysis"] = analyze_content(content)
+    return content

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "revision": "sley-0.0.1",
+  "accepted_on": "2026-08-23",
+  "reviewed_revision": "96a0bff508e3389979f58554149391257fb457ef",
+  "status": "accepted_implementation_baseline",
+  "hash_algorithm": "sha256",
+  "authority": [
+    {
+      "path": "architecture/rfcs/0001-sley-runtime.md",
+      "sha256": "e3835c40842dfb77ac9f5e90ec4d90715518629c99f9aaab1ca1928c3cccc968"
+    },
+    {
+      "path": "architecture/architecture-verdict.md",
+      "sha256": "b650c1563bc9a119933e7932d8a46520c634c0acec25dd0a98caf7228469bff6"
+    },
+    {
+      "path": "conformance/fixture.schema.json",
+      "sha256": "22352e818875ce655197831abef1e335142c4b3816c34c001bd229995cb0c62a"
+    },
+    {
+      "path": "conformance/fixtures/runtime.json",
+      "sha256": "347e192957ba669c118d5f667839583e6d0246e3475493fe97096329245b56f7"
+    },
+    {
+      "path": "conformance/coverage.md",
+      "sha256": "4a1124a3c429eca6d73c164b084dd1bf9033bcb884626a6e9129e1284e5ce1b3"
+    }
+  ],
+  "verification_tools": [
+    {
+      "path": "conformance/reference.py",
+      "sha256": "e0c2da66d12a0096d8a4186fd87ea134454028af02631e03343f5164ad765444"
+    },
+    {
+      "path": "conformance/run-python.py",
+      "sha256": "99c41abe76dfb3f683888a74bf59205e23d82388ee37dd882488e71da33b7adc"
+    },
+    {
+      "path": "conformance/run-typescript.mts",
+      "sha256": "85fd1408927f090ae778f93433248d4970443372d873e9952a83a20c8589a883"
+    },
+    {
+      "path": "conformance/run-all.py",
+      "sha256": "a4908e0297bfc734503a953dee9c232661e480b6a2afd31fe2d0c006103c0aab"
+    }
+  ]
+}

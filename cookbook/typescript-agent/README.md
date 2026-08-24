@@ -2,53 +2,41 @@
 complexity: 11
 ---
 
-# Agent Example
+# Search Agent
 
-This example demonstrates how to build a question-answering agent using TypeScript and Caskada. The agent can search the web for information and provide answers based on the search results.
-
-## Overview
-
-This agent demonstrates the following capabilities:
-
-- Decision-making based on context
-- Web searching for information
-- Generating comprehensive answers
-
-### Step and Usage
-
-```bash
-# from Caskada root directory
-cd cookbook/typescript-agent
-
-cp .env.example .env # add your API key
-
-npm install
-npm run agent -- "this is your question"
-```
-
-Default question is "What is the latest Deepseek LLM model?" if you did not provide any argument after `npm run agent`
-
-## Features
-
-- Performs web searches to gather information
-- Collects and processes information from search results
-- Answers user questions based on the gathered information
-
-## How It Works
-
-The agent flow comprises three nodes:
-
-1. **DecideNode**: The core of the agent flow that determines whether it can answer the question directly or needs to search for more information.
-2. **SearchNode**: Executes web searches when the DecideNode determines that more information is needed.
-3. **AnswerNode**: Generates a comprehensive answer when the DecideNode determines that sufficient context is available.
-
-The flow starts with the DecideNode, which decides whether to search (triggering SearchNode) or answer (triggering AnswerNode) based on the current context. This decision is made in the `post` method, which returns either "search" or "answer".
-
-After completing a search, the SearchNode's `post` method returns results to the DecideNode via the "decide" action. This allows the DecideNode to determine whether to search again or provide a final answer when the context is sufficient.
+An agent that decides whether it needs web research before answering a
+question.
 
 ```mermaid
-graph TD
-    A[DecideNode] -->|"search"| B[SearchNode]
-    A -->|"answer"| C[AnswerNode]
-    B -->|"decide"| A
+flowchart LR
+    Decide -->|search| Search
+    Search -->|decide| Decide
+    Decide -->|answer| Answer
+```
+
+`context.emit(action)` selects a named link. The search node loops back to the
+decision node, while the answer node emits nothing and therefore exits the Flow
+normally.
+
+Long-lived research and the final answer stay in `context.state`. This example
+keeps its small static data model in `types.ts`, separate from the workflow.
+
+## Decision Contract
+
+The decision prompt shows the model the exact YAML shape for both allowed
+actions. `parseDecision` still treats the response as untrusted data: it checks
+the action, reason, and required search query before `context.emit(action)` can
+change graph control. The TypeScript type documents the contract; the runtime
+check enforces it.
+
+This explicit prompt-and-validate approach is deliberately used instead of a
+provider-specific structured-output helper, so the example works with both
+OpenAI and OpenRouter without another schema library.
+
+## Run
+
+```bash
+cp .env.example .env
+npm install
+npm run agent -- "What is the latest Deepseek LLM model?"
 ```

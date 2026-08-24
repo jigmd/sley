@@ -1,24 +1,21 @@
+import asyncio
+
 from flow import flow
 
-async def main():
-    # Example text to summarize
+
+async def main() -> None:
     text = """
-    Caskada is a minimalist LLM framework that models workflows as a Nested Directed Graph.
-    Nodes handle simple LLM tasks, connecting through Actions for Agents.
-    Flows orchestrate these nodes for Task Decomposition, and can be nested.
-    It also supports Batch processing and Async execution.
+    Sley is a structured graph runtime. Functions perform work, links choose
+    what runs next, and Flows define execution boundaries.
     """
 
-    # Initialize shared store
-    shared = {"data": text}
-    
-    # Run the flow
-    await flow.run(shared)
-    
-    # Print result
+    state = await flow.run({"data": text, "summary": None})
+    if state["summary"] is None:
+        raise RuntimeError("The summarizer completed without a summary")
+
     print("\nInput text:", text)
-    print("\nSummary:", shared["summary"])
+    print("\nSummary:", state["summary"])
+
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

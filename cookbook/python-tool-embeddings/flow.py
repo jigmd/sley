@@ -1,10 +1,4 @@
-from caskada import Flow
-from nodes import EmbeddingNode
+from nodes import embed_text
+from sley import Flow
 
-def create_embedding_flow():
-    """Create a flow for text embedding"""
-    # Create embedding node
-    embedding = EmbeddingNode()
-    
-    # Create and return flow
-    return Flow(start=embedding) 
+embedding_flow = Flow(embed_text)

@@ -1,18 +1,14 @@
-import os
-from PIL import Image
-import numpy as np
-from flow import create_flow
+import asyncio
 
-async def main():
-    # Create and run flow
+from flow import batch_flow
+
+
+async def main() -> None:
     print("Processing images with filters...")
-    
-    flow = create_flow()
-    await flow.run({}) 
-    
+    await batch_flow.run({})
     print("\nAll images processed successfully!")
     print("Check the 'output' directory for results.")
 
+
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

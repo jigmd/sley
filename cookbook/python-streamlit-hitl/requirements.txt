@@ -1,3 +1,2 @@
-streamlit
-caskada
-openai
+streamlit>=1.61.1
+sley>=0.0.1

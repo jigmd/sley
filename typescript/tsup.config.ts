@@ -6,6 +6,6 @@ export const tsup: Options = {
   format: ['cjs', 'esm'],
   minify: true,
   bundle: true,
-  entryPoints: ['caskada.ts'],
+  entryPoints: ['sley.ts'],
   outDir: 'dist',
 }

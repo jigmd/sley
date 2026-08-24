@@ -4,3 +4,12 @@ packages:
   - 'cookbook/typescript-*'
 
   - '!**/test/**'
+
+linkWorkspacePackages: true
+preferWorkspacePackages: true
+
+overrides:
+  esbuild: 0.28.2
+
+allowBuilds:
+  esbuild: true

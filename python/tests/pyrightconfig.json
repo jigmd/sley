@@ -1,0 +1,7 @@
+{
+  "include": ["typing.py"],
+  "extraPaths": [".."],
+  "typeCheckingMode": "strict",
+  "pythonVersion": "3.13",
+  "reportMissingTypeStubs": "none"
+}

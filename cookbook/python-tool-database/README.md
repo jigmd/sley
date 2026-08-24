@@ -1,101 +1,22 @@
 ---
-complexity: 6.5
+complexity: 5
 ---
 
-# SQLite Database with Caskada
+# SQLite Tool
 
-This example demonstrates how to properly integrate SQLite database operations with Caskada, focusing on:
+Three nodes form a linear database workflow:
 
-1. Clean code organization with separation of concerns:
+1. Initialize the SQLite schema.
+2. Insert one task with bound query parameters.
+3. Read the tasks into the final run state.
 
-   - Tools layer for database operations (`tools/database.py`)
-   - Node implementation for Caskada integration (`nodes.py`)
-   - Flow configuration (`flow.py`)
-   - Safe SQL query execution with parameter binding
+The SQLite functions stay in `tools/database.py`; the Sley handlers only
+adapt shared state to those tool calls. Successful handlers emit nothing, so
+each follows its unlabelled link automatically.
 
-2. Best practices for database operations:
-
-   - Connection management with proper closing
-   - SQL injection prevention using parameterized queries
-   - Error handling and resource cleanup
-   - Simple schema management
-
-3. Example task management system:
-   - Database initialization
-   - Task creation
-   - Task listing
-   - Status tracking
-
-## Project Structure
-
-```
-python-tool-database/
-├── tools/
-│   └── database.py    # SQLite database operations
-├── nodes.py          # Caskada node implementation
-├── flow.py          # Flow configuration
-└── main.py          # Example usage
-```
-
-## Setup
-
-1. Create a virtual environment:
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-2. Install dependencies:
+## Run
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Usage
-
-Run the example:
-
-```bash
 python main.py
-```
-
-This will:
-
-1. Initialize a SQLite database with a tasks table
-2. Create an example task
-3. List all tasks in the database
-4. Display the results
-
-## Key Concepts Demonstrated
-
-1. **Database Operations**
-
-   - Safe connection handling
-   - Query parameterization
-   - Schema management
-
-2. **Code Organization**
-
-   - Clear separation between database operations and Caskada components
-   - Modular project structure
-   - Type hints and documentation
-
-3. **Caskada Integration**
-   - Node implementation with prep->exec->post lifecycle
-   - Flow configuration
-   - Shared store usage for data passing
-
-## Example Output
-
-```
-Database Status: Database initialized
-Task Status: Task created successfully
-
-All Tasks:
-- ID: 1
-  Title: Example Task
-  Description: This is an example task created using Caskada
-  Status: pending
-  Created: 2024-03-02 12:34:56
 ```

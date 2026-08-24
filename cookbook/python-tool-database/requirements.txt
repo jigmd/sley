@@ -1,2 +1,1 @@
-caskada>=1.0.0
-python-dotenv>=0.19.0
+sley>=0.0.1

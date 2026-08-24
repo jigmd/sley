@@ -1,138 +1,73 @@
-from caskada import Node
-from utils import call_llm, search_web_duckduckgo
 import yaml
+from sley import Context, node
+from utils import call_llm, search_web
 
-class DecideAction(Node):
-    async def prep(self, shared):
-        """Prepare the context and question for the decision-making process."""
-        # Get the current context (default to "No previous search" if none exists)
-        context = getattr(shared, "context", "No previous search")
-        # Get the question from the shared store
-        question = shared["question"]
-        # Return both for the exec step
-        return question, context
-        
-    async def exec(self, inputs):
-        """Call the LLM to decide whether to search or answer."""
-        question, context = inputs
-        
-        print(f"🤔 Agent deciding what to do next...")
-        
-        # Create a prompt to help the LLM decide what to do next with proper yaml formatting
-        prompt = f"""
-### CONTEXT
+
+@node
+def decide(context: Context) -> None:
+    print("🤔 Agent deciding what to do next...")
+    prompt = f"""
 You are a research assistant that can search the web.
-Question: {question}
-Previous Research: {context}
+Question: {context.state["question"]}
+Previous research: {context.state.get("research", "No previous search")}
 
-### ACTION SPACE
-[1] search
-  Description: Look up more information on the web
-  Parameters:
-    - query (str): What to search for
-
-[2] answer
-  Description: Answer the question with current knowledge
-  Parameters:
-    - answer (str): Final answer to the question
-
-## NEXT ACTION
-Decide the next action based on the context and available actions.
-Return your response in this format:
-
+### NEXT ACTION
+Choose `search` or `answer` and return exactly one of these YAML code blocks:
 ```yaml
-thinking: |
-    <your step-by-step reasoning process>
-action: search OR answer
-reason: <why you chose this action>
-answer: <if action is answer>
-search_query: <specific search query if action is search>
+action: search
+search_query: what to search for
 ```
 
-IMPORTANT: Make sure to:
-1. Use proper indentation (4 spaces) for all multi-line fields
-2. Use the | character for multi-line text fields
-3. Keep single-line fields without the | character
-4. Your answer must be wrapped in yaml code block or it will result in an error. Do not forget to include the ```yaml sequence at the beginning and end it with ```.
+```yaml
+action: answer
+answer: final answer when action is answer
+```
 """
-        
-        # Call the LLM to make a decision
-        response = call_llm(prompt)
-        
-        assert "```yaml" in response, "Response must contain yaml block"
-        # Parse the response to get the decision
-        yaml_str = response.split("```yaml")[1].split("```")[0].strip()
-        decision = yaml.safe_load(yaml_str)
-        
-        return decision
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Save the decision and determine the next step in the flow."""
-        # If LLM decided to search, save the search query
-        if exec_res["action"] == "search":
-            shared["search_query"] = exec_res["search_query"]
-            print(f"🔍 Agent decided to search for: {exec_res['search_query']}")
-        else:
-            shared["context"] = exec_res["answer"] #save the context if LLM gives the answer without searching.
-            print(f"💡 Agent decided to answer the question")
-        
-        # Return the action to determine the next node in the flow
-        self.trigger(exec_res["action"])
+    response = call_llm(prompt)
+    if "```yaml" not in response:
+        raise ValueError("decision must contain a YAML block")
+    decision = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
+    if not isinstance(decision, dict) or decision.get("action") not in {
+        "search",
+        "answer",
+    }:
+        raise ValueError("decision action must be search or answer")
 
-class SearchWeb(Node):
-    async def prep(self, shared):
-        """Get the search query from the shared store."""
-        return shared["search_query"]
-        
-    async def exec(self, search_query):
-        """Search the web for the given query."""
-        # Call the search utility function
-        print(f"🌐 Searching the web for: {search_query}")
-        results = search_web_duckduckgo(search_query)
-        return results
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Save the search results and go back to the decision node."""
-        # Add the search results to the context in the shared store
-        previous = getattr(shared, "context", "")
-        shared["context"] = previous + "\n\nSEARCH: " + shared["search_query"] + "\nRESULTS: " + exec_res
-        
-        print(f"📚 Found information, analyzing results...")
-        
-        # Always go back to the decision node after searching
-        self.trigger("decide")
+    if decision["action"] == "search":
+        search_query = decision.get("search_query")
+        if not isinstance(search_query, str) or not search_query.strip():
+            raise ValueError("search decision needs a non-empty search_query")
+        context.state["search_query"] = search_query
+        print(f"🔍 Agent decided to search for: {search_query}")
+    else:
+        answer = decision.get("answer")
+        if not isinstance(answer, str) or not answer.strip():
+            raise ValueError("answer decision needs a non-empty answer")
+        context.state["research"] = answer
+        print("💡 Agent decided to answer the question")
+    context.emit(decision["action"])
 
-class AnswerQuestion(Node):
-    async def prep(self, shared):
-        """Get the question and context for answering."""
-        return shared["question"], getattr(shared, "context", "")
-        
-    async def exec(self, inputs):
-        """Call the LLM to generate a final answer."""
-        question, context = inputs
-        
-        print(f"✍️ Crafting final answer...")
-        
-        # Create a prompt for the LLM to answer the question
-        prompt = f"""
-### CONTEXT
-Based on the following information, answer the question.
-Question: {question}
-Research: {context}
 
-## YOUR ANSWER:
-Provide a comprehensive answer using the research results.
+@node
+def search(context: Context) -> None:
+    query = context.state["search_query"]
+    print(f"🌐 Searching the web for: {query}")
+    results = search_web(query)
+    context.state["research"] = (
+        context.state.get("research", "") + f"\n\nSEARCH: {query}\nRESULTS: {results}"
+    )
+    print("📚 Found information, analyzing results...")
+    context.emit("decide")
+
+
+@node
+def answer(context: Context) -> None:
+    print("✍️ Crafting final answer...")
+    context.state["answer"] = call_llm(
+        f"""
+Answer this question using the research below.
+Question: {context.state["question"]}
+Research: {context.state.get("research", "")}
 """
-        # Call the LLM to generate an answer
-        answer = call_llm(prompt)
-        return answer
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Save the final answer and complete the flow."""
-        # Save the answer in the shared store
-        shared["answer"] = exec_res
-        
-        print(f"✅ Answer generated successfully")
-        
-        # We're done - no need to continue the flow
-        self.trigger("done")
+    )
+    print("✅ Answer generated successfully")

@@ -1,20 +1,15 @@
-from flow import create_vision_flow
+import asyncio
 
-async def main():
-    # Create and run flow
-    flow = create_vision_flow()
-    shared = {}
-    await flow.run(shared)
-    
-    # Print results
-    if "results" in shared:
-        for result in shared["results"]:
-            print(f"\nFile: {result['filename']}")
-            print("-" * 50)
-            print(result["text"])
-    else:
-        print("No results found")
+from flow import vision_flow
+
+
+async def main() -> None:
+    state = await vision_flow.run({})
+    for result in state["results"]:
+        print(f"\nFile: {result['filename']}")
+        print("-" * 50)
+        print(result["text"])
+
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

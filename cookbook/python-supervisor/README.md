@@ -6,45 +6,20 @@ complexity: 13
 
 This project demonstrates a supervisor that oversees an unreliable [research agent](../python-agent) to ensure high-quality answers.
 
+## Run
+
+Set `OPENAI_API_KEY`, then run:
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
 ## Features
 
 - Evaluates responses for quality and relevance
 - Rejects nonsensical or unreliable answers
 - Requests new answers until a quality response is produced
-
-## Getting Started
-
-1. Install the packages you need with this simple command:
-
-```bash
-pip install -r requirements.txt
-```
-
-2. Let's get your OpenAI API key ready:
-
-```bash
-export OPENAI_API_KEY="your-api-key-here"
-```
-
-3. Let's do a quick check to make sure your API key is working properly:
-
-```bash
-python utils.py
-```
-
-This will test both the LLM call and web search features. If you see responses, you're good to go!
-
-4. Try out the agent with the default question (about Nobel Prize winners):
-
-```bash
-python main.py
-```
-
-5. Got a burning question? Ask anything you want by using the `--` prefix:
-
-```bash
-python main.py --"What is quantum computing?"
-```
 
 ## How It Works?
 
@@ -54,20 +29,26 @@ The magic happens through a simple but powerful graph structure with these main 
 graph TD
     subgraph InnerAgent[Inner Research Agent]
         DecideAction -->|"search"| SearchWeb
-        DecideAction -->|"answer"| UnreliableAnswerNode
+        DecideAction -->|"answer"| UnreliableAnswer
         SearchWeb -->|"decide"| DecideAction
     end
 
-    InnerAgent --> SupervisorNode
-    SupervisorNode -->|"retry"| InnerAgent
+    InnerAgent --> Supervisor
+    Supervisor -->|"retry"| InnerAgent
 ```
 
 Here's what each part does:
 
-1. **DecideAction**: The brain that figures out whether to search or answer based on current context
-2. **SearchWeb**: The researcher that goes out and finds information using web search
-3. **UnreliableAnswerNode**: Generates answers (with a 50% chance of being unreliable)
-4. **SupervisorNode**: Quality control that validates answers and rejects nonsensical ones
+1. **DecideAction**: Figures out whether to search or answer based on current context
+2. **SearchWeb**: Finds information using web search
+3. **UnreliableAnswer**: Generates answers (with a 50% chance of being unreliable)
+4. **Supervisor**: Validates answers and rejects nonsensical ones
+
+The answer function emits nothing, which exits the inner Flow and reaches the
+supervisor. A rejection emits `"retry"` and re-enters that inner Flow. An
+approval emits nothing, which exits the outer Flow and completes the run. This
+is ordinary Flow termination, so the example needs neither `end()` nor
+`combine()`.
 
 ## Example Output
 

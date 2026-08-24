@@ -1,38 +1,21 @@
 import asyncio
-from flow import create_article_flow
+import sys
 
-async def run_flow(topic="AI Safety"):
-    """
-    Run the article writing workflow with a specific topic
-    
-    Args:
-        topic (str): The topic for the article
-    """
-    # Initialize shared data with the topic
-    shared = {"topic": topic}
-    
-    # Print starting message
+from flow import article_flow
+
+
+async def main(topic: str = "AI Safety") -> None:
     print(f"\n=== Starting Article Workflow on Topic: {topic} ===\n")
-    
-    # Run the flow
-    flow = create_article_flow()
-    await flow.run(shared)
-    
-    # Output summary
+
+    # run() returns the final state owned by this workflow invocation.
+    state = await article_flow.run({"topic": topic})
+
     print("\n=== Workflow Completed ===\n")
-    print(f"Topic: {shared['topic']}")
-    print(f"Outline Length: {len(shared['outline'])} characters")
-    print(f"Draft Length: {len(shared['draft'])} characters")
-    print(f"Final Article Length: {len(shared['final_article'])} characters")
-    
-    return shared
+    print(f"Topic: {state['topic']}")
+    print(f"Outline Length: {len(state['outline'])} characters")
+    print(f"Draft Length: {len(state['draft'])} characters")
+    print(f"Final Article Length: {len(state['final_article'])} characters")
+
 
 if __name__ == "__main__":
-    import sys
-    
-    # Get topic from command line if provided
-    topic = "AI Safety"  # Default topic
-    if len(sys.argv) > 1:
-        topic = " ".join(sys.argv[1:])
-    
-    asyncio.run(run_flow(topic)) 
+    asyncio.run(main(" ".join(sys.argv[1:]) or "AI Safety"))

@@ -2,67 +2,41 @@
 complexity: 4.5
 ---
 
-# Batch Node Example
+# Combine CSV Chunks
 
-This example demonstrates the batch Node concept in Caskada by implementing a CSV processor that handles large files by processing them in chunks.
+This example processes a sales CSV in chunks and combines their statistics into
+one result.
 
-## What this Example Demonstrates
-
-- How to use batch Node to process large inputs in chunks
-- The three key methods of batch Node:
-  1. `prep`: Splits input into chunks
-  2. `exec`: Processes each chunk independently
-  3. `post`: Combines results from all chunks
-
-## Project Structure
-
-```
-python-batch-node/
-├── README.md
-├── requirements.txt
-├── data/
-│   └── sales.csv      # Sample large CSV file
-├── main.py            # Entry point
-├── flow.py            # Flow definition
-└── nodes.py           # batch Node implementation
-```
-
-## How it Works
-
-The example processes a large CSV file containing sales data:
-
-1. **Chunking (prep)**: The CSV file is read and split into chunks of N rows
-2. **Processing (exec)**: Each chunk is processed to calculate:
-   - Total sales
-   - Average sale value
-   - Number of transactions
-3. **Combining (post)**: Results from all chunks are aggregated into final statistics
-
-## Installation
+## Run
 
 ```bash
 pip install -r requirements.txt
-```
-
-## Usage
-
-```bash
 python main.py
 ```
 
-## Sample Output
+## What This Example Demonstrates
 
+1. `dispatch_chunks` emits one branch input for each CSV chunk.
+2. `process_chunk` calls `end(value)` to publish one output from its branch.
+3. `combine_chunks` receives those values in `result.outputs` and sums them.
+4. Its single `emit()` replaces all worker terminals with one continuation, so
+   `show_stats` runs once.
+
+`end(value)` ends only that worker branch. It does not stop sibling workers or
+the whole run. The Flow's `combine` callback runs after every branch in that Flow
+has settled. The outer Flow gives the combiner's single continuation a
+`show_stats` node to follow.
+
+```mermaid
+flowchart LR
+    Dispatch[dispatch_chunks] -->|chunk x N| Process[process_chunk]
+    Process -->|end statistics| Combine[combine_chunks]
+    Combine -->|one continuation| Show[show_stats]
 ```
-Processing sales.csv in chunks...
 
-Final Statistics:
-- Total Sales: $1,234,567.89
-- Average Sale: $123.45
-- Total Transactions: 10,000
-```
+## Files
 
-## Key Concepts Illustrated
-
-1. **Chunk-based Processing**: Shows how batch Node handles large inputs by breaking them into manageable pieces
-2. **Independent Processing**: Demonstrates how each chunk is processed separately
-3. **Result Aggregation**: Shows how individual results are combined into a final output
+- [`main.py`](./main.py): Runs the example
+- [`flow.py`](./flow.py): Builds the fan-out Flow and defines its combiner
+- [`nodes.py`](./nodes.py): Contains the three small handler functions
+- [`data/sales.csv`](./data/sales.csv): Sample sales data

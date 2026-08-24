@@ -3,7 +3,6 @@
  * @type {import("prettier").Config}
  */
 const config = {
-  editorconfig: true,
   semi: false,
   useTabs: false,
   singleQuote: true,

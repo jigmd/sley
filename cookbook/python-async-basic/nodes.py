@@ -1,63 +1,34 @@
-from caskada import Node
-from utils import fetch_recipes, call_llm_async, get_user_input
+from sley import Context, node
+from utils import get_user_input, load_recipes
 
-class FetchRecipes(Node):
-    """Node that fetches recipes."""
-    
-    async def prep(self, shared):
-        """Get ingredient from user."""
-        ingredient = await get_user_input("Enter ingredient: ")
-        return ingredient
-    
-    async def exec(self, ingredient):
-        """Fetch recipes asynchronously."""
-        recipes = await fetch_recipes(ingredient)
-        return recipes
-    
-    async def post(self, shared, prep_res, recipes):
-        """Store recipes and continue."""
-        shared["recipes"] = recipes
-        shared["ingredient"] = prep_res
-        self.trigger("suggest")
 
-class SuggestRecipe(Node):
-    """Node that suggests a recipe using LLM."""
-    
-    async def prep(self, shared):
-        """Get recipes from shared store."""
-        return shared["recipes"]
-    
-    async def exec(self, recipes):
-        """Get suggestion from LLM."""
-        suggestion = await call_llm_async(
-            f"Choose best recipe from: {', '.join(recipes)}"
-        )
-        return suggestion
-    
-    async def post(self, shared, prep_res, suggestion):
-        """Store suggestion and continue."""
-        shared["suggestion"] = suggestion
-        self.trigger("approve")
+@node
+async def fetch(context: Context) -> None:
+    ingredient = await get_user_input("Enter ingredient: ")
+    context.state["ingredient"] = ingredient
+    context.state["recipes"] = await load_recipes(ingredient)
+    context.emit("suggest")
 
-class GetApproval(Node):
-    """Node that gets user approval."""
-    
-    async def prep(self, shared):
-        """Get current suggestion."""
-        return shared["suggestion"]
-    
-    async def exec(self, suggestion):
-        """Ask for user approval."""
-        answer = await get_user_input(f"\nAccept this recipe? (y/n): ")
-        return answer
-    
-    async def post(self, shared, prep_res, answer):
-        """Handle user's decision."""
-        if answer == "y":
-            print("\nGreat choice! Here's your recipe...")
-            print(f"Recipe: {shared['suggestion']}")
-            print(f"Ingredient: {shared['ingredient']}")
-            return self.trigger("accept")
-            
+
+@node
+def suggest(context: Context) -> None:
+    recipes = context.state["recipes"]
+    index = context.state.get("suggestion_index", 0)
+    context.state["suggestion"] = recipes[index % len(recipes)]
+    context.state["suggestion_index"] = index + 1
+    print(f"\nHow about: {context.state['suggestion']}")
+    context.emit("approve")
+
+
+@node
+async def approve(context: Context) -> None:
+    answer = await get_user_input("\nAccept this recipe? (y/n): ")
+    if answer != "y":
         print("\nLet's try another recipe...")
-        self.trigger("retry")
+        context.emit("retry")
+        return
+
+    print("\nGreat choice! Here's your recipe...")
+    print(f"Recipe: {context.state['suggestion']}")
+    print(f"Ingredient: {context.state['ingredient']}")
+    # No emission means this branch leaves the Flow normally.

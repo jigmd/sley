@@ -1,40 +1,64 @@
-from caskada import Flow
-from nodes import ProcessChunkDocumentsNode, EmbedDocumentsNode, CreateIndexNode, EmbedQueryNode, ReduceChunksAndEmbeddingsNode, RetrieveDocumentNode, GenerateAnswerNode
-from mapreduce import mapreduce
+from nodes import (
+    create_index,
+    embed_documents,
+    embed_query,
+    generate_answer,
+    process_chunk_documents,
+    retrieve_document,
+)
+from sley import Flow, node
 
-def get_document_flow():
-    # Create offline flow for document indexing
-    process_chunk_docs_node = ProcessChunkDocumentsNode()
-    embed_docs_node = EmbedDocumentsNode()
-    
-    process_chunk_docs_node >> embed_docs_node
-    
-    return Flow(start=process_chunk_docs_node)
+
+def dispatch_documents(context):
+    texts = context.state["texts"]
+    if not texts:
+        # No texts means zero branches; end() stops the unlabelled link running once.
+        context.end()
+        return
+
+    for text in texts:
+        context.emit("document", text)
+
+
+def combine_documents(context, result):
+    documents = result.outputs
+    context.state["texts"] = [
+        chunk for document in documents for chunk in document["chunks"]
+    ]
+    context.state["embeddings"] = [
+        embedding for document in documents for embedding in document["embeddings"]
+    ]
+
+    if not documents:
+        # No emission preserves the dispatcher's hard end, so index creation is skipped.
+        return
+
+    # One emission replaces all branch terminals with one downstream continuation.
+    context.emit()
+
 
 def get_offline_flow():
-    # Create offline flow for document indexing
-    doc_flow = get_document_flow()
-    reduce_chunks_and_embeddings_node = ReduceChunksAndEmbeddingsNode()
-    create_index_node = CreateIndexNode()
+    dispatch = node(dispatch_documents)
+    process = node(process_chunk_documents)
+    embed = node(embed_documents)
+    documents = Flow(dispatch, combine=combine_documents)
+    build_index = node(create_index)
 
-    mapreduce_flow = mapreduce(doc_flow, {"input_key": "texts"})
-    mapreduce_flow >> reduce_chunks_and_embeddings_node >> create_index_node
-    
-    offline_flow = Flow(start=mapreduce_flow)
-    return offline_flow
+    dispatch.link(process, "document")
+    process.link(embed)
+    documents.link(build_index)
+    return Flow(documents)
+
 
 def get_online_flow():
-    # Create online flow for document retrieval and answer generation
-    embed_query_node = EmbedQueryNode()
-    retrieve_doc_node = RetrieveDocumentNode()
-    generate_answer_node = GenerateAnswerNode()
-    
-    # Connect the nodes
-    embed_query_node >> retrieve_doc_node >> generate_answer_node
-    
-    online_flow = Flow(start=embed_query_node)
-    return online_flow
+    query = node(embed_query)
+    retrieve = node(retrieve_document)
+    answer = node(generate_answer)
 
-# Initialize flows
+    query.link(retrieve)
+    retrieve.link(answer)
+    return Flow(query)
+
+
 offline_flow = get_offline_flow()
 online_flow = get_online_flow()

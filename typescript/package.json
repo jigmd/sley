@@ -1,33 +1,33 @@
 {
-  "name": "caskada",
-  "version": "2.2.0",
+  "name": "@jigging/sley",
+  "version": "0.0.1",
   "type": "module",
-  "types": "./dist/caskada.d.ts",
+  "types": "./dist/sley.d.ts",
   "exports": {
     ".": {
       "types": {
-        "import": "./dist/caskada.d.ts",
-        "require": "./dist/caskada.d.cts"
+        "import": "./dist/sley.d.ts",
+        "require": "./dist/sley.d.cts"
       },
-      "import": "./dist/caskada.js",
-      "require": "./dist/caskada.cjs"
+      "import": "./dist/sley.js",
+      "require": "./dist/sley.cjs"
     }
   },
   "files": [
     "dist",
     "README.md"
   ],
-  "homepage": "https://skada.ai/caskada/",
-  "repository": "github:skadaai/caskada",
+  "homepage": "https://sley.jig.md",
+  "repository": "github:jigmd/sley",
   "bugs": {
-    "url": "https://github.com/skadaai/caskada/issues"
+    "url": "https://github.com/jigmd/sley/issues"
   },
-  "description": "Minimalist AI framework in 300 Lines. Enable LLMs to Program Themselves.",
+  "description": "Structured graph runtime for Python and TypeScript.",
   "keywords": [
     "AI",
-    "brainy",
-    "Flow",
-    "Workflow",
+    "workflow",
+    "graph",
+    "runtime",
     "LLM"
   ],
   "license": "MPL-2.0",
@@ -38,18 +38,18 @@
   "scripts": {
     "build": "tsup && cp ../README.md ./README.md",
     "prepack": "pnpm run build",
-    "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx node' node --test **/*.test.ts",
+    "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx' node --test tests/*.test.ts",
     "release": "pnpm run build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "2.29.4",
-    "@std/assert": "npm:@jsr/std__assert@1.0.13",
-    "@types/node": "22.15.21",
-    "p-limit": "6.2.0",
-    "tsup": "8.5.0",
-    "typescript": "5.8.3"
+    "@changesets/cli": "2.31.1",
+    "@std/assert": "npm:@jsr/std__assert@1.0.19",
+    "@types/node": "24.13.3",
+    "p-limit": "7.3.1",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
   },
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@11.22.0",
   "publishConfig": {
     "access": "public"
   }

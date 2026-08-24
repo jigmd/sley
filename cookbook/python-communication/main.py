@@ -1,11 +1,11 @@
-from flow import create_flow
+import asyncio
 
-async def main():
-    """Run the communication example."""
-    flow = create_flow()
-    shared = {}
-    await flow.run(shared)
+from flow import word_counter
+
+
+async def main() -> None:
+    await word_counter.run({})
+
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

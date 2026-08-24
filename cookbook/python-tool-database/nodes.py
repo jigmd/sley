@@ -1,40 +1,22 @@
-from caskada import Node
+from sley import Context, node
 from tools.database import execute_sql, init_db
 
-class InitDatabaseNode(Node):
-    """Node for initializing the database"""
-    
-    async def exec(self, _):
-        init_db()
-        return "Database initialized"
-        
-    async def post(self, shared, prep_res, exec_res):
-        shared["db_status"] = exec_res
 
-class CreateTaskNode(Node):
-    """Node for creating a new task"""
-    
-    async def prep(self, shared):
-        return (
-            getattr(shared, "task_title", ""),
-            getattr(shared, "task_description", "")
-        )
-        
-    async def exec(self, inputs):
-        title, description = inputs
-        query = "INSERT INTO tasks (title, description) VALUES (?, ?)"
-        execute_sql(query, (title, description))
-        return "Task created successfully"
-        
-    async def post(self, shared, prep_res, exec_res):
-        shared["task_status"] = exec_res
+@node
+def initialize_database(context: Context) -> None:
+    init_db()
+    context.state["db_status"] = "Database initialized"
 
-class ListTasksNode(Node):
-    """Node for listing all tasks"""
-    
-    async def exec(self, _):
-        query = "SELECT * FROM tasks"
-        return execute_sql(query)
-        
-    async def post(self, shared, prep_res, exec_res):
-        shared["tasks"] = exec_res
+
+@node
+def create_task(context: Context) -> None:
+    execute_sql(
+        "INSERT INTO tasks (title, description) VALUES (?, ?)",
+        (context.state["task_title"], context.state["task_description"]),
+    )
+    context.state["task_status"] = "Task created successfully"
+
+
+@node
+def list_tasks(context: Context) -> None:
+    context.state["tasks"] = execute_sql("SELECT * FROM tasks")

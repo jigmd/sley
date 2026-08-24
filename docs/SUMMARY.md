@@ -1,50 +1,46 @@
 # Summary
 
-## Introduction
+## Start
 
-- [What is Caskada?](index.md)
-- [Installation](installation.md)
-- [Getting Started](getting_started.md)
-- [Comparison](comparison.md)
+- [Sley](README.md)
+- [Quickstart](quickstart.md)
 
-## Cookbook
+## Learn
 
-- [Python Examples](cookbook/python.md)
-- [Typescript Examples](cookbook/typescript.md)
-
-## Core Abstraction
-
-- [Overview](core_abstraction/index.md)
-- [Node](core_abstraction/node.md)
-- [Flow](core_abstraction/flow.md)
-- [Memory](core_abstraction/memory.md)
-
-## Design Patterns
-
-- [Overview](design_pattern/index.md)
-- [Agent](design_pattern/agent.md)
-- [Workflow](design_pattern/workflow.md)
-- [RAG](design_pattern/rag.md)
-- [Map Reduce](design_pattern/mapreduce.md)
-- [Structured Output](design_pattern/structure.md)
-- [Multi-Agents (Advanced)](design_pattern/multi_agent.md)
-
-## Utility Functions
-
-- [Overview](utility_function/index.md)
-- [LLM Wrapper](utility_function/llm.md)
-- [Web Search](utility_function/websearch.md)
-- [Chunking](utility_function/chunking.md)
-- [Embedding](utility_function/embedding.md)
-- [Vector Databases](utility_function/vector.md)
-- [Text-to-Speech](utility_function/text_to_speech.md)
+- [Core model](learn/core-model.md)
+- [Links and routing](learn/routing.md)
+- [State and input](learn/data.md)
+- [Fan-out, End, and combine](learn/fan-out-and-combine.md)
+- [Nested Flows](learn/nested-flows.md)
+- [Failures and results](learn/failures-and-results.md)
 
 ## Guides
 
-- [Best Practices](guides/best_practices.md)
-- [Agentic Coding Guide](guides/agentic_coding.md)
-- [Throttling](guides/throttling.md)
-- [Visualization & Logging](guides/visualization_logging.md)
+- [Validation and types](guides/validation-and-types.md)
+- [Concurrency and cycles](guides/concurrency-and-cycles.md)
+- [Retry and recovery](guides/retry-and-recovery.md)
 - [Testing](guides/testing.md)
-- [Migrating from PocketFlow](guides/migrating_from_pocketflow.md)
-- [Migrating from Older Versions](guides/migration.md)
+- [Inspection](guides/inspection.md)
+- [Integration boundaries](guides/integration-boundaries.md)
+
+## Patterns
+
+- [Choose a pattern](patterns.md)
+
+## Reference
+
+- [Python API](reference/python.md)
+- [TypeScript API](reference/typescript.md)
+- [Runtime semantics](reference/runtime-semantics.md)
+
+## Examples
+
+- [Example projects](examples/README.md)
+- [Python examples](examples/python.md)
+- [TypeScript examples](examples/typescript.md)
+
+## About
+
+- [PocketFlow, Caskada, and Sley](about/lineage.md)
+- [Migrate from Caskada](about/migrate-from-caskada.md)
+- [Migrate from PocketFlow](about/migrate-from-pocketflow.md)

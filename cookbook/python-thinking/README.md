@@ -8,6 +8,15 @@ This project demonstrates an implementation that orchestrates a Chain-of-Thought
 
 This implementation is based on this tutorial (for Pocketflow): [Build Chain-of-Thought From Scratch - Tutorial for Dummies](https://zacharyhuang.substack.com/p/build-chain-of-thought-from-scratch).
 
+## Run
+
+Set `ANTHROPIC_API_KEY`, then run:
+
+```bash
+pip install -r requirements.txt
+python main.py
+```
+
 ## Features
 
 - Improves model reasoning on complex problems.
@@ -15,51 +24,15 @@ This implementation is based on this tutorial (for Pocketflow): [Build Chain-of-
 - Solves problems that direct prompting often fails on by breaking them down systematically.
 - Provides detailed reasoning traces, including step-by-step evaluation and planning, for verification.
 
-## Getting Started
-
-1.  **Install Packages:**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2.  **Set API Key:**
-
-    ```bash
-    export ANTHROPIC_API_KEY="your-api-key-here"
-    ```
-
-3.  **Verify API Key (Optional):**
-    Run a quick check to ensure your key and environment are set up correctly.
-
-    ```bash
-    python utils.py
-    ```
-
-4.  **Run Default Example:**
-    Execute the main script to see the process in action with the default Jane Street problem.
-
-    ```bash
-    python main.py
-    ```
-
-    The default question is:
-
-    > You keep rolling a fair die until you roll three, four, five in that order consecutively on three rolls. What is the probability that you roll the die an odd number of times?
-
-5.  **Run Custom Problem:**
-    Provide your own reasoning problem using the `--` argument.
-    ```bash
-    python main.py --"Your complex reasoning problem here"
-    ```
-
 ## How It Works
 
-The implementation uses a self-looping Caskada node (`ChainOfThoughtNode`) that guides an LLM through a structured problem-solving process:
+The implementation uses a function-backed, self-looping Sley node occurrence
+(`chain_of_thought`) that guides an LLM through a structured problem-solving
+process:
 
 ```mermaid
 flowchart LR
-    cot[ChainOfThoughtNode] -->|"continue"| cot
+    cot[chain_of_thought] -->|"continue"| cot
 ```
 
 In each loop (thought step), the node directs the LLM to:
@@ -71,6 +44,15 @@ In each loop (thought step), the node directs the LLM to:
 5.  Decide if further thinking (`next_thought_needed`) is required based on the plan state.
 
 This external orchestration enforces a systematic approach, helping models tackle problems that are difficult with a single prompt.
+
+When another thought is needed, the function emits `"continue"` to follow its
+self-loop. A conclusion emits nothing, so the root Flow ends normally. It does
+not call `end()` because this is an ordinary leaf, not a hard terminal carrying
+a branch output.
+
+The Flow keeps the original limit of 50 node visits as `max_activations=50` and
+makes up to three attempts at a failed thought. Sley retries the whole function,
+so it stores the new thought only after the model response has been parsed.
 
 ## Comparison with Different Approaches
 

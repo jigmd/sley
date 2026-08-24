@@ -1,91 +1,62 @@
-import os
 import asyncio
-from PIL import Image, ImageFilter
+from pathlib import Path
+
 import numpy as np
-from caskada import Node
+from PIL import Image, ImageFilter
+from sley import Context
 
-class LoadImage(Node):
-    """Node that loads an image from file."""
-    async def prep(self, shared):
-        """Get image path from parameters."""
-        image_path = self.params["image_path"]
-        print(f"Loading image: {image_path}")
-        return image_path
-    
-    async def exec(self, image_path):
-        """Load image using PIL."""
-        # Simulate I/O delay
-        await asyncio.sleep(0.5)
-        return Image.open(image_path)
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Store image in shared store."""
-        shared["image"] = exec_res
-        self.trigger("apply_filter")
 
-class ApplyFilter(Node):
-    """Node that applies a filter to an image."""
-    async def prep(self, shared):
-        """Get image and filter type."""
-        image = shared["image"]
-        filter_type = self.params["filter"]
-        print(f"Applying {filter_type} filter...")
-        return image, filter_type
-    
-    async def exec(self, inputs):
-        """Apply the specified filter."""
-        image, filter_type = inputs
-        
-        # Simulate processing delay
-        await asyncio.sleep(0.5)
-        
-        if filter_type == "grayscale":
-            return image.convert("L")
-        elif filter_type == "blur":
-            return image.filter(ImageFilter.BLUR)
-        elif filter_type == "sepia":
-            # Convert to array for sepia calculation
-            img_array = np.array(image)
-            sepia_matrix = np.array([
-                [0.393, 0.769, 0.189],
-                [0.349, 0.686, 0.168],
-                [0.272, 0.534, 0.131]
-            ])
-            sepia_array = img_array.dot(sepia_matrix.T)
-            sepia_array = np.clip(sepia_array, 0, 255).astype(np.uint8)
-            return Image.fromarray(sepia_array)
-        else:
-            raise ValueError(f"Unknown filter: {filter_type}")
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Store filtered image."""
-        shared["filtered_image"] = exec_res
-        self.trigger("save")
+def dispatch(context: Context) -> None:
+    filters = ("grayscale", "blur", "sepia")
+    print(
+        f"Processing {len(context.state['images'])} images with {len(filters)} filters..."
+    )
+    for image_path in context.state["images"]:
+        for filter_name in filters:
+            context.emit("process", {"image_path": image_path, "filter": filter_name})
 
-class SaveImage(Node):
-    """Node that saves the processed image."""
-    async def prep(self, shared):
-        """Prepare output path."""
-        image = shared["filtered_image"]
-        base_name = os.path.splitext(os.path.basename(self.params["image_path"]))[0]
-        filter_type = self.params["filter"]
-        output_path = f"output/{base_name}_{filter_type}.jpg"
-        
-        # Create output directory if needed
-        os.makedirs("output", exist_ok=True)
-        
-        return image, output_path
-    
-    async def exec(self, inputs):
-        """Save the image."""
-        image, output_path = inputs
-        
-        # Simulate I/O delay
-        await asyncio.sleep(0.5)
-        
-        image.save(output_path)
-        return output_path
-    
-    async def post(self, shared, prep_res, exec_res):
-        """Print success message."""
-        print(f"Saved: {exec_res}")
+
+def read_image(path: str):
+    with Image.open(path) as source:
+        return source.copy()
+
+
+async def load_image(context: Context) -> None:
+    job = context.input
+    print(f"Loading image: {job['image_path']}")
+    await asyncio.sleep(0.1)
+    context.emit("filter", {"job": job, "image": read_image(job["image_path"])})
+
+
+async def apply_filter(context: Context) -> None:
+    job = context.input["job"]
+    image = context.input["image"]
+    print(f"Applying {job['filter']} filter...")
+    await asyncio.sleep(0.1)
+
+    if job["filter"] == "grayscale":
+        filtered = image.convert("L")
+    elif job["filter"] == "blur":
+        filtered = image.filter(ImageFilter.BLUR)
+    else:
+        matrix = np.array(
+            [[0.393, 0.769, 0.189], [0.349, 0.686, 0.168], [0.272, 0.534, 0.131]]
+        )
+        pixels = np.clip(np.array(image).dot(matrix.T), 0, 255).astype(np.uint8)
+        filtered = Image.fromarray(pixels)
+
+    context.emit("save", {"job": job, "image": filtered})
+
+
+def write_image(image, path: Path) -> None:
+    path.parent.mkdir(exist_ok=True)
+    image.save(path)
+
+
+async def save_image(context: Context) -> None:
+    job = context.input["job"]
+    path = Path("output") / f"{Path(job['image_path']).stem}_{job['filter']}.jpg"
+    await asyncio.sleep(0.1)
+    write_image(context.input["image"], path)
+    print(f"Saved: {path}")
+    context.end(path)

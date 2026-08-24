@@ -1,4 +1,36 @@
-# caskada
+# Sley
+
+## 0.0.1
+
+- Initial prerelease of the Sley graph runtime for Python.
+
+# Caskada History
+
+## 3.0.0
+
+### Major Changes
+
+- Replaced lifecycle subclasses with function-backed nodes created by
+  `node(...)` or `@node`.
+- Replaced `Memory`, local stores, triggers, and execution trees with one shared
+  run state, branch input, buffered `emit(...)` / `end(...)`, and structured run
+  results.
+- Moved topology to target-first `source.link(target, action?)` connections.
+- Added nested structured Flow scopes with declared exits, local concurrency,
+  local activation bounds, combine callbacks, and recovery callbacks.
+- Added whole-handler retry, node timeouts, run deadlines, cancellation grace,
+  portable work limits, and deterministic compiled descriptions.
+- Added `start()` for cancellation and complete `Completed`, `Failed`,
+  `Cancelled`, and `Abandoned` results. `run()` now returns the final shared
+  state and raises `RunError` for every non-completed result.
+- Added versioned synchronous run events, application reports, statistics,
+  observer diagnostics, and the optional `caskada_logging` adapter.
+- Aligned Python runtime semantics and public result/event schemas with the
+  TypeScript implementation.
+- Raised the minimum supported Python version to 3.13.
+
+See [Migrating from Caskada to Sley](../docs/about/migrate-from-caskada.md) for
+the authoring and behavior changes.
 
 ## 2.2.0
 
@@ -37,7 +69,6 @@
   This release introduces a significant overhaul of the `Memory` class, refines `Flow` execution and cycle detection, and improves overall type safety and developer experience.
 
   ## Breaking Changes
-
   - **Flow as Node - Trigger Propagation**: When a sub-flow (acting as a node) has an internal node triggering an action for which the sub-flow has no defined successor, this action now correctly propagates as a trigger from the sub-flow node itself in the parent flow's `ExecutionTree`.
   - **Simplified Generic Type Hints**: The generic type hints for `Flow` and `Node` have been simplified, removing the `L` (i.e. `LocalMemory`) type parameter and moving the `ActionT` to the end of the list as it is rarely used. Before: `Node[G, L, ActionT, PrepResultT, ExecResultT]`; Now: `Node[G, PrepResultT, ExecResultT, ActionT]`.
   - **NodeError**: Changed from an `Exception` subclass to a `Protocol` (`runtime_checkable`). This affects how `NodeError` might be caught or checked, promoting structural typing and fixing the double-raising of the exception.
@@ -52,7 +83,6 @@
   ## Core Library Changes & New Features
 
   ### Memory Management (`Memory` Class)
-
   - **Enhanced Proxy Behavior**:
     - `memory.local` now returns a dedicated `LocalProxy` instance, providing isolated attribute and item access (`getattr`, `getitem`, `setattr`, `setitem`, `delattr`, `delitem`, `contains`) that operates _only_ on the local store.
     - The main `Memory` object's attribute/item access (`memory.foo`, `memory['foo']`) continues to prioritize local then global for reads.
@@ -64,20 +94,17 @@
   - **Cloning**: `memory.clone(forking_data=None)` remains, ensuring deep copy of the local store and merging of `forking_data`. Global store is shared by reference.
 
   ### Flow Execution & Cycle Detection
-
   - **`Flow.run()` and `ExecutionTree`**: As mentioned in Breaking Changes, returns a structured `ExecutionTree`.
   - **Default `maxVisits`**: Increased from 5 to 15 in the `Flow` constructor for cycle detection.
   - **Cycle Detection Error Message**: Improved format to: `Maximum cycle count ({max_visits}) reached for {ClassName}#{node_order}`.
 
   ### Node Lifecycle and Error Handling
-
   - **`NodeError` Protocol**: Now a `typing.Protocol` for more flexible error handling. `error.retry_count` is added to exceptions during the retry mechanism in `Node.exec_runner`.
   - **Warnings**:
     - The warning "Node won't run successors. Use Flow!" when `run()` is called on a `BaseNode` with successors has been **removed** to reduce noise. #20
     - Warning for an "orphan action" (action triggered with no successor) in `get_next_nodes` has been refined for better clarity: `Flow ends for node {ClassName}#{node_order}: Action '{action}' not found in its defined successors [...]`.
 
   ### Type Annotations & Developer Experience
-
   - **Improved Type Hints**: Extensive improvements to type annotations throughout the library using `TypeVar`, `Generic`, `Protocol`, `TypeAlias`, and `TypedDict` for better static analysis and developer understanding. All MyPy errors and inconsistencies addressed.
   - **Test Suite Enhancements**:
     - Tests for new `Memory` deletion features and `LocalProxy` behavior.
@@ -90,7 +117,6 @@
     - "Contributors Wanted!" section added to `README.md`.
 
   ## Infrastructure Improvements
-
   - **CI/CD**: GitHub Actions workflow `changeset-check.yml` updated to use `changesets/action@v1.4.9` and properly prepare the Python directory for changeset tooling.
   - **`.envrc`**: Added `dotenv_if_exists`.
   - **`.gitignore`**: Added `python/README.md` (if it's auto-generated and shouldn't be committed).

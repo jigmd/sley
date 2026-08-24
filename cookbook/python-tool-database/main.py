@@ -1,30 +1,26 @@
-from flow import create_database_flow
+import asyncio
 
-async def main():
-    # Create the flow
-    flow = create_database_flow()
-    
-    # Prepare example task data
-    shared = {
-        "task_title": "Example Task",
-        "task_description": "This is an example task created using Caskada"
-    }
-    
-    # Run the flow
-    await flow.run(shared)
-    
-    # Print results
-    print("Database Status:", shared.get("db_status"))
-    print("Task Status:", shared.get("task_status"))
+from flow import database_flow
+
+
+async def main() -> None:
+    state = await database_flow.run(
+        {
+            "task_title": "Example Task",
+            "task_description": "This is an example task created using Sley",
+        }
+    )
+
+    print("Database Status:", state["db_status"])
+    print("Task Status:", state["task_status"])
     print("\nAll Tasks:")
-    for task in shared.get("tasks", []):
+    for task in state["tasks"]:
         print(f"- ID: {task[0]}")
         print(f"  Title: {task[1]}")
         print(f"  Description: {task[2]}")
         print(f"  Status: {task[3]}")
-        print(f"  Created: {task[4]}")
-        print()
+        print(f"  Created: {task[4]}\n")
+
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

@@ -1,78 +1,26 @@
 ---
-complexity: 9
+complexity: 6
 ---
 
-# Tool Calling: PDF Vision
+# PDF Vision Batch
 
-A Caskada example project demonstrating PDF processing with OpenAI's Vision API for OCR and text extraction.
+Convert every PDF page to an image and extract its text with OpenAI's vision
+model.
 
-## Features
+`dispatch_pdfs` emits one branch input per file. Each `process_pdf` branch ends
+with one file result. After every branch settles, the Flow's `combine` callback
+collects `result.outputs` into the final run state.
 
-- Convert PDF pages to images while maintaining quality and size limits
-- Extract text from scanned documents using GPT-4 Vision API
-- Support for custom extraction prompts
-- Maintain page order and formatting in extracted text
-- Batch processing of multiple PDFs from a directory
+This is the complete batch shape:
 
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Set your OpenAI API key as an environment variable:
-   ```bash
-   export OPENAI_API_KEY=your_api_key_here
-   ```
-
-## Usage
-
-1. Place your PDF files in the `pdfs` directory
-2. Run the example:
-   ```bash
-   python main.py
-   ```
-   The script will process all PDF files in the `pdfs` directory and output the extracted text for each one.
-
-## Project Structure
-
-```
-python-tool-pdf-vision/
-├── pdfs/           # Directory for PDF files to process
-├── tools/
-│   ├── pdf.py     # PDF to image conversion
-│   └── vision.py  # Vision API integration
-├── utils/
-│   └── call_llm.py # OpenAI client config
-├── nodes.py       # Caskada nodes
-├── flow.py        # Flow configuration
-└── main.py        # Example usage
+```text
+dispatch_pdfs --process--> process_pdf --end(file_result)--> combine
 ```
 
-## Flow Description
+## Run
 
-1. **LoadPDFNode**: Loads PDF and converts pages to images
-2. **ExtractTextNode**: Processes images with Vision API
-3. **CombineResultsNode**: Combines extracted text from all pages
-
-## Customization
-
-You can customize the extraction by modifying the prompt in `shared`:
-
-```python
-shared = {
-    "pdf_path": "your_file.pdf",
-    "extraction_prompt": "Your custom prompt here"
-}
+```bash
+export OPENAI_API_KEY="your-api-key"
+pip install -r requirements.txt
+python main.py
 ```
-
-## Limitations
-
-- Maximum PDF page size: 2000px (configurable in `tools/pdf.py`)
-- Vision API token limit: 1000 tokens per response
-- Image size limit: 20MB per image for Vision API
-
-## License
-
-MIT

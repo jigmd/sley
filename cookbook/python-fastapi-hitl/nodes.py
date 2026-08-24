@@ -1,79 +1,36 @@
-from caskada import Node
+from sley import Context, node
 from utils.process_task import process_task
 
-class ProcessNode(Node):
-    async def prep(self, shared):
-        task_input = getattr(shared, "task_input", "No input")
-        print("ProcessNode Prep")
-        return task_input
 
-    async def exec(self, prep_res):
-        return process_task(prep_res)
+@node
+async def process(context: Context) -> None:
+    context.state["processed_output"] = await process_task(context.state["task_input"])
 
-    async def post(self, shared, prep_res, exec_res):
-        shared["processed_output"] = exec_res
-        print("ProcessNode Post: Output stored.")
-        self.trigger("default") # Go to ReviewNode
 
-class ReviewNode(Node):
-    async def prep(self, shared):
-        review_event = getattr(shared, "review_event")
-        queue = getattr(shared, "sse_queue") # Expect queue in shared
-        processed_output = getattr(shared, "processed_output", "N/A")
-
-        if not review_event or not queue:
-            print("ERROR: ReviewNode Prep - Missing review_event or sse_queue in shared store!")
-            return None # Signal failure
-
-        # Push status update to SSE queue
-        status_update = {
+@node
+async def review(context: Context) -> None:
+    channel = context.state["review"]
+    await context.state["sse_queue"].put(
+        {
             "status": "waiting_for_review",
-            "output_to_review": processed_output
+            "output_to_review": context.state["processed_output"],
         }
-        await queue.put(status_update)
-        print("ReviewNode Prep: Put 'waiting_for_review' on SSE queue.")
+    )
 
-        return review_event # Return event for exec
+    # The HTTP endpoint sets this event after storing the user's decision.
+    await channel["event"].wait()
+    channel["event"].clear()
+    feedback = channel["feedback"]
+    channel["feedback"] = None
 
-    async def exec(self, prep_res):
-        review_event = prep_res
-        if not review_event:
-            print("ReviewNode Exec: Skipping wait (no event from prep).")
-            return
-        print("ReviewNode Exec: Waiting on review_event...")
-        await review_event.wait()
-        print("ReviewNode Exec: review_event set.")
+    if feedback == "approved":
+        context.state["final_result"] = context.state["processed_output"]
+        context.emit("approved")
+    else:
+        context.emit("rejected")
 
-    async def post(self, shared, prep_res, exec_res):
-        feedback = getattr(shared, "feedback")
-        print(f"ReviewNode Post: Processing feedback '{feedback}'")
 
-        # Clear the event for potential loops
-        review_event = getattr(shared, "review_event")
-        if review_event:
-            review_event.clear()
-        shared["feedback"] = None # Reset feedback
-
-        if feedback == "approved":
-            shared["final_result"] = getattr(shared, "processed_output")
-            print("ReviewNode Post: Action=approved")
-            self.trigger("approved")
-            return
-        
-        print("ReviewNode Post: Action=rejected")
-        self.trigger("rejected")
-
-class ResultNode(Node):
-     async def prep(self, shared):
-         print("ResultNode Prep")
-         return getattr(shared, "final_result", "No final result.")
-
-     async def exec(self, prep_res):
-         print(f"--- FINAL RESULT ---")
-         print(prep_res)
-         print(f"--------------------")
-         return prep_res
-
-     async def post(self, shared, prep_res, exec_res):
-         print("ResultNode Post: Flow finished.")
-         self.trigger(None) # End flow
+@node
+def show_result(context: Context) -> None:
+    print("--- FINAL RESULT ---")
+    print(context.state["final_result"])

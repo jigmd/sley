@@ -1,197 +1,196 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/logo-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/logo-light.png">
-    <img width="280" alt="Caskada's logo" src="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/logo-light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark-reverse.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark.svg">
+    <img width="360" alt="Sley" src="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark.svg">
   </picture>
-<p>
-
-<p align="center">
-  A radically minimalist AI framework (just <a href="https://github.com/skadaai/caskada/blob/main/python/caskada.py">300 lines</a>! 🤯)
-
-  <br />
-  Build Powerful AI Agents with Minimal Code, Maximum Freedom.
-  <br />
-  <sub>Let Agents build Agents with Zero bloat, dependencies, or vendor lock-in 😮</sub>
 </p>
 
-<p align="center">
+<p align="center">A structured graph runtime for Python and TypeScript.</p>
 
-  <a href="https://pypi.org/project/caskada">
-   <img src="https://img.shields.io/pypi/dw/caskada?logo=python&label=Python&style=flat-square" alt="python version">
-  </a>
-  <a href="https://npmjs.com/packages/caskada">
-   <img src="https://img.shields.io/npm/d18m/caskada?logo=typescript&label=Typescript&style=flat-square" alt="typescript version">
-  </a>
-  <a href="https://discord.gg/N9mVvxRXyH">
-    <img src="https://img.shields.io/discord/1346833819172601907?logo=discord&style=flat-square" alt="Discord">
-  </a>
-  <a href="https://github.com/skadaai/caskada">
-    <img src="https://img.shields.io/github/stars/skadaai/caskada?logo=github&style=flat-square" alt="GitHub Repository">
-  </a>
-  <a href="https://github.com/sponsors/zvictor">
-    <img src="https://img.shields.io/github/sponsors/zvictor?logo=github&style=flat-square" alt="GitHub Sponsors">
-  </a>
-</p>
-
-Caskada is a framework enabling _Agentic Coding_ through powerful abstractions.
-
-It provides a simple interface for building complex AI applications based on _nested directed graphs_ with shared state.
-It enables both humans and AI assistants to collaborate effectively on designing and implementing AI systems.
-
-## Features
-
-- **Brain-Easy 🧠**: Intuitive for both humans and AI assistants
-- **Minimalist Design ✨**: Core abstractions in just (_you heard it right!_) 300 lines of code
-- **Freedom 🔓**: Zero bloat, dependencies, or vendor lock-in
-- **Composable 🧩**: Build complex systems from simple, reusable components
-- **Powerful 🦾**: Supports everything you love—([Multi-](https://skadaai.gitbook.io/caskada/design_pattern/multi_agent))[Agents](https://skadaai.gitbook.io/caskada/design_pattern/agent), [Workflow](https://skadaai.gitbook.io/caskada/design_pattern/workflow), [RAG](https://skadaai.gitbook.io/caskada/design_pattern/rag), and more
-- **Agentic-Coding 🤖**: Designed for AI-assisted development
-- **Universal 🌈**: Works with any LLM provider or API
-- **Polyglot 🌍**: <!-- gitbook-ignore-start --><a href="https://pypi.org/project/caskada"><img src="https://github.com/skadaai/caskada/raw/main/.github/media/python.svg" width="16" height="16" alt="Python Logo" style="vertical-align: middle; margin: 0 2px;"></a><!-- gitbook-ignore-end --> Python and <!-- gitbook-ignore-start --><a href="https://npmjs.com/packages/caskada"><img src="https://github.com/skadaai/caskada/raw/main/.github/media/typescript.svg" width="16" height="16" alt="Typescript Logo" style="vertical-align: middle; margin: 0 2px;"></a><!-- gitbook-ignore-end --> Typescript are both supported
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
-
-<!-- gitbook-ignore-start -->
-
-## Documentation
-
-Our documentation is inclusive, suitable for both biological and synthetic minds.<br />
-Start by selecting your condition - or perhaps _the one you've been conditioned to believe_:
-
-\>> [I'm Carbon-Based 🐥](https://skadaai.gitbook.io/caskada/introduction/getting_started) <<
-
-\>> [I'm Silicon-Based 🤖](https://flow.brainy.sh/docs.txt) <<
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
-
-<!-- gitbook-ignore-end -->
-
-## Why Caskada?
-
-Current LLM frameworks are bloated... You actually only need 300 lines for a robust LLM Framework!
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/skadaai/caskada/main/.github/media/meme.jpg" width="500"/>
-
-|                                                                                                                                                                                                                | **Abstraction** |                     **App-Specific Wrappers**                      |                       **Vendor-Specific Wrappers**                       |                **Lines**                 |                  **Size**                   |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------: | :----------------------------------------------------------------: | :----------------------------------------------------------------------: | :--------------------------------------: | :-----------------------------------------: |
-| LangChain                                                                                                                                                                                                      |  Agent, Chain   |      Many <br><sup><sub>(e.g., QA, Summarization)</sub></sup>      |      Many <br><sup><sub>(e.g., OpenAI, Pinecone, etc.)</sub></sup>       |                   405K                   |                   +166MB                    |
-| CrewAI                                                                                                                                                                                                         |  Agent, Chain   | Many <br><sup><sub>(e.g., FileReadTool, SerperDevTool)</sub></sup> | Many <br><sup><sub>(e.g., OpenAI, Anthropic, Pinecone, etc.)</sub></sup> |                   18K                    |                   +173MB                    |
-| SmolAgent                                                                                                                                                                                                      |      Agent      |   Some <br><sup><sub>(e.g., CodeAgent, VisitWebTool)</sub></sup>   |  Some <br><sup><sub>(e.g., DuckDuckGo, Hugging Face, etc.)</sub></sup>   |                    8K                    |                   +198MB                    |
-| LangGraph                                                                                                                                                                                                      |  Agent, Graph   |       Some <br><sup><sub>(e.g., Semantic Search)</sub></sup>       | Some <br><sup><sub>(e.g., PostgresStore, SqliteSaver, etc.) </sub></sup> |                   37K                    |                    +51MB                    |
-| AutoGen                                                                                                                                                                                                        |      Agent      |   Some <br><sup><sub>(e.g., Tool Agent, Chat Agent)</sub></sup>    | Many <sup><sub>[Optional]<br> (e.g., OpenAI, Pinecone, etc.)</sub></sup> | 7K <br><sup><sub>(core-only)</sub></sup> | +26MB <br><sup><sub>(core-only)</sub></sup> |
-| **Caskada** <!-- gitbook-ignore-start --><img src="https://github.com/skadaai/caskada/raw/main/.github/media/typescript.svg" width="16" height="16" alt="Typescript Logo"><!-- gitbook-ignore-end -->.ts |    **Graph**    |                              **None**                              |                                 **None**                                 |                 **300**                  |                 **few KB**                  |
-| **Caskada** <!-- gitbook-ignore-start --><img src="https://github.com/skadaai/caskada/raw/main/.github/media/python.svg" width="16" height="16" alt="Python Logo"><!-- gitbook-ignore-end -->.py         |    **Graph**    |                              **None**                              |                                 **None**                                 |                 **300**                  |                 **few KB**                  |
-
-</div>
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
-
-## How does Caskada work?
-
-The single file in <a href="https://github.com/skadaai/caskada/blob/main/python/caskada.py"><!-- gitbook-ignore-start --><img src="https://github.com/skadaai/caskada/raw/main/.github/media/python.svg" width="16" height="16" alt="Python Logo" style="vertical-align: middle; margin: 0 2px;"> <!-- gitbook-ignore-end -->Python</a> or <a href="https://github.com/skadaai/caskada/blob/main/typescript/caskada.ts"><!-- gitbook-ignore-start --><img src="https://github.com/skadaai/caskada/raw/main/.github/media/typescript.svg" width="16" height="16" alt="Typescript Logo" style="vertical-align: middle; margin: 0 2px;"> <!-- gitbook-ignore-end -->Typescript</a> capture the core abstraction of LLM frameworks: Graph!
-<br>
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/skadaai/caskada/main/.github/media/abstraction.jpg" width="1300"/>
-</div>
-<br>
-
-- [Node](https://skadaai.gitbook.io/caskada/core_abstraction/node) handles simple (LLM) tasks with a clear lifecycle (`prep` → `exec` → `post`).
-- [Flow](https://skadaai.gitbook.io/caskada/core_abstraction/flow) connects nodes through **Actions** (labeled edges), orchestrating execution.
-- [Memory](https://skadaai.gitbook.io/caskada/core_abstraction/memory) manages shared (`global`) and isolated (`local`) state, enabling communication between nodes.
-
-From there, it's easy to implement all popular design patterns:
-<br>
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/skadaai/caskada/main/.github/media/design.jpg" width="1300"/>
-</div>
-<br>
-
-- [Agent](https://skadaai.gitbook.io/caskada/design_pattern/agent) autonomously makes decisions based on context.
-- [Workflow](https://skadaai.gitbook.io/caskada/design_pattern/workflow) chains multiple tasks into sequential pipelines.
-- [RAG](https://skadaai.gitbook.io/caskada/design_pattern/rag) integrates data retrieval with generation.
-- [Map Reduce](https://skadaai.gitbook.io/caskada/design_pattern/mapreduce) splits data tasks into Map and Reduce steps.
-- [Structured Output](https://skadaai.gitbook.io/caskada/design_pattern/structure) formats outputs consistently.
-- [Multi-Agents](https://skadaai.gitbook.io/caskada/design_pattern/multi_agent) coordinate multiple agents.
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
-
-## Tutorials
-
-<div align="center">
-  
-|  Name  | Difficulty    |  Description  |  
-| :-------------:  | :-------------: | :--------------------- |  
-| [Chat](https://github.com/skadaai/caskada/tree/main/cookbook/python-chat) | ☆☆☆ <br> *Dummy*   | A basic chat bot with conversation history |
-| [RAG](https://github.com/skadaai/caskada/tree/main/cookbook/python-rag) | ☆☆☆ <br> *Dummy*   | A simple Retrieval-augmented Generation process |
-| [Workflow](https://github.com/skadaai/caskada/tree/main/cookbook/python-workflow) | ☆☆☆ <br> *Dummy*   | A writing workflow that outlines, writes content, and applies styling |
-| [Map-Reduce](https://github.com/skadaai/caskada/tree/main/cookbook/python-map-reduce) | ☆☆☆ <br> *Dummy* | A resume qualification processor using map-reduce pattern for batch evaluation |
-| [Agent](https://github.com/skadaai/caskada/tree/main/cookbook/python-agent) | ☆☆☆ <br> *Dummy*   | A research agent that can search the web and answer questions |
-| [Streaming](https://github.com/skadaai/caskada/tree/main/cookbook/python-llm-streaming) | ☆☆☆ <br> *Dummy*   | A real-time LLM streaming demo with user interrupt capability |
-| [Multi-Agent](https://github.com/skadaai/caskada/tree/main/cookbook/python-multi-agent) | ★☆☆ <br> *Beginner* | A Taboo word game for asynchronous communication between two agents |
-| [Supervisor](https://github.com/skadaai/caskada/tree/main/cookbook/python-supervisor) | ★☆☆ <br> *Beginner* | Research agent is getting unreliable... Let's build a supervision process|
-| [Parallel](https://github.com/skadaai/caskada/tree/main/cookbook/python-parallel-batch) | ★☆☆ <br> *Beginner*   | A parallel execution demo that shows 3x speedup |
-| [Thinking](https://github.com/skadaai/caskada/tree/main/cookbook/python-thinking) | ★☆☆ <br> *Beginner*   | Solve complex reasoning problems through Chain-of-Thought |
-| [Memory](https://github.com/skadaai/caskada/tree/main/cookbook/python-chat-memory) | ★☆☆ <br> *Beginner* | A chat bot with short-term and long-term memory |
-
-</div>
-
-And many more available for all levels! [Check them all out!](https://github.com/skadaai/caskada/tree/main/cookbook)
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
-
-<!-- ## How to Use Caskada?
-
-🚀 Through **Agentic Coding**—the fastest LLM App development paradigm-where _humans design_ and _agents code_!
-
-<br />
-
-- Want to learn **Agentic Coding**?
-  - To setup, read this [post](https://zacharyhuang.substack.com/p/agentic-coding-the-most-fun-way-to)!
-  - Check out [my YouTube](https://www.youtube.com/@ZacharyLLM?sub_confirmation=1)! Read this [Guide](https://skadaai.gitbook.io/caskada/guides/agentic_coding)!
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png) -->
-
-## Quick Start
-
-New to Caskada? Check out our [Getting Started](https://skadaai.gitbook.io/caskada/introduction/getting_started) guide to build your first flow in no time.
-
-## Ready to Build Self-Coding Apps?
-
-Check out [Agentic Coding Guidance](https://skadaai.gitbook.io/caskada/guides/agentic_coding), the fastest way to develop self-coding LLM projects with Caskada!
-
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
-
-## Acknowledgement
-
-We would like to extend our deepest gratitude to the creators and contributors of the PocketFlow framework, from which Caskada originated as a fork.
-
-## Contributors Wanted!
-
-We're looking for contributors for all aspects of the project. Whether you're interested in documentation, testing, or implementing features, we'd love your help!
-
-Get involved by joining our [Discord server](https://discord.gg/N9mVvxRXyH).
-
-## Liability Disclaimer
-
-Caskada is provided "as is" without any warranties or guarantees.  
-We do not take responsibility for how the generated output is used, including but not limited to its accuracy, legality, or any potential consequences arising from its use.
-
-## Sponsors
+Sley is a fork of Caskada. It keeps that history visible while taking the graph
+runtime forward under its own package and project identity.
 
 <p align="center">
-  <a style="color: inherit" href="https://github.com/sponsors/zvictor?utm_source=caskada&utm_medium=sponsorship&utm_campaign=caskada&utm_id=caskada">
-    <img width="150" src="https://cdn.jsdelivr.net/gh/skadaai/caskada@main/.github/media/brain.png" alt="Caskada's logo" />
-  </a><br /><br />
-  Caskada runs on 300 lines of code and your generosity! 💰<br />
-    <a style="color: inherit" href="https://github.com/sponsors/zvictor?utm_source=caskada&utm_medium=sponsorship&utm_campaign=caskada&utm_id=caskada">
-      Help us deliver more AI with less code (but maybe more caffeine)
-    </a> ☕<br /><br />
-    <a style="color: inherit" href="https://github.com/sponsors/zvictor?utm_source=caskada&utm_medium=sponsorship&utm_campaign=caskada&utm_id=caskada">Your support</a> helps keep it minimal, powerful, and dependency-free! 🚀
-  </a>
+  <a href="https://pypi.org/project/sley"><img src="https://img.shields.io/pypi/v/sley?logo=python&label=Python&style=flat-square" alt="Python package"></a>
+  <a href="https://www.npmjs.com/package/@jigging/sley"><img src="https://img.shields.io/npm/v/%40jigging%2Fsley?logo=typescript&label=TypeScript&style=flat-square" alt="TypeScript package"></a>
+  <a href="https://github.com/jigmd/sley"><img src="https://img.shields.io/github/stars/jigmd/sley?logo=github&style=flat-square" alt="GitHub stars"></a>
 </p>
 
-![](https://raw.githubusercontent.com/skadaai/caskada/master/.github/media/divider.png)
+Sley runs ordinary functions as nodes in nested directed graphs. It provides
+explicit branching, structured fan-out and joining, retries, recovery, local
+concurrency, and typed execution results without depending on an LLM provider
+or application framework.
+
+## Why Sley
+
+A sley is the moving loom frame that carries the reed, keeps warp threads
+separated, and advances the fabric. To sley also means threading the warp in a
+prescribed pattern. The analogy is direct: the graph defines the pattern,
+branches and state are the threads, Sley executes their arrangement, and a
+completed run is the woven result.
+
+## Install
+
+```bash
+pip install sley
+```
+
+```bash
+npm install @jigging/sley
+```
+
+Python 3.13 or newer is required. The TypeScript package ships ESM and CommonJS
+builds.
+
+## Python
+
+```python
+import asyncio
+
+from sley import Flow, node
+
+
+@node
+def normalize(context):
+    context.state["question"] = context.state["question"].strip()
+
+
+@node
+def answer(context):
+    context.state["answer"] = f"You asked: {context.state['question']}"
+
+
+normalize.link(answer)
+
+
+async def main() -> None:
+    state = await Flow(normalize).run({"question": "  Why?  "})
+    print(state["answer"])
+
+
+asyncio.run(main())
+```
+
+## TypeScript
+
+```typescript
+import { Flow, node } from '@jigging/sley'
+
+interface State {
+  question: string
+  answer?: string
+}
+
+const normalize = node<State>((context) => {
+  context.state.question = context.state.question.trim()
+})
+
+const answer = node<State>((context) => {
+  context.state.answer = `You asked: ${context.state.question}`
+})
+
+normalize.link(answer)
+
+const state = await new Flow(normalize).run({ question: '  Why?  ' })
+console.log(state.answer)
+```
+
+Both programs print `You asked: Why?`.
+
+## Core Model
+
+### Nodes
+
+`node(handler)` turns a function into one graph occurrence. A handler receives
+one `Context` and returns no application value.
+
+```python
+@node
+def decide(context):
+    if needs_review(context.state):
+        context.emit("review")
+```
+
+Nodes connect target first:
+
+```python
+decide.link(review, "review")
+decide.link(publish)  # unlabelled link
+```
+
+The equivalent TypeScript spelling is identical:
+
+```typescript
+decide.link(review, 'review')
+decide.link(publish)
+```
+
+### Control
+
+- `context.emit()` selects the unlabelled link.
+- `context.emit("review")` selects a named link.
+- `context.emit("work", item)` also supplies the next branch's
+  `context.input`.
+- A successful normal handler with no control call behaves like one implicit
+  `emit()`.
+- `context.end(value)` creates a hard terminal for the current branch and
+  bypasses links. It does not stop the handler function, so use a normal
+  `return` when later statements should not run.
+
+Several control calls create a buffered fan-out. Sley commits that buffer only
+after the handler returns normally; state writes and external effects are not
+rolled back.
+
+### Data
+
+`context.state` is the one mutable top-level map shared by every branch in one
+run. Sley shallow-copies the caller's initial mapping once, so `run()` returns
+the authoritative final state and does not mutate the caller's top-level map.
+Nested values remain shared references.
+
+`context.input` is the value carried by one branch. Omitted input forwards the
+current input. Sley preserves application values but does not validate their
+schema or prove payload compatibility between links.
+
+### Flows And Combine
+
+A `Flow` is a structured scope. It waits until all of its branches settle, then
+optionally invokes one `combine` callback.
+
+```python
+def combine(context, result):
+    context.state["total"] = sum(result.outputs)
+
+
+batch = Flow(dispatch, combine=combine, concurrency=8)
+```
+
+Worker branches publish values with `context.end(value)`. The combiner reads
+those values through `result.outputs`. Zero combiner emissions preserve the
+original terminals; one or more emissions replace them with new outward
+continuations.
+
+### Results
+
+`await flow.run(initial_state)` is the simple API. It returns the final state for
+every completed run and raises `RunError` on failure. The error retains the
+failed result and exposes a controlling application error through standard
+native exception chaining.
+
+`flow.start(initial_state)` returns a `RunHandle` whose `result()` method exposes
+the completed or failed result, including state and settled terminals.
+
+## Learn
+
+- [Website](https://sley.jig.md)
+- [Quickstart](https://github.com/jigmd/sley/blob/main/docs/quickstart.md)
+- [Core model](https://github.com/jigmd/sley/blob/main/docs/learn/core-model.md)
+- [Cookbook](https://github.com/jigmd/sley/tree/main/cookbook)
+- [Media kit](https://github.com/jigmd/sley/tree/main/media)
+- [Migration from Caskada](https://github.com/jigmd/sley/blob/main/docs/about/migrate-from-caskada.md)
+- [Normative runtime contract](https://github.com/jigmd/sley/blob/main/architecture/rfcs/0001-sley-runtime.md)
+
+## License
+
+Sley is licensed under the Mozilla Public License 2.0.

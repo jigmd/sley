@@ -1,4 +1,37 @@
-# caskada
+# Sley
+
+## 0.0.1
+
+- Initial prerelease of the Sley graph runtime for TypeScript and JavaScript.
+
+# Caskada History
+
+## 3.0.0
+
+### Major Changes
+
+- Replaced lifecycle subclasses with function-backed nodes created by
+  `node(...)`.
+- Replaced `Memory`, local stores, triggers, and execution trees with one shared
+  run state, branch input, buffered `emit(...)` / `end(...)`, and structured run
+  results.
+- Moved topology to target-first `source.link(target, action?)` connections.
+- Added nested structured Flow scopes with declared exits, local concurrency,
+  local activation bounds, combine callbacks, and recovery callbacks.
+- Added whole-handler retry, node timeouts, run deadlines, cancellation grace,
+  portable work limits, and deterministic compiled descriptions.
+- Added `start()` for cancellation and complete `Completed`, `Failed`,
+  `Cancelled`, and `Abandoned` results. `run()` now returns the final shared
+  state and raises `RunError` for every non-completed result.
+- Added versioned synchronous run events, application reports, statistics,
+  observer diagnostics, and the browser-safe `caskada/logging` export.
+- Added ESM, CommonJS, and declaration builds for the core and logging entry
+  points, and refreshed the development build tooling.
+- Aligned TypeScript runtime semantics and public result/event schemas with the
+  Python implementation.
+
+See [Migrating from Caskada to Sley](../docs/about/migrate-from-caskada.md) for
+the authoring and behavior changes.
 
 ## 2.2.0
 
@@ -37,7 +70,6 @@
   This release introduces significant improvements to `Memory` management, `Flow` execution, and overall type safety.
 
   ## Breaking Changes
-
   - **Flow as Node - Trigger Propagation**: When a sub-flow (acting as a node) has an internal node triggering an action for which the sub-flow has no defined successor, this action now correctly propagates as a trigger from the sub-flow node itself in the parent flow's `ExecutionTree`.
   - **Simplified Generic Types**: The generic type hints for `Flow` and `Node` have been simplified, removing the `L` (i.e. `LocalMemory`) type parameter and moving the `ActionT` to the end of the list as it is rarely used. The local memory type can be defined inside the Global by using the property `.local`. Before: `Node[G, L, ActionT, PrepResultT, ExecResultT]`; Now: `Node[G, PrepResultT, ExecResultT, ActionT]`.
   - **New License**: Caskada is now licensed under the Mozilla Public License 2.0.
@@ -59,19 +91,16 @@
   ## Core Library Changes & New Features
 
   ### Memory Management (`createMemory`)
-
   - **Proxy-Based Implementation**: `createMemory` function now constructs `Memory` objects using nested proxies to manage global and local scopes, closely mirroring the advanced Python `Memory` behavior.
   - **Deletion and Existence**: The `Memory` proxy handler now supports `deleteProperty` (for `delete memory.key`) and `has` (for `'key' in memory`), operating on both local and global stores appropriately. `memory.local` proxy also supports these for the local scope.
   - **Type Safety**: `Memory` type uses generics `GlobalStore` and `LocalStore` for better type inference. `_isMemoryObject` flag added for runtime type assertions if needed.
 
   ### Flow Execution & `ExecutionTree`
-
   - **`Flow.run()`**: Returns a detailed `ExecutionTree`.
   - **Cycle Detection**: Default `maxVisits` for `Flow` instances increased from 5 to 15. Error messages for cycle detection now include node class name and ID (e.g., `Maximum cycle count (15) reached for TestNode#0`).
   - **Node `__nodeOrder`**: Now consistently a number. The `order` field in `ExecutionTree` is also a number.
 
   ### Node Lifecycle and Error Handling
-
   - **`BaseNode.triggers`**: Changed from private to protected to allow manipulation in subclasses if necessary (e.g., for complex trigger logic in `ParallelFlow` tests).
   - **`NodeError`**: Remains an `Error` subtype with an optional `retryCount`.
   - **Warnings**:
@@ -79,13 +108,11 @@
     - Warning for an "orphan action" (action triggered with no successor) in `get_next_nodes` has been refined for better clarity: `Flow ends for node {ClassName}#{node_order}: Action '{action}' not found in its defined successors [...]`.
 
   ### Developer Experience & Testing
-
   - **Test Suite**: Comprehensive updates to `memory.test.ts` and `flow.test.ts` to cover new `Memory` functionalities (including cloning, local proxy operations, deletion, existence checks) and the new `ExecutionTree` structure.
   - **Mock Resetting**: Improved mock handling in tests for better isolation, particularly for `TestNode` instances.
   - **Type Generics**: Enhanced use of generics in `TestNode` and `BranchingNode` for better type safety in tests.
 
   ## Bug Fixes
-
   - **V8 Debugger Craskeeping `structuredClone` and Proxies**: Resolved by ensuring `structuredClone` in `memory.clone()` operates on plain object representations of proxied data.
   - **`ExecutionTree` Structure**: Standardized and made more robust.
   - **Type Inconsistencies**: Addressed various type issues for a more stable and predictable API.

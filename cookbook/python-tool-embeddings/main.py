@@ -1,23 +1,16 @@
-from flow import create_embedding_flow
+import asyncio
 
-async def main():
-    # Create the flow
-    flow = create_embedding_flow()
-    
-    # Example text
+from flow import embedding_flow
+
+
+async def main() -> None:
     text = "What's the meaning of life?"
-    
-    # Prepare shared data
-    shared = {"text": text}
-    
-    # Run the flow
-    await flow.run(shared)
-    
-    # Print results
+    state = await embedding_flow.run({"text": text})
+
     print("Text:", text)
-    print("Embedding dimension:", len(shared["embedding"]))
-    print("First 5 values:", shared["embedding"][:5])
+    print("Embedding dimension:", len(state["embedding"]))
+    print("First 5 values:", state["embedding"][:5])
+
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

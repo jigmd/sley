@@ -1,26 +1,18 @@
-from flow import create_resume_processing_flow
+import asyncio
 
-async def main():
-    # Initialize shared store
-    shared = {}
-    
-    # Create the resume processing flow
-    resume_flow = create_resume_processing_flow()
-    
-    # Run the flow
+from flow import resume_flow
+
+
+async def main() -> None:
     print("Starting resume qualification processing...")
-    await resume_flow.run(shared)
-    
-    # Display final summary information (additional to what's already printed in ReduceResultsNode)
-    if "summary" in shared:
-        print("\nDetailed evaluation results:")
-        for filename, evaluation in shared.get("data", {}).items():
-            qualified = "✓" if evaluation.get("qualifies", False) else "✗"
-            name = evaluation.get("candidate_name", "Unknown")
-            print(f"{qualified} {name} ({filename})")
-    
+    state = await resume_flow.run({})
+
+    print("\nDetailed evaluation results:")
+    for filename, evaluation in state["evaluations"].items():
+        marker = "✓" if evaluation.get("qualifies", False) else "✗"
+        print(f"{marker} {evaluation.get('candidate_name', 'Unknown')} ({filename})")
     print("\nResume processing complete!")
 
+
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

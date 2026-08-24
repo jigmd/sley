@@ -1,53 +1,39 @@
-import time
+import asyncio
 import threading
-from caskada import Node, Flow
+
+from sley import Context, Flow, node
 from utils import stream_llm
 
-class StreamNode(Node):
-    async def prep(self, shared):
-        # Create interrupt event
-        interrupt_event = threading.Event()
 
-        # Start a thread to listen for user interrupt
-        def wait_for_interrupt():
-            input("Press ENTER at any time to interrupt streaming...\n")
-            interrupt_event.set()
-        listener_thread = threading.Thread(target=wait_for_interrupt)
-        listener_thread.start()
-        
-        # Get prompt from shared store
-        prompt = shared["prompt"]
-        # Get chunks from LLM function
-        chunks = stream_llm(prompt)
-        return chunks, interrupt_event, listener_thread
+@node
+def stream_answer(context: Context) -> None:
+    interrupted = threading.Event()
 
-    async def exec(self, prep_res):
-        chunks, interrupt_event, listener_thread = prep_res
-        for chunk in chunks:
-            if interrupt_event.is_set():
+    def wait_for_enter() -> None:
+        input("Press ENTER at any time to interrupt streaming...\n")
+        interrupted.set()
+
+    listener = threading.Thread(target=wait_for_enter)
+    listener.start()
+    try:
+        for chunk in stream_llm(context.state["prompt"]):
+            if interrupted.is_set():
                 print("User interrupted streaming.")
                 break
-            
-            if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
-                chunk_content = chunk.choices[0].delta.content
-                print(chunk_content, end="", flush=True)
-                time.sleep(0.1)  # simulate latency
-        return interrupt_event, listener_thread
+            text = chunk.choices[0].delta.content
+            if text:
+                print(text, end="", flush=True)
+    finally:
+        interrupted.set()
+        listener.join()
 
-    async def post(self, shared, prep_res, exec_res):
-        interrupt_event, listener_thread = exec_res
-        # Join the interrupt listener so it doesn't linger
-        interrupt_event.set()
-        listener_thread.join()
 
-# Usage:
-async def main():
-    node = StreamNode()
-    flow = Flow(start=node)
+streaming_flow = Flow(stream_answer)
 
-    shared = {"prompt": "What's the meaning of life?"}
-    await flow.run(shared)
+
+async def main() -> None:
+    await streaming_flow.run({"prompt": "What's the meaning of life?"})
+
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main()) 
+    asyncio.run(main())
