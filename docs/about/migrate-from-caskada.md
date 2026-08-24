@@ -12,7 +12,8 @@ behavior before composing it into a larger graph.
 
 | Caskada v2                                 | Sley                                                       |
 | ------------------------------------------ | ---------------------------------------------------------- |
-| `caskada` package                          | `sley` package                                             |
+| PyPI `caskada` package                     | `sley` package                                             |
+| npm `caskada` package                      | `@jigging/sley` package                                    |
 | `Node` subclass                            | Function wrapped by `node(...)` or `@node`                 |
 | `prep` + `exec` + `post`                   | One handler receiving `Context`                            |
 | Global `Memory`                            | `context.state`                                            |

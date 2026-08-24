@@ -15,7 +15,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "sley": "^0.0.1",
+    "@jigging/sley": "^0.0.1",
     "openai": "^7.4.0"
   }
 }

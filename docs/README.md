@@ -4,6 +4,14 @@ description: Decide whether Sley fits your workflow and begin with its small gra
 
 # Sley
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark-reverse.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark.svg">
+    <img width="320" alt="Sley" src="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark.svg">
+  </picture>
+</p>
+
 Sley is a structured graph runtime for Python and TypeScript. It runs ordinary
 functions as nodes, follows explicit links, and waits for every branch inside a
 Flow to settle.

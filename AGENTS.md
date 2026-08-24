@@ -77,8 +77,9 @@ Default section order:
 
 ## Workspace Contract
 
-- The product is Sley. Published packages, import roots, and the reserved CLI
-  name are `sley`; the canonical repository is `github.com/jigmd/sley`.
+- The product is Sley. The PyPI package, Python import root, and reserved CLI
+  name are `sley`; the npm package and TypeScript import specifier are
+  `@jigging/sley`; the canonical repository is `github.com/jigmd/sley`.
 - Sley is a fork of Caskada. Preserve Caskada names, versions, and descriptions
   in historical records; distinguish that history from current Sley surfaces.
 - The canonical public website is `https://sley.jig.md`.
@@ -130,4 +131,4 @@ When the user requests a durable behavior change, record it here or in the relev
   contracts.
 - `typescript/AGENTS.md` owns the TypeScript runtime, package surface, and
   TypeScript-side conformance verification.
-- Root-owned files include `README.md` and `LICENSE`.
+- Root-owned files include `README.md`, `LICENSE`, and the `media/` brand kit.

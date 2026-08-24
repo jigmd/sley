@@ -1,5 +1,5 @@
-import { node } from 'sley'
 import { parse } from 'yaml'
+import { node } from '@jigging/sley'
 import { callLLM, webSearch } from './utils'
 
 import type { AgentState, Decision } from './types'

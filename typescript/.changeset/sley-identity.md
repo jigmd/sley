@@ -1,4 +1,4 @@
 ---
 ---
 
-Reset the package identity to Sley at version 0.0.1.
+Reset the package identity to `@jigging/sley` at version 0.0.1.

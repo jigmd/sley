@@ -1,6 +1,6 @@
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
-import type { Context, ScopeFailure } from 'sley'
+import type { Context, ScopeFailure } from '@jigging/sley'
 import type { BatchState, ImportedRecord, SourceRecord } from './types'
 
 const dispatch = node<BatchState>((context) => {

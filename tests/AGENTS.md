@@ -16,8 +16,8 @@
   graph from a staged project copy.
 - External API, search, audio, and network behavior is replaced only inside the
   test harness; teaching source must not contain smoke-test branches.
-- Installed runs resolve Sley to the current checkout before validating each
-  project's declared dependencies.
+- Installed runs resolve Python `sley` and TypeScript `@jigging/sley` to the
+  current checkout before validating each project's declared dependencies.
 
 ## Work Guidance
 

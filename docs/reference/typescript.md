@@ -4,12 +4,12 @@ description: Every public TypeScript and JavaScript export, with exact signature
 
 # TypeScript API
 
-The `sley` package provides ESM, CommonJS, and TypeScript declarations.
+The `@jigging/sley` package provides ESM, CommonJS, and TypeScript declarations.
 
 ```typescript
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
-import type { Context, RunResult } from 'sley'
+import type { Context, RunResult } from '@jigging/sley'
 ```
 
 The sections below cover all eight runtime values and every exported type. See

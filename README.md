@@ -1,13 +1,19 @@
-# Sley
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark-reverse.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark.svg">
+    <img width="360" alt="Sley" src="https://raw.githubusercontent.com/jigmd/sley/main/media/sley-wordmark.svg">
+  </picture>
+</p>
 
-A structured graph runtime for Python and TypeScript.
+<p align="center">A structured graph runtime for Python and TypeScript.</p>
 
 Sley is a fork of Caskada. It keeps that history visible while taking the graph
 runtime forward under its own package and project identity.
 
 <p align="center">
   <a href="https://pypi.org/project/sley"><img src="https://img.shields.io/pypi/v/sley?logo=python&label=Python&style=flat-square" alt="Python package"></a>
-  <a href="https://www.npmjs.com/package/sley"><img src="https://img.shields.io/npm/v/sley?logo=typescript&label=TypeScript&style=flat-square" alt="TypeScript package"></a>
+  <a href="https://www.npmjs.com/package/@jigging/sley"><img src="https://img.shields.io/npm/v/%40jigging%2Fsley?logo=typescript&label=TypeScript&style=flat-square" alt="TypeScript package"></a>
   <a href="https://github.com/jigmd/sley"><img src="https://img.shields.io/github/stars/jigmd/sley?logo=github&style=flat-square" alt="GitHub stars"></a>
 </p>
 
@@ -31,7 +37,7 @@ pip install sley
 ```
 
 ```bash
-npm install sley
+npm install @jigging/sley
 ```
 
 Python 3.13 or newer is required. The TypeScript package ships ESM and CommonJS
@@ -69,7 +75,7 @@ asyncio.run(main())
 ## TypeScript
 
 ```typescript
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
 interface State {
   question: string
@@ -181,6 +187,7 @@ the completed or failed result, including state and settled terminals.
 - [Quickstart](https://github.com/jigmd/sley/blob/main/docs/quickstart.md)
 - [Core model](https://github.com/jigmd/sley/blob/main/docs/learn/core-model.md)
 - [Cookbook](https://github.com/jigmd/sley/tree/main/cookbook)
+- [Media kit](https://github.com/jigmd/sley/tree/main/media)
 - [Migration from Caskada](https://github.com/jigmd/sley/blob/main/docs/about/migrate-from-caskada.md)
 - [Normative runtime contract](https://github.com/jigmd/sley/blob/main/architecture/rfcs/0001-sley-runtime.md)
 

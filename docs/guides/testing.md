@@ -51,7 +51,7 @@ test_priority_route()
 
 ```typescript
 import assert from 'node:assert/strict'
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
 async function testPriorityRoute() {
   const choose = node<{ amount: number; lane?: string }>((context) => {
@@ -120,7 +120,7 @@ asyncio.run(check_failure())
 
 ```typescript
 import assert from 'node:assert/strict'
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
 interface State {
   amount: number

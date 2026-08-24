@@ -7,7 +7,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "sley": "^0.0.1"
+    "@jigging/sley": "^0.0.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

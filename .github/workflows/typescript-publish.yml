@@ -92,7 +92,7 @@ jobs:
       - name: Publish to npm (OIDC)
         if: steps.version.outputs.has_changes == 'true'
         working-directory: typescript
-        run: npm publish
+        run: npm publish --access=public
 
       - name: Commit and push version bump
         if: steps.version.outputs.has_changes == 'true'
@@ -136,13 +136,13 @@ jobs:
 
             ### Installation
 
-            npm install sley@${{ steps.version.outputs.new_version }}
-            pnpm add sley@${{ steps.version.outputs.new_version }}
-            yarn add sley@${{ steps.version.outputs.new_version }}
+            npm install @jigging/sley@${{ steps.version.outputs.new_version }}
+            pnpm add @jigging/sley@${{ steps.version.outputs.new_version }}
+            yarn add @jigging/sley@${{ steps.version.outputs.new_version }}
 
             ### NPM Package
 
-            📦 [View on NPM](https://www.npmjs.com/package/sley/v/${{ steps.version.outputs.new_version }})
+            📦 [View on NPM](https://www.npmjs.com/package/@jigging/sley/v/${{ steps.version.outputs.new_version }})
           draft: false
           prerelease: false
 

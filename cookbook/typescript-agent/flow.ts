@@ -1,4 +1,4 @@
-import { Flow } from 'sley'
+import { Flow } from '@jigging/sley'
 import { answer, decide, search } from './nodes'
 
 decide.link(search, 'search')

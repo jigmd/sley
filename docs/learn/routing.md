@@ -65,7 +65,7 @@ asyncio.run(main())
 {% tab title="TypeScript" %}
 
 ```typescript
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
 interface State {
   score: number

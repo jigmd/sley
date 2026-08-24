@@ -25,7 +25,7 @@ function importedExample(markdown, language, file) {
   const pattern = new RegExp(`${fence}${language}\\n([\\s\\S]*?)${fence}`, 'g')
   const blocks = [...markdown.matchAll(pattern)]
     .map((match) => match[1])
-    .filter((code) => /from ['"]sley['"]|from sley import/.test(code))
+    .filter((code) => /from ['"]@jigging\/sley['"]|from sley import/.test(code))
 
   if (blocks.length === 0) throw new Error(`${file}: missing complete ${language} example`)
   return blocks[0]

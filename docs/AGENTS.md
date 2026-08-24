@@ -19,6 +19,8 @@
   or owning a distinct contract.
 - The Quickstart is provider-free, dependency-free beyond Sley, runnable in one
   file, and reaches visible output in under five minutes.
+- Keep distribution names explicit: Python installs and imports `sley`, while
+  TypeScript installs and imports `@jigging/sley`.
 - Teach shared behavior once with paired Python and TypeScript examples. Keep
   language-specific signatures in their own reference pages.
 - Every page starts with a concise `description` frontmatter value, defines new

@@ -42,9 +42,9 @@
   and interactive exploration when they are part of what the example teaches.
 - Prompts whose responses are parsed by code must specify the exact response
   shape and validate required fields before changing state or control flow.
-- TypeScript cookbook manifests must use the published Sley semver range so
-  each project installs outside this repository; the root workspace may still
-  prefer the matching local package during repository verification.
+- TypeScript cookbook manifests must use the published `@jigging/sley` semver
+  range so each project installs outside this repository; the root workspace
+  may still prefer the matching local package during repository verification.
 - Keep external-service doubles in cookbook verification, not in the teaching
   source. An example's smoke case must still execute its real Sley graph.
 

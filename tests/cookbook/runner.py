@@ -129,11 +129,13 @@ def _link_typescript_workspace(name: str, project_dir: Path) -> None:
     )
     staged_modules = project_dir / "node_modules"
     shutil.copytree(source_modules, staged_modules, symlinks=True)
-    staged_sley = staged_modules / "sley"
+    staged_scope = staged_modules / "@jigging"
+    staged_scope.mkdir(exist_ok=True)
+    staged_sley = staged_scope / "sley"
     if staged_sley.is_symlink():
         staged_sley.unlink()
     elif staged_sley.exists():
-        raise ContractError(f"{name}: expected sley dependency to be a symlink")
+        raise ContractError(f"{name}: expected @jigging/sley dependency to be a symlink")
     os.symlink(
         staged_workspace / "typescript", staged_sley, target_is_directory=True
     )

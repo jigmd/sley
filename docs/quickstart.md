@@ -30,7 +30,7 @@ This example uses the type-stripping support in Node.js 24 or newer, so no
 TypeScript runner is required.
 
 ```bash
-npm install sley
+npm install @jigging/sley
 ```
 
 {% endtab %}
@@ -83,7 +83,7 @@ python quickstart.py
 Create `quickstart.mts`:
 
 ```typescript
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
 interface State {
   question: string

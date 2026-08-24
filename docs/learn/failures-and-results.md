@@ -50,7 +50,7 @@ asyncio.run(main())
 {% tab title="TypeScript" %}
 
 ```typescript
-import { Flow, node, RunError } from 'sley'
+import { Flow, node, RunError } from '@jigging/sley'
 
 interface State {
   divisor: number

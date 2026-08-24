@@ -71,9 +71,9 @@ Output:
 {% tab title="TypeScript" %}
 
 ```typescript
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
-import type { Failure } from 'sley'
+import type { Failure } from '@jigging/sley'
 
 class TransientError extends Error {}
 
@@ -218,7 +218,7 @@ batch = Flow(dispatch, concurrency=4, recover=recover_batch)
 {% tab title="TypeScript" %}
 
 ```typescript
-import type { ScopeFailure } from 'sley'
+import type { ScopeFailure } from '@jigging/sley'
 
 function recoverBatch(context: Context<State>, failure: ScopeFailure): void {
   context.state.completedBeforeFailure = [...failure.terminals]

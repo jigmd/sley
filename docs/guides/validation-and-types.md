@@ -78,7 +78,7 @@ guarantee.
 {% tab title="TypeScript" %}
 
 ```typescript
-import { Flow, node } from 'sley'
+import { Flow, node } from '@jigging/sley'
 
 interface Job {
   readonly text: string
