@@ -1,4 +1,5 @@
 ---
+'@jigging/sley': patch
 ---
 
-Reset the package identity to `@jigging/sley` at version 0.0.1.
+Publish the first Sley release under its scoped npm identity.

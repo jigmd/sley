@@ -17,6 +17,7 @@
 - `architecture/rfcs/0001-sley-runtime.md` is normative.
 - The published npm package and public import specifier are `@jigging/sley`;
   internal facade and artifact basenames remain `sley`.
+- Release changesets name the public package `@jigging/sley`.
 - Shared semantics consume language-neutral conformance fixtures. TypeScript
   tests add dynamic JavaScript, Promise, browser, and static typing coverage.
 - Invalid public options fail immediately. Application throws become runtime
