@@ -1,7 +1,7 @@
 # Sley 0.0.1 Release Readiness
 
 - Status: identity, specification, API, and package reset complete; publication deferred
-- Evidence date: 2026-08-23
+- Evidence date: 2026-08-24
 - Authority: [RFC 0001](rfcs/0001-sley-runtime.md)
 - Semantic review revision: `96a0bff508e3389979f58554149391257fb457ef`
 
@@ -19,5 +19,6 @@
 | Independent review      | Pass   | Three independent critics found no blocker or major issue in the semantic review revision; the rename does not alter runtime behavior.                 |
 
 Every Sley 0.0.1 implementation gate passes. Tags, package uploads, GitHub
-releases, and other publication remain intentionally deferred. The public
-website is still undecided and is not required for package readiness.
+releases, and other publication remain intentionally deferred. The canonical
+public website is `https://sley.jig.md`; deploying it is not required for package
+readiness.

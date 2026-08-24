@@ -34,6 +34,8 @@
   teaching choice, not mandatory ceremony in every example.
 - Keep project prose durable and lesson-focused. Mention implementation status
   or version migration only when that is the example's enduring subject.
+- Each project README's H1, `complexity` frontmatter, and lesson content feed the
+  generated sections of `docs/cookbook/python.md` or `typescript.md`.
 - Simplify framework ceremony without erasing domain behavior or scenario
   complexity that makes the lesson observable. Preserve deliberate simulations
   and interactive exploration when they are part of what the example teaches.
@@ -68,6 +70,8 @@
 - Execute changed examples through `tests/cookbook/runner.py`; use `--install`
   when dependency declarations change.
 - Run formatting and `git diff --check`.
+- Run `node .github/scripts/generate-examples.js` after changing project README
+  content or complexity metadata; a second run must leave no diff.
 - Review the final example in isolation for teaching clarity and lesson focus;
   passing production-oriented checks is not a substitute for this review.
 

@@ -81,13 +81,13 @@ Default section order:
   name are `sley`; the canonical repository is `github.com/jigmd/sley`.
 - Sley is a fork of Caskada. Preserve Caskada names, versions, and descriptions
   in historical records; distinguish that history from current Sley surfaces.
-- The public website is undecided. Use the canonical repository rather than
-  inventing or committing a website URL until that decision is made.
+- The canonical public website is `https://sley.jig.md`.
 - The root pnpm workspace links matching local package versions during repository
   development. Example package manifests must retain publishable semver ranges so
   they also install correctly outside the workspace.
-- `docs/cookbook/` catalogs are curated navigation. Update them with relevant
-  cookbook changes instead of regenerating them from project README content.
+- `docs/cookbook/` combines curated navigation with generated project lessons.
+  Keep the navigation tables intentional and regenerate the bounded lesson
+  sections from cookbook project READMEs.
 - `shell.nix` provides Python Playwright and Chromium so the TypeScript browser
   snapshot runs directly inside the development shell.
 

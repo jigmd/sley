@@ -2,99 +2,128 @@
 machine-display: false
 ---
 
-# Choosing Sley
+# PocketFlow, Caskada, and Sley
 
-Sley is a structured graph runtime. It provides graph definition,
-branching, nested scopes, local concurrency and limits, retry and recovery, and
-structured results. It intentionally does not provide model clients,
-vector stores, tool registries, prompt templates, or domain-specific agent
-classes.
+Sley is the third step in one design lineage:
 
-This is a tradeoff, not a claim that one framework fits every project.
+1. **PocketFlow** established the small, graph-oriented workflow model.
+2. **Caskada** expanded that model with richer memory, routing, concurrency, and
+   matching Python and TypeScript APIs.
+3. **Sley** keeps the graph runtime but replaces implicit and class-heavy parts
+   of Caskada with a smaller, explicit execution contract.
 
-## What Sley Optimizes For
+Sley is the graph runtime formerly designed as Caskada v3. It now has its own
+name, packages, and version history while remaining a proud fork and successor
+of Caskada. In this page, **Caskada means the v2 API** that existing users
+migrate from; comparing Sley with the proposed Caskada v3 would compare Sley
+with an earlier draft of itself.
 
-### A Small Authoring Model
+## The Evolution
 
-Ordinary workflows use:
+PocketFlow made graph workflows approachable through nodes, actions, and a
+shared store. Caskada kept that foundation and made it more capable, but its
+`prep` / `exec` / `post` lifecycle, `Memory` proxy, trigger propagation, and
+execution trees increased the number of rules an author had to hold at once.
 
-- function handlers wrapped by `node(...)`;
-- target-first `link(...)` topology;
-- one shared run state and branch-local input;
-- buffered `emit(...)` and `end(...)` control;
-- nested Flow boundaries and optional combine callbacks.
+Sley does not reject that history. It applies what Caskada taught us: keep the
+graph, make branch data and completion explicit, let the runtime own fan-in,
+and remove machinery that is not required to execute the graph.
 
-The same concepts exist in the Python and TypeScript packages.
+| Concern               | PocketFlow                        | Caskada v2                              | Sley                                            |
+| --------------------- | --------------------------------- | --------------------------------------- | ----------------------------------------------- |
+| Node authoring        | `Node` subclasses                 | `Node` subclasses                       | Functions wrapped by `node(...)`                |
+| Handler lifecycle     | `prep` / `exec` / `post`          | `prep` / `exec` / `post`                | One sync or async handler                       |
+| Data                  | Shared store and params           | Global and local `Memory`               | Shared `state`, branch `input`, terminal output |
+| Routing               | Returned actions and operators    | `trigger()`, `next()`, `on()`, and `>>` | Buffered `emit()` and target-first `link()`     |
+| Fan-out               | Batch classes                     | Multiple targets or parallel Flows      | Several explicit emissions                      |
+| Fan-in                | Application aggregation           | Shared counters or Flow `post`          | Flow `combine` after the scope settles          |
+| Named Flow boundaries | Action conventions                | Terminal trigger propagation            | Declared exits; unknown actions fail            |
+| Common run result     | Mutated shared store              | Execution tree beside mutated memory    | Final shared state                              |
+| Detailed result       | Framework-specific execution data | Execution tree                          | Terminal records from `start()`                 |
+| Cycle limit           | Application/framework convention  | Hidden default `max_visits=15`          | Optional explicit `max_activations`             |
 
-### Explicit Control
+## Sley Compared with Caskada
 
-Links authorize routing. A name with no link or declared Flow exit is an
-`unknown_action` failure. Fan-out is visible as several emissions, and fan-in is
-visible as a Flow combine callback.
+Sley is better when explicit behavior and a smaller mental model matter more
+than lifecycle hooks and implicit convenience. It is worse when an application
+benefited from those Caskada conveniences and does not want to spell out their
+replacement.
 
-Sley does not infer graph control from model output, object shape, or an
-integration wrapper.
+### What Sley Improves
 
-### Structured Runtime Semantics
+- **Less authoring ceremony:** one function replaces a lifecycle subclass.
+- **Clearer data ownership:** shared state, branch input, and completed branch
+  output are separate channels instead of views through one `Memory` proxy.
+- **Fail-fast routing:** a misspelled or missing route fails unless it is a
+  declared Flow exit.
+- **Visible fan-out:** one action has one physical target; several destinations
+  require several emissions, so broadcast is intentional at the call site.
+- **Structured fan-in:** `combine` runs when the Flow is quiet, without shared
+  counters recreating scheduler state in application code.
+- **A useful default result:** `run()` returns the final shared state directly;
+  callers opt into terminal detail with `start()`.
+- **A smaller runtime:** graph compilation, callback control, state capture,
+  and one scope runner implement the contract in both languages.
+- **Executable parity:** language-neutral conformance cases verify that Python
+  and TypeScript settle the same graphs the same way.
 
-The runtime owns local callback admission, scope quiescence, retry, recovery,
-activation bounds, and terminal settlement. `start()` exposes a structured
-result rather than using native exceptions as the complete runtime protocol.
+### What Caskada Did Better
 
-### Bring-Your-Own Integrations
+- **Lifecycle boundaries were obvious:** `prep` gave validation a named home,
+  and retry could focus on `exec`. Sley authors must validate before writes or
+  effects because retry repeats the whole handler.
+- **Subclassing offered extension points:** custom Node and Flow behavior fitted
+  object-oriented applications. Sley deliberately exposes fewer hooks.
+- **Local Memory was convenient:** branch-local cloning and global fallback
+  required less explicit payload plumbing, even though the proxy rules were
+  harder to reason about.
+- **Trigger propagation was permissive:** a nested Flow could pass a named
+  action outward without declaring an exit. Sley requires the boundary to say
+  which actions may leave it.
+- **One action could broadcast:** connecting several physical targets was terse.
+  Sley makes the same fan-out more verbose by requiring separate emissions.
+- **Cycle protection was automatic:** Caskada imposed a default visit bound.
+  Sley has no hidden limit; cyclic Flows should set `max_activations` explicitly.
+- **`run()` always produced an execution tree:** that was useful for tracing.
+  Sley's detailed result records terminals, not a complete execution history.
 
-Application code calls provider SDKs and databases directly. This avoids a
-Sley-specific wrapper layer, but it also means the application owns service
-configuration, runtime data validation, rate limiting, and fakes.
+These are intentional tradeoffs, not compatibility gaps waiting to be filled.
+Adding lifecycle hooks, implicit routing, proxy memory, or tracing to Sley would
+require evidence that the benefit outweighs the added runtime and authoring
+rules.
 
-## Architectural Tradeoffs
+## Sley's Own Tradeoffs
 
-| Choice                      | Benefit                                     | Cost                                                 |
-| --------------------------- | ------------------------------------------- | ---------------------------------------------------- |
-| Function-first nodes        | Little framework ceremony                   | No lifecycle phase dedicated to validation           |
-| One shared run state        | One authoritative result state              | Concurrent writes need application discipline        |
-| Branch input and End output | Explicit per-branch data flow               | Connected handlers must agree on payload shape       |
-| Buffered control            | Atomic 0/1/N routing                        | `end()` does not stop host-language execution        |
-| First-class Flow combine    | Correct structured fan-in                   | Authors must understand terminal replacement         |
-| No built-in integrations    | Direct provider APIs and fewer abstractions | Less ready-made ecosystem functionality              |
-| Python/TypeScript parity    | Portable workflow semantics                 | Contract follows the smaller common semantic surface |
+| Choice                      | Benefit                                     | Cost                                              |
+| --------------------------- | ------------------------------------------- | ------------------------------------------------- |
+| Function-first nodes        | Little framework ceremony                   | No lifecycle phase dedicated to validation        |
+| One shared run state        | One authoritative result state              | Concurrent writes need application discipline     |
+| Branch input and End output | Explicit per-branch data flow               | Connected handlers must agree on payload shape    |
+| Buffered control            | Atomic zero, one, or many routes            | `end()` does not stop host-language execution     |
+| First-class Flow combine    | Correct structured fan-in                   | Authors must understand terminal replacement      |
+| No built-in integrations    | Direct provider APIs and fewer abstractions | Applications own provider configuration and fakes |
+| Python/TypeScript parity    | Portable workflow semantics                 | The contract follows the smaller common surface   |
 
-## Compare Against Your Requirements
+Sley validates its control protocol, not application schemas. Missing Python
+mapping keys raise `KeyError`; missing TypeScript properties normally produce
+`undefined`. Static types document connected payloads but do not validate them
+at runtime. Validate external data at the beginning of a handler or in an
+ordinary preparation node.
 
-When evaluating Sley, LangChain, LangGraph, CrewAI, AutoGen, PocketFlow, or a
-custom scheduler, compare the current releases on these questions:
+## Which One Should You Use?
 
-1. **Control:** Is topology explicit, model-directed, or conversation-directed?
-2. **State:** Is state shared, copied per branch, immutable, or externally owned?
-3. **Fan-in:** Who knows when a dynamic set of branches is complete?
-4. **Failure:** Are retry, recovery, and partial results structured data?
-5. **Limits:** Which local resources are bounded?
-6. **Inspection:** Can graph topology and terminal outcomes be inspected?
-7. **Integrations:** Does the framework wrap providers or use their SDKs directly?
-8. **Portability:** Are multiple language implementations behaviorally aligned?
-9. **Testing:** Can the real graph run with test-owned service fakes?
-10. **Operations:** Which timeouts and rate limits remain application concerns?
+Use **Sley** for new graph runtimes when explicit topology, structured fan-in,
+fail-fast routing, a small implementation, and Python/TypeScript parity are the
+priority.
 
-Product surfaces change frequently. Use each project's current official
-documentation rather than codebase-size or feature-count tables.
+Keep **Caskada v2** when maintaining an existing application whose lifecycle
+subclasses, Memory behavior, or execution-tree consumers are stable and useful.
+Migration is worthwhile when those features create more complexity than value,
+not merely because Sley is newer.
 
-## Relationship to PocketFlow
+Return to **PocketFlow** when its original minimal model already solves the
+problem. Prefer an ordinary function or queue when the problem does not need a
+graph runtime at all.
 
-Sley began from PocketFlow's graph-oriented minimalism but has a different
-authoring and runtime contract. It uses function-first nodes, shared run state,
-branch input, buffered emissions, structured Flow combine, local limits, and
-cross-language result schemas.
-
-Migration is therefore a design conversion rather than an import rename. See
-[Migrating from PocketFlow](./guides/migrating_from_pocketflow.md).
-
-## When Sley Fits
-
-Choose Sley when the workflow graph and its runtime behavior should remain
-visible in application code, you want to bring your own integrations, and
-Python/TypeScript parity matters.
-
-Prefer a higher-level framework when built-in provider components, opinionated
-agent roles, or ecosystem-specific tooling matters more than a small execution
-kernel. Prefer an ordinary function or queue when the problem does not need a
-workflow runtime at all.
+For concrete conversions, see [Migrating from PocketFlow](./guides/migrating_from_pocketflow.md)
+and [Migrating from Caskada v2](./guides/migration.md).

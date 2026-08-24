@@ -7,6 +7,9 @@ on:
     paths:
       - 'README.md'
       - 'docs/**'
+      - 'cookbook/**/README.md'
+      - '.github/scripts/generate-examples.js'
+      - '.github/workflows/update-docs.yml'
 
 permissions:
   contents: write # Needed to push to gh-pages branch
@@ -23,6 +26,9 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Generate cookbook pages
+        run: node .github/scripts/generate-examples.js
+
       - name: Generate docs/index.md from README.md
         run: |
           printf -- "---\ntitle: 'Sley'\nmachine-display: false\n---\n" > docs/index.md
@@ -30,11 +36,11 @@ jobs:
             | sed 's/alt\s*=\s*"[^"]*"//g; s/alt\s*=\s*'\''[^'\'']*'\''//g' \
             >> docs/index.md
 
-      - name: Commit and push updated docs/index.md
+      - name: Commit and push generated documentation
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
-          commit_message: Update docs/index.md from README.md [skip ci]
-          file_pattern: docs/index.md
+          commit_message: Update generated documentation [skip ci]
+          file_pattern: docs/index.md docs/cookbook/python.md docs/cookbook/typescript.md
           # The action defaults to pushing to the branch that triggered the workflow (main)
           # It also uses the github-actions[bot] user by default
 

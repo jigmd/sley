@@ -24,7 +24,7 @@ setup(
     description="Structured graph runtime for Python and TypeScript.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/jigmd/sley",
+    url="https://sley.jig.md",
     license="MPL-2.0",
     python_requires=">=3.13",
     classifiers=[

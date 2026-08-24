@@ -161,6 +161,7 @@ the completed or failed result, including state and settled terminals.
 
 ## Learn
 
+- [Website](https://sley.jig.md)
 - [Getting started](https://github.com/jigmd/sley/blob/main/docs/getting_started.md)
 - [Core concepts](https://github.com/jigmd/sley/blob/main/docs/core_abstraction/index.md)
 - [Cookbook](https://github.com/jigmd/sley/tree/main/cookbook)
