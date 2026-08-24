@@ -1,5 +1,11 @@
 # Sley
 
+## 0.0.2
+
+### Patch Changes
+
+- b10182c: Publish the first Sley release under its scoped npm identity.
+
 ## 0.0.1
 
 - Initial prerelease of the Sley graph runtime for TypeScript and JavaScript.
