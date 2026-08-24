@@ -18,7 +18,7 @@
 | Cookbook execution      | Pass   | All 41 contracts pass isolated installation runs; catalog source compilation and strict Pyright pass.                                  |
 | Independent review      | Pass   | Three independent critics found no blocker or major issue in the semantic review revision; the rename does not alter runtime behavior. |
 
-Every Sley 0.0.1 implementation gate passes. Tags, package uploads, GitHub
-releases, and other publication remain intentionally deferred. The canonical
-public website is `https://sley.jig.md`; deploying it is not required for package
-readiness.
+Every implementation gate passes. Language publish workflows apply valid
+changesets on `main`, then publish packages, version commits, tags, and GitHub
+releases. The canonical public website is `https://sley.jig.md`; deploying it is
+not required for package readiness.

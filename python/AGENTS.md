@@ -15,6 +15,7 @@
 ## Local Contracts
 
 - `architecture/rfcs/0001-sley-runtime.md` is normative.
+- Release changesets name the public package `sley`.
 - Shared semantics consume language-neutral conformance fixtures. Python tests
   add host-language validation, asyncio, and typing coverage.
 - Public definitions fail immediately on invalid values. Application failures
