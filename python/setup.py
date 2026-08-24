@@ -17,7 +17,7 @@ long_description = (
 
 setup(
     name="sley",
-    version="0.0.1",
+    version="0.0.2",
     packages=["sley"],
     package_data={"sley": ["py.typed"]},
     author="Victor Duarte",

@@ -86,6 +86,8 @@ Default section order:
 - The root pnpm workspace links matching local package versions during repository
   development. Example package manifests must retain publishable semver ranges so
   they also install correctly outside the workspace.
+- Publish workflows commit generated version files after upload and rebase that
+  commit onto the current `main` before pushing it.
 - `docs/examples/` combines curated teaching order with generated project
   metadata. Keep the catalog intentional and regenerate it from cookbook README
   titles and complexity plus the curated lesson labels.
