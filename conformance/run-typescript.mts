@@ -1,11 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { Flow, node } from '../typescript/sley.ts'
 
-import type { Context, RunResult, ScopeFailure, ScopeResult, Terminal } from '../typescript/sley.ts'
+import type { CompiledDescription, Context, RunResult, ScopeFailure, ScopeResult, Terminal } from '../typescript/sley.ts'
 
 interface State {
   [key: string]: unknown
 }
+
+type CaseResult = RunResult<State> | CompiledDescription
 
 function terminalSnapshot(terminal: Terminal): Record<string, unknown> {
   return {
@@ -33,6 +35,25 @@ function resultSnapshot(result: RunResult<State>): Record<string, unknown> {
         }
       : {}),
   }
+}
+
+function caseSnapshot(result: CaseResult): unknown {
+  return 'schema_version' in result ? result : resultSnapshot(result)
+}
+
+async function compiledDescription(): Promise<CompiledDescription> {
+  const entry = node<State>(() => {}, { name: 'entry', retry: { maxAttempts: 3 } })
+  const childEntry = node<State>(() => {}, { name: 'child entry', retry: { maxAttempts: 2 } })
+  const child = new Flow(childEntry, {
+    name: 'child',
+    exits: ['done'],
+    concurrency: 3,
+    maxActivations: 5,
+  })
+  const finish = node<State>(() => {}, { name: 'finish' })
+  entry.link(child, 'nested')
+  child.link(finish)
+  return new Flow(entry, { name: 'root', exits: ['abort'], concurrency: 2 }).compile().describe()
 }
 
 async function implicitLink(): Promise<RunResult<State>> {
@@ -291,7 +312,8 @@ async function nestedFailureTerminals(): Promise<RunResult<State>> {
     .result()
 }
 
-const cases: Record<string, () => Promise<RunResult<State>>> = {
+const cases: Record<string, () => Promise<CaseResult>> = {
+  compiled_description: compiledDescription,
   implicit_link: implicitLink,
   named_input: namedInput,
   unlabelled_input: unlabelledInput,
@@ -320,8 +342,8 @@ if (ids.length !== Object.keys(cases).length || ids.some((id) => cases[id] === u
 }
 
 const snapshots = []
-for (const id of ids) snapshots.push({ id, snapshot: resultSnapshot(await cases[id]!()) })
-const concurrent = snapshots.find((item) => item.id === 'local_concurrency')!.snapshot
+for (const id of ids) snapshots.push({ id, snapshot: caseSnapshot(await cases[id]!()) })
+const concurrent = snapshots.find((item) => item.id === 'local_concurrency')!.snapshot as Record<string, unknown>
 const concurrentTerminals = concurrent.terminals as Record<string, unknown>[]
 concurrentTerminals.sort((left, right) => Number(left.output) - Number(right.output))
 for (const terminal of concurrentTerminals) delete terminal.sequence

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, Generic, Literal, TypeAlias, cast, overload
+from typing import Any, Generic, Literal, cast, overload
 
 from ._contracts import (
     Action,
+    CompiledDescription,
+    DescriptionElement,
     DuplicateLinkError,
     FlowCombineHandler,
     FlowRecoveryHandler,
@@ -26,7 +28,6 @@ from ._state import _capture_initial_state
 
 _UNLABELLED = object()
 _MISSING = object()
-CompiledDescription: TypeAlias = dict[str, object]
 
 
 @dataclass(frozen=True, slots=True)
@@ -380,6 +381,32 @@ def _compile(root: Flow[StateT]) -> _CompiledSnapshot:
     return _Compiler(root).compile()
 
 
+def _describe_element(element: _CompiledPlacement) -> DescriptionElement:
+    links = [
+        {"action": link.action, "target_element_id": link.target_element_id}
+        for link in element.links
+    ]
+    if element.kind == "node":
+        if element.retry is None:
+            raise RuntimeError("compiled node retry policy is missing")
+        return {
+            "element_id": element.element_id,
+            "kind": "node",
+            "name": element.name,
+            "links": links,
+            "max_attempts": element.retry.max_attempts,
+        }
+    if element.owned_scope_id is None:
+        raise RuntimeError("compiled Flow owned scope is missing")
+    return {
+        "element_id": element.element_id,
+        "kind": "flow",
+        "name": element.name,
+        "links": links,
+        "owned_scope_id": element.owned_scope_id,
+    }
+
+
 def _describe(snapshot: _CompiledSnapshot) -> CompiledDescription:
     return {
         "schema_version": 1,
@@ -397,24 +424,5 @@ def _describe(snapshot: _CompiledSnapshot) -> CompiledDescription:
             }
             for scope in snapshot.scopes
         ],
-        "elements": [
-            {
-                "element_id": element.element_id,
-                "kind": element.kind,
-                "name": element.name,
-                "links": [
-                    {
-                        "action": link.action,
-                        "target_element_id": link.target_element_id,
-                    }
-                    for link in element.links
-                ],
-                **(
-                    {"max_attempts": element.retry.max_attempts}
-                    if element.retry is not None
-                    else {"owned_scope_id": element.owned_scope_id}
-                ),
-            }
-            for element in snapshot.placements
-        ],
+        "elements": [_describe_element(element) for element in snapshot.placements],
     }

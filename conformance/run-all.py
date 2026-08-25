@@ -12,6 +12,7 @@ from reference import load_fixture
 ROOT = Path(__file__).parent.parent
 FIXTURE = ROOT / "conformance" / "fixtures" / "runtime.json"
 BASELINE = ROOT / "architecture" / "implementation-baseline.json"
+TSX = ROOT / "node_modules" / ".bin" / "tsx"
 
 
 def run_json(command: list[str]) -> list[dict[str, Any]]:
@@ -55,9 +56,7 @@ def main() -> None:
     cases = load_fixture(FIXTURE)
     expected = [{"id": case["id"], "snapshot": case["expected"]} for case in cases]
     python = run_json([sys.executable, "conformance/run-python.py", str(FIXTURE)])
-    typescript = run_json(
-        ["pnpm", "exec", "tsx", "conformance/run-typescript.mts", str(FIXTURE)]
-    )
+    typescript = run_json([str(TSX), "conformance/run-typescript.mts", str(FIXTURE)])
     compare("Python", python, expected)
     compare("TypeScript", typescript, expected)
     compare("cross-port", python, typescript)

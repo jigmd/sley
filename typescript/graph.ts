@@ -7,6 +7,8 @@ import { captureInitialState, resolveState } from './state.js'
 
 import type {
   Action,
+  CompiledDescription,
+  DescriptionElement,
   FlowCombineHandler,
   FlowRecoveryHandler,
   NodeHandler,
@@ -203,13 +205,6 @@ export interface CompiledSnapshot {
   readonly placements: readonly CompiledPlacement[]
 }
 
-export interface CompiledDescription {
-  readonly schema_version: 1
-  readonly root: { readonly element_id: 1; readonly scope_id: 1 }
-  readonly scopes: readonly Record<string, unknown>[]
-  readonly elements: readonly Record<string, unknown>[]
-}
-
 interface NodeData {
   readonly handler: NodeHandler<any, any>
   readonly retry: NormalizedRetryPolicy
@@ -348,13 +343,29 @@ function describe(snapshot: CompiledSnapshot): CompiledDescription {
       concurrency: scope.concurrency,
       max_activations: scope.maxActivations ?? null,
     })),
-    elements: snapshot.placements.map((element) => ({
+    elements: snapshot.placements.map(describeElement),
+  }
+}
+
+function describeElement(element: CompiledPlacement): DescriptionElement {
+  const links = element.links.map((link) => ({ action: link.action, target_element_id: link.targetElementId }))
+  if (element.kind === 'node') {
+    if (element.retry === undefined) throw new Error('compiled node retry policy is missing')
+    return {
       element_id: element.elementId,
-      kind: element.kind,
+      kind: 'node',
       name: element.name,
-      links: element.links.map((link) => ({ action: link.action, target_element_id: link.targetElementId })),
-      ...(element.retry === undefined ? { owned_scope_id: element.ownedScopeId } : { max_attempts: element.retry.maxAttempts }),
-    })),
+      links,
+      max_attempts: element.retry.maxAttempts,
+    }
+  }
+  if (element.ownedScopeId === undefined) throw new Error('compiled Flow owned scope is missing')
+  return {
+    element_id: element.elementId,
+    kind: 'flow',
+    name: element.name,
+    links,
+    owned_scope_id: element.ownedScopeId,
   }
 }
 

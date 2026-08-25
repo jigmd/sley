@@ -2,6 +2,73 @@
   "schema_version": 1,
   "cases": [
     {
+      "id": "compiled_description",
+      "requirement": "Compiled descriptions use the exact portable version 1 inspection shape.",
+      "expected": {
+        "schema_version": 1,
+        "root": { "element_id": 1, "scope_id": 1 },
+        "scopes": [
+          {
+            "scope_id": 1,
+            "owner_element_id": 1,
+            "parent_scope_id": null,
+            "entry_element_id": 2,
+            "name": "root",
+            "exits": ["abort"],
+            "concurrency": 2,
+            "max_activations": null
+          },
+          {
+            "scope_id": 2,
+            "owner_element_id": 3,
+            "parent_scope_id": 1,
+            "entry_element_id": 5,
+            "name": "child",
+            "exits": ["done"],
+            "concurrency": 3,
+            "max_activations": 5
+          }
+        ],
+        "elements": [
+          {
+            "element_id": 1,
+            "kind": "flow",
+            "name": "root",
+            "links": [],
+            "owned_scope_id": 1
+          },
+          {
+            "element_id": 2,
+            "kind": "node",
+            "name": "entry",
+            "links": [{ "action": "nested", "target_element_id": 3 }],
+            "max_attempts": 3
+          },
+          {
+            "element_id": 3,
+            "kind": "flow",
+            "name": "child",
+            "links": [{ "action": null, "target_element_id": 4 }],
+            "owned_scope_id": 2
+          },
+          {
+            "element_id": 4,
+            "kind": "node",
+            "name": "finish",
+            "links": [],
+            "max_attempts": 1
+          },
+          {
+            "element_id": 5,
+            "kind": "node",
+            "name": "child entry",
+            "links": [],
+            "max_attempts": 2
+          }
+        ]
+      }
+    },
+    {
       "id": "implicit_link",
       "requirement": "Silent handlers follow an unlabelled link and share state.",
       "expected": {

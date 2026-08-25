@@ -2,6 +2,7 @@
 
 | Case                       | RFC behavior                                    |
 | -------------------------- | ----------------------------------------------- |
+| `compiled_description`     | exact portable version 1 inspection shape       |
 | `implicit_link`            | silent handler, unlabelled link, shared state   |
 | `named_input`              | named routing and branch input                  |
 | `unlabelled_input`         | unlabelled replacement input                    |

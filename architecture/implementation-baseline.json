@@ -8,7 +8,7 @@
   "authority": [
     {
       "path": "architecture/rfcs/0001-sley-runtime.md",
-      "sha256": "e3835c40842dfb77ac9f5e90ec4d90715518629c99f9aaab1ca1928c3cccc968"
+      "sha256": "a2c8c18e3dec2a5f885f71353b26e78b62428c69d985e8f606853cb0a8beec48"
     },
     {
       "path": "architecture/architecture-verdict.md",
@@ -20,11 +20,11 @@
     },
     {
       "path": "conformance/fixtures/runtime.json",
-      "sha256": "347e192957ba669c118d5f667839583e6d0246e3475493fe97096329245b56f7"
+      "sha256": "9a10838a9ff0bc2099c47e5204def1a012cc5d3411c95fd30cbbe60711d3abe5"
     },
     {
       "path": "conformance/coverage.md",
-      "sha256": "4a1124a3c429eca6d73c164b084dd1bf9033bcb884626a6e9129e1284e5ce1b3"
+      "sha256": "63d3d870513e7c84c989d077856f387c054f9a6bba002d20df610f768c766e42"
     }
   ],
   "verification_tools": [
@@ -34,15 +34,15 @@
     },
     {
       "path": "conformance/run-python.py",
-      "sha256": "99c41abe76dfb3f683888a74bf59205e23d82388ee37dd882488e71da33b7adc"
+      "sha256": "dd5d2bfbc39a3fb53c93dbf96c028e5bbbead82c897b94d53a657d571d2a15af"
     },
     {
       "path": "conformance/run-typescript.mts",
-      "sha256": "85fd1408927f090ae778f93433248d4970443372d873e9952a83a20c8589a883"
+      "sha256": "96cb17bf9ab7d960ba181a186b8ab1b294bcbd70f67a47c889d1b83b34aa702b"
     },
     {
       "path": "conformance/run-all.py",
-      "sha256": "a4908e0297bfc734503a953dee9c232661e480b6a2afd31fe2d0c006103c0aab"
+      "sha256": "cba73cfe88e2118dd0644c0f44885a09bd283b1fda186d1c6b56ab78121d331c"
     }
   ]
 }

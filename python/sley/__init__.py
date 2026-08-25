@@ -2,8 +2,15 @@
 # Copyright (c) 2026, Victor Duarte
 from ._contracts import (
     Action,
+    CompiledDescription,
     Completed,
     Context,
+    DescriptionElement,
+    DescriptionFlow,
+    DescriptionLink,
+    DescriptionNode,
+    DescriptionRoot,
+    DescriptionScope,
     DuplicateLinkError,
     EndTerminal,
     ExitTerminal,
@@ -20,7 +27,6 @@ from ._contracts import (
     Terminal,
 )
 from ._graph import (
-    CompiledDescription,
     CompiledFlow,
     Flow,
     GraphElement,
@@ -35,6 +41,12 @@ __all__ = (
     "CompiledFlow",
     "Completed",
     "Context",
+    "DescriptionElement",
+    "DescriptionFlow",
+    "DescriptionLink",
+    "DescriptionNode",
+    "DescriptionRoot",
+    "DescriptionScope",
     "DuplicateLinkError",
     "EndTerminal",
     "ExitTerminal",

@@ -3,8 +3,15 @@ from __future__ import annotations
 from typing import TypedDict, assert_type
 
 from sley import (
+    CompiledDescription,
     Completed,
     Context,
+    DescriptionElement,
+    DescriptionFlow,
+    DescriptionLink,
+    DescriptionNode,
+    DescriptionRoot,
+    DescriptionScope,
     Failed,
     Flow,
     RetryPolicy,
@@ -51,6 +58,19 @@ def recover(context: Context[State], failure: ScopeFailure) -> None:
 source.link(worker_node, "work")
 flow = Flow(source, combine=combine, recover=recover)
 compiled = flow.compile()
+description = compiled.describe()
+assert_type(description, CompiledDescription)
+assert_type(description["root"], DescriptionRoot)
+assert_type(description["scopes"][0], DescriptionScope)
+element = description["elements"][0]
+assert_type(element, DescriptionElement)
+assert_type(element["links"][0], DescriptionLink)
+if element["kind"] == "node":
+    assert_type(element, DescriptionNode)
+    assert_type(element["max_attempts"], int)
+else:
+    assert_type(element, DescriptionFlow)
+    assert_type(element["owned_scope_id"], int)
 handle = compiled.start(State())
 assert_type(handle.done(), bool)
 

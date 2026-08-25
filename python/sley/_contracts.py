@@ -4,7 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Any, Generic, Literal, Protocol, TypeAlias, TypeVar, overload
+from typing import (
+    Any,
+    Generic,
+    Literal,
+    Protocol,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
+    overload,
+)
 
 Action: TypeAlias = str
 T = TypeVar("T")
@@ -13,6 +22,53 @@ InputT = TypeVar("InputT", default=object)
 ContextStateT_co = TypeVar("ContextStateT_co", covariant=True, default=dict[str, Any])
 ContextInputT_co = TypeVar("ContextInputT_co", covariant=True, default=object)
 MaybeAwaitable: TypeAlias = T | Awaitable[T]
+
+
+class DescriptionRoot(TypedDict):
+    element_id: Literal[1]
+    scope_id: Literal[1]
+
+
+class DescriptionLink(TypedDict):
+    action: Action | None
+    target_element_id: int
+
+
+class DescriptionScope(TypedDict):
+    scope_id: int
+    owner_element_id: int
+    parent_scope_id: int | None
+    entry_element_id: int
+    name: str
+    exits: list[Action]
+    concurrency: int
+    max_activations: int | None
+
+
+class DescriptionNode(TypedDict):
+    element_id: int
+    kind: Literal["node"]
+    name: str
+    links: list[DescriptionLink]
+    max_attempts: int
+
+
+class DescriptionFlow(TypedDict):
+    element_id: int
+    kind: Literal["flow"]
+    name: str
+    links: list[DescriptionLink]
+    owned_scope_id: int
+
+
+DescriptionElement: TypeAlias = DescriptionNode | DescriptionFlow
+
+
+class CompiledDescription(TypedDict):
+    schema_version: Literal[1]
+    root: DescriptionRoot
+    scopes: list[DescriptionScope]
+    elements: list[DescriptionElement]
 
 
 class SleyError(Exception):

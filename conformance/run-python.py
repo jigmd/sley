@@ -10,6 +10,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "python"))
 
 from sley import (
+    CompiledDescription,
     Context,
     Flow,
     RetryPolicy,
@@ -48,6 +49,43 @@ def result_snapshot(result: RunResult[Any]) -> dict[str, Any]:
             ),
         }
     return snapshot
+
+
+def case_snapshot(result: RunResult[Any] | CompiledDescription) -> Any:
+    return result if isinstance(result, dict) else result_snapshot(result)
+
+
+async def compiled_description() -> CompiledDescription:
+    entry = node(
+        lambda _context: None,
+        name="entry",
+        retry=RetryPolicy(max_attempts=3),
+    )
+    child_entry = node(
+        lambda _context: None,
+        name="child entry",
+        retry=RetryPolicy(max_attempts=2),
+    )
+    child = Flow(
+        child_entry,
+        name="child",
+        exits=("done",),
+        concurrency=3,
+        max_activations=5,
+    )
+    finish = node(lambda _context: None, name="finish")
+    entry.link(child, "nested")
+    child.link(finish)
+    return (
+        Flow(
+            entry,
+            name="root",
+            exits=("abort",),
+            concurrency=2,
+        )
+        .compile()
+        .describe()
+    )
 
 
 async def implicit_link() -> RunResult[Any]:
@@ -271,6 +309,7 @@ async def nested_failure_terminals() -> RunResult[Any]:
 
 
 CASES = {
+    "compiled_description": compiled_description,
     "implicit_link": implicit_link,
     "named_input": named_input,
     "unlabelled_input": unlabelled_input,
@@ -299,7 +338,7 @@ async def main() -> None:
     if set(ids) != set(CASES):
         raise ValueError("Python adapter case ids do not match fixture ids")
     snapshots = [
-        {"id": case_id, "snapshot": result_snapshot(await CASES[case_id]())}
+        {"id": case_id, "snapshot": case_snapshot(await CASES[case_id]())}
         for case_id in ids
     ]
     concurrent = next(

@@ -24,7 +24,7 @@ class DefinitionTests(unittest.TestCase):
     def test_public_surface_is_explicit_and_small(self) -> None:
         public = {name for name in vars(sley) if not name.startswith("_")}
         self.assertEqual(public, set(sley.__all__))
-        self.assertLessEqual(len(public), 24)
+        self.assertLessEqual(len(public), 30)
 
     def test_node_supports_direct_and_decorator_forms(self) -> None:
         def direct(_context: object) -> None:
@@ -141,7 +141,7 @@ class DefinitionTests(unittest.TestCase):
         self.assertEqual(compiled.describe(), before)
         self.assertNotEqual(Flow(entry).compile().describe(), before)
 
-        before["elements"].clear()  # type: ignore[union-attr]
+        before["elements"].clear()
         self.assertTrue(compiled.describe()["elements"])
 
     def test_describe_contains_only_topology_and_policies(self) -> None:
@@ -151,7 +151,7 @@ class DefinitionTests(unittest.TestCase):
         self.assertEqual(description["schema_version"], 1)
         self.assertEqual(description["root"], {"element_id": 1, "scope_id": 1})
         self.assertEqual(
-            [item["name"] for item in description["elements"]],  # type: ignore[index,union-attr]
+            [item["name"] for item in description["elements"]],
             ["root", "entry"],
         )
         self.assertNotIn("handler", repr(description))
@@ -409,8 +409,9 @@ class ResultTests(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(RunError) as raised:
             await Flow(node(fail)).run({})
-        self.assertIs(raised.exception.result.failure.cause, cause)
-        self.assertIs(raised.exception.__cause__, cause)
+        failure = raised.exception.result.failure
+        self.assertIs(failure.cause, cause)
+        self.assertIs(raised.exception.__cause__, failure.cause)
 
     async def test_compiled_flow_is_reusable_with_fresh_state(self) -> None:
         compiled = Flow(node(lambda _context: None)).compile()
@@ -500,19 +501,17 @@ class RetryAndRecoveryTests(unittest.IsolatedAsyncioTestCase):
         def bad_policy(_failure: object) -> bool:
             raise policy_error
 
-        result = (
-            await Flow(
-                node(fail, retry=RetryPolicy(max_attempts=2, should_retry=bad_policy))
-            )
-            .start({})
-            .result()
+        flow = Flow(
+            node(fail, retry=RetryPolicy(max_attempts=2, should_retry=bad_policy))
         )
+        with self.assertRaises(RunError) as raised:
+            await flow.run({})
 
-        self.assertEqual(result.status, "failed")
-        if result.status == "failed":
-            self.assertEqual(result.failure.kind, "retry_policy")
-            self.assertIs(result.failure.cause, policy_error)
-            self.assertEqual(result.failure.previous.kind, "handler")  # type: ignore[union-attr]
+        failure = raised.exception.result.failure
+        self.assertEqual(failure.kind, "retry_policy")
+        self.assertIs(failure.cause, policy_error)
+        self.assertIs(raised.exception.__cause__, failure.cause)
+        self.assertEqual(failure.previous.kind, "handler")  # type: ignore[union-attr]
 
     async def test_flow_recovery_receives_settled_terminals(self) -> None:
         seen: list[ScopeFailure] = []
@@ -578,12 +577,14 @@ class RetryAndRecoveryTests(unittest.IsolatedAsyncioTestCase):
         def recover(_context: object, _failure: object) -> None:
             raise recovery_error
 
-        result = await Flow(node(fail), recover=recover).start({}).result()
-        self.assertEqual(result.status, "failed")
-        if result.status == "failed":
-            self.assertEqual(result.failure.kind, "flow_recovery")
-            self.assertIs(result.failure.cause, recovery_error)
-            self.assertEqual(result.failure.previous.kind, "handler")  # type: ignore[union-attr]
+        with self.assertRaises(RunError) as raised:
+            await Flow(node(fail), recover=recover).run({})
+
+        failure = raised.exception.result.failure
+        self.assertEqual(failure.kind, "flow_recovery")
+        self.assertIs(failure.cause, recovery_error)
+        self.assertIs(raised.exception.__cause__, failure.cause)
+        self.assertEqual(failure.previous.kind, "handler")  # type: ignore[union-attr]
 
     async def test_nested_flow_recovery_resumes_parent_once(self) -> None:
         def fail(_context: object) -> None:

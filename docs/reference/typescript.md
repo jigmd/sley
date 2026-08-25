@@ -17,6 +17,20 @@ field, or runtime error. It covers all eight runtime values and every exported
 type. For the shared execution rules behind them, use
 [Runtime semantics](runtime-semantics.md).
 
+## Compatibility
+
+The published JavaScript and TypeScript declarations target ES2022. TypeScript
+projects must include the ES2022 library or a later one; the declarations use
+the native `ErrorOptions` type for cause chaining.
+
+Sley's package and runtime tests run in CI on Node 24. The repository also
+provides a Chromium runtime smoke check for an ES2022 browser bundle. Bun,
+Deno, and other browsers are not verified compatibility targets.
+
+The package intentionally omits `package.json#engines`: Sley is not
+Node-specific, and the project has not tested a minimum Node release. That
+omission is not a promise that every JavaScript runtime is supported.
+
 ## Graph construction
 
 ### `node`
@@ -164,31 +178,61 @@ top-level state.
 ### `CompiledDescription`
 
 ```typescript
+interface DescriptionRoot {
+  readonly element_id: 1
+  readonly scope_id: 1
+}
+
+interface DescriptionLink {
+  readonly action: Action | null
+  readonly target_element_id: number
+}
+
+interface DescriptionScope {
+  readonly scope_id: number
+  readonly owner_element_id: number
+  readonly parent_scope_id: number | null
+  readonly entry_element_id: number
+  readonly name: string
+  readonly exits: readonly Action[]
+  readonly concurrency: number
+  readonly max_activations: number | null
+}
+
+interface DescriptionNode {
+  readonly element_id: number
+  readonly kind: 'node'
+  readonly name: string
+  readonly links: readonly DescriptionLink[]
+  readonly max_attempts: number
+}
+
+interface DescriptionFlow {
+  readonly element_id: number
+  readonly kind: 'flow'
+  readonly name: string
+  readonly links: readonly DescriptionLink[]
+  readonly owned_scope_id: number
+}
+
+type DescriptionElement = DescriptionNode | DescriptionFlow
+
 interface CompiledDescription {
   readonly schema_version: 1
-  readonly root: { readonly element_id: 1; readonly scope_id: 1 }
-  readonly scopes: readonly Record<string, unknown>[]
-  readonly elements: readonly Record<string, unknown>[]
+  readonly root: DescriptionRoot
+  readonly scopes: readonly DescriptionScope[]
+  readonly elements: readonly DescriptionElement[]
 }
 ```
 
-The records returned by `describe()` have this exact runtime shape:
-
-```text
-scopes[]:
-  scope_id, owner_element_id, parent_scope_id, entry_element_id,
-  name, exits, concurrency, max_activations
-elements[]:
-  element_id, kind, name, links
-  owned_scope_id   // Flow only
-  max_attempts     // Node only
-links[]:
-  action, target_element_id
-```
+`DescriptionRoot`, `DescriptionLink`, `DescriptionScope`, `DescriptionNode`,
+`DescriptionFlow`, and `DescriptionElement` are exported for inspectors that
+need to name individual records.
 
 Absent actions, parent scopes, and activation limits are represented by
 `null`. Callbacks, recovery policies, run state, and execution events are not
-included. Each call returns detached records.
+included. Narrow `DescriptionElement` on `kind` before reading
+`max_attempts` or `owned_scope_id`. Each call returns detached records.
 
 ## Callback context
 

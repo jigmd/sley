@@ -105,7 +105,7 @@ describe('graph definitions', () => {
     assert.deepEqual(compiled.describe(), before)
     assert.notDeepEqual(new Flow(entry).compile().describe(), before)
 
-    ;(before.elements as Record<string, unknown>[]).length = 0
+    ;(before.elements as unknown as Record<string, unknown>[]).length = 0
     assert.notEqual(compiled.describe().elements.length, 0)
   })
 })
@@ -380,7 +380,8 @@ describe('results, retry, and recovery', () => {
           throw cause
         }),
       ).run({}),
-      (error: unknown) => error instanceof RunError && error.result.failure.cause === cause,
+      (error: unknown) =>
+        error instanceof RunError && error.result.failure.cause === cause && error.cause === error.result.failure.cause,
     )
   })
 
@@ -453,13 +454,14 @@ describe('results, retry, and recovery', () => {
         },
       },
     )
-    const result = await new Flow(worker).start({}).result()
-    assert.equal(result.status, 'failed')
-    if (result.status === 'failed') {
-      assert.equal(result.failure.kind, 'retry_policy')
-      assert.equal(result.failure.cause, policyError)
-      assert.equal(result.failure.previous!.kind, 'handler')
-    }
+    await assert.rejects(new Flow(worker).run({}), (error: unknown) => {
+      if (!(error instanceof RunError)) return false
+      assert.equal(error.result.failure.kind, 'retry_policy')
+      assert.equal(error.result.failure.cause, policyError)
+      assert.equal(error.cause, error.result.failure.cause)
+      assert.equal(error.result.failure.previous!.kind, 'handler')
+      return true
+    })
   })
 
   it('captures thrown non-Error values without coercing the cause', async () => {
@@ -537,6 +539,29 @@ describe('results, retry, and recovery', () => {
     assert.equal(recovered.result, combined)
     assert.equal(recovered.primary.kind, 'flow_combine')
     assert.equal(result.terminals[0]!.output, 4)
+  })
+
+  it('preserves a Flow recovery throw as the RunError cause', async () => {
+    const recoveryError = new Error('recovery')
+    const flow = new Flow(
+      node<State>(() => {
+        throw new Error('handler')
+      }),
+      {
+        recover() {
+          throw recoveryError
+        },
+      },
+    )
+
+    await assert.rejects(flow.run({}), (error: unknown) => {
+      if (!(error instanceof RunError)) return false
+      assert.equal(error.result.failure.kind, 'flow_recovery')
+      assert.equal(error.result.failure.cause, recoveryError)
+      assert.equal(error.cause, error.result.failure.cause)
+      assert.equal(error.result.failure.previous!.kind, 'handler')
+      return true
+    })
   })
 })
 

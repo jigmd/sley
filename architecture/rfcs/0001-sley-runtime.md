@@ -93,6 +93,37 @@ change a compiled Flow. Definitions and compiled Flows hold no run state.
 limits in fresh, detached plain records suitable for inspection and
 visualization. It is not a run trace.
 
+Version 1 has this exact portable shape:
+
+```text
+CompiledDescription {
+  schema_version: 1
+  root: { element_id: 1, scope_id: 1 }
+  scopes: [{
+    scope_id, owner_element_id, parent_scope_id, entry_element_id,
+    name, exits, concurrency, max_activations
+  }]
+  elements: [DescriptionNode | DescriptionFlow]
+}
+
+DescriptionNode {
+  element_id, kind: "node", name, links, max_attempts
+}
+
+DescriptionFlow {
+  element_id, kind: "flow", name, links, owned_scope_id
+}
+
+DescriptionLink { action, target_element_id }
+```
+
+IDs, limits, concurrency, and retry counts are integers. Names, actions, and
+exits are strings. `action`, `parent_scope_id`, and `max_activations` may be
+null. Element and scope IDs follow deterministic compilation order, beginning
+with root element and scope 1. Record arrays follow ID order, and link arrays
+preserve definition order. Both ports expose matching structural types for
+these records. A future shape change requires a new `schema_version`.
+
 ## State and input
 
 Each run shallow-copies its initial top-level mapping once. Python uses an
@@ -260,8 +291,13 @@ Failed(status, state, terminals, failure)
 
 `Flow.run(initial_state)` is the everyday projection. It awaits completion and
 returns the final shared state. On failure it raises `RunError`, whose `result`
-is the exact `Failed` value. Native task cancellation remains native task
-cancellation; the runtime adds no second cancellation model.
+is the exact `Failed` value. When `result.failure.cause` is non-null, native
+chaining exposes that identical value: `error.__cause__ is
+error.result.failure.cause` in Python and `error.cause ===
+error.result.failure.cause` in TypeScript. Only the controlling `result.failure`
+participates; superseded failures remain available through `Failure.previous`.
+Native task cancellation remains native task cancellation; the runtime adds no
+second cancellation model.
 
 Each terminal exposes:
 

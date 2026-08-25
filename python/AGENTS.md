@@ -21,6 +21,8 @@
 - Public definitions fail immediately on invalid values. Application failures
   become runtime `Failure` records only where retry or recovery can act on them.
 - Compilation revalidates reachable mutable definitions before snapshotting.
+- Compiled description records are public `TypedDict` contracts with the
+  portable version 1 snake_case shape.
 
 ## Work Guidance
 

@@ -6,6 +6,7 @@ export const tsup: Options = {
   format: ['cjs', 'esm'],
   minify: true,
   bundle: true,
+  target: 'es2022',
   entryPoints: ['sley.ts'],
   outDir: 'dist',
 }

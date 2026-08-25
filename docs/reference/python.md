@@ -190,28 +190,55 @@ each invocation receives fresh top-level state.
 ### `CompiledDescription`
 
 ```python
-CompiledDescription: TypeAlias = dict[str, object]
+class DescriptionRoot(TypedDict):
+    element_id: Literal[1]
+    scope_id: Literal[1]
+
+class DescriptionLink(TypedDict):
+    action: Action | None
+    target_element_id: int
+
+class DescriptionScope(TypedDict):
+    scope_id: int
+    owner_element_id: int
+    parent_scope_id: int | None
+    entry_element_id: int
+    name: str
+    exits: list[Action]
+    concurrency: int
+    max_activations: int | None
+
+class DescriptionNode(TypedDict):
+    element_id: int
+    kind: Literal["node"]
+    name: str
+    links: list[DescriptionLink]
+    max_attempts: int
+
+class DescriptionFlow(TypedDict):
+    element_id: int
+    kind: Literal["flow"]
+    name: str
+    links: list[DescriptionLink]
+    owned_scope_id: int
+
+DescriptionElement: TypeAlias = DescriptionNode | DescriptionFlow
+
+class CompiledDescription(TypedDict):
+    schema_version: Literal[1]
+    root: DescriptionRoot
+    scopes: list[DescriptionScope]
+    elements: list[DescriptionElement]
 ```
 
-`describe()` returns this detached shape:
-
-```text
-schema_version: 1
-root: {element_id: 1, scope_id: 1}
-scopes[]:
-  scope_id, owner_element_id, parent_scope_id, entry_element_id,
-  name, exits, concurrency, max_activations
-elements[]:
-  element_id, kind, name, links
-  owned_scope_id   # Flow only
-  max_attempts     # Node only
-links[]:
-  action, target_element_id
-```
+`DescriptionRoot`, `DescriptionLink`, `DescriptionScope`, `DescriptionNode`,
+`DescriptionFlow`, and `DescriptionElement` are exported for inspectors that
+need to name individual records.
 
 Actions and absent parent scope / activation limit use `None` in the returned
 records. Callbacks, recovery policies, run state, and execution events are not
-included.
+included. Narrow `DescriptionElement` on `kind` before reading `max_attempts`
+or `owned_scope_id`. Each call returns detached records.
 
 ## Callback context
 

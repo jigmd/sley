@@ -6,8 +6,15 @@ export { Flow, GraphElement, Node, node } from './graph.js'
 
 export type {
   Action,
+  CompiledDescription,
   Completed,
   Context,
+  DescriptionElement,
+  DescriptionFlow,
+  DescriptionLink,
+  DescriptionNode,
+  DescriptionRoot,
+  DescriptionScope,
   EndTerminal,
   ExitTerminal,
   Failed,
@@ -25,4 +32,4 @@ export type {
   Terminal,
 } from './contracts.js'
 
-export type { CompiledDescription, CompiledFlow, FlowOptions, Link, NodeOptions } from './graph.js'
+export type { CompiledFlow, FlowOptions, Link, NodeOptions } from './graph.js'

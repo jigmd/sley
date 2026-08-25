@@ -4,6 +4,52 @@
 export type Action = string
 export type MaybePromise<T> = T | PromiseLike<T>
 
+export interface DescriptionRoot {
+  readonly element_id: 1
+  readonly scope_id: 1
+}
+
+export interface DescriptionLink {
+  readonly action: Action | null
+  readonly target_element_id: number
+}
+
+export interface DescriptionScope {
+  readonly scope_id: number
+  readonly owner_element_id: number
+  readonly parent_scope_id: number | null
+  readonly entry_element_id: number
+  readonly name: string
+  readonly exits: readonly Action[]
+  readonly concurrency: number
+  readonly max_activations: number | null
+}
+
+export interface DescriptionNode {
+  readonly element_id: number
+  readonly kind: 'node'
+  readonly name: string
+  readonly links: readonly DescriptionLink[]
+  readonly max_attempts: number
+}
+
+export interface DescriptionFlow {
+  readonly element_id: number
+  readonly kind: 'flow'
+  readonly name: string
+  readonly links: readonly DescriptionLink[]
+  readonly owned_scope_id: number
+}
+
+export type DescriptionElement = DescriptionNode | DescriptionFlow
+
+export interface CompiledDescription {
+  readonly schema_version: 1
+  readonly root: DescriptionRoot
+  readonly scopes: readonly DescriptionScope[]
+  readonly elements: readonly DescriptionElement[]
+}
+
 export class SleyError extends Error {
   constructor(message = '', options?: ErrorOptions) {
     super(message, options)

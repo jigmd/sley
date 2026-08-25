@@ -24,6 +24,14 @@
   `Failure` records only where retry or recovery can act on them.
 - Initial state is a plain string-keyed object; invalid containers fail before
   callbacks run.
+- Compiled description records are public discriminated interfaces with the
+  portable version 1 snake_case shape.
+- Published JavaScript and declarations target ES2022. Node 24 is the only
+  CI-tested server runtime; the repository Chromium runtime check covers an
+  ES2022 browser bundle, not browsers generally. Bun, Deno, and other browsers
+  are unverified.
+- `package.json` intentionally omits `engines` until a minimum Node version is
+  tested; the package is not Node-specific.
 
 ## Work Guidance
 
@@ -46,6 +54,8 @@
   terminals, nested Flow, combine, atomic control, results, retry, recovery,
   concurrency, and cycle limits.
 - Build ESM, CommonJS, and declarations with `pnpm --dir typescript build`.
+- After building, `pnpm --dir typescript check:declarations` verifies the
+  generated declarations with the ES2022 library and `skipLibCheck` disabled.
 - Run strict `tsc` over `typescript/tsconfig.json` after the build so typed
   cookbook projects can resolve the linked local package; the check includes
   `tests/runtime.types.ts`.

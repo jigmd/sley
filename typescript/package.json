@@ -36,7 +36,8 @@
     "url": "https://github.com/zvictor"
   },
   "scripts": {
-    "build": "tsup && cp ../README.md ./README.md",
+    "build": "tsup && pnpm run check:declarations && cp ../README.md ./README.md",
+    "check:declarations": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022 --skipLibCheck false dist/sley.d.ts dist/sley.d.cts",
     "prepack": "pnpm run build",
     "test": "NODE_OPTIONS='--experimental-vm-modules --import=tsx' node --test tests/*.test.ts",
     "release": "pnpm run build && changeset publish"
