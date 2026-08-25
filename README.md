@@ -15,95 +15,14 @@
 </p>
 
 Sley turns tangled workflow logic into code your team can scan and change with
-confidence. Every possible path stays visible, the final state comes back
-directly, and your application remains ordinary Python or TypeScript.
+confidence. A workflow rarely starts tangled. It gets there one condition,
+callback, counter, and fallback at a time, until the work still makes sense but
+its shape no longer does.
 
-Write ordinary functions, connect the paths they may take, and run the graph.
-Branching, fan-out, joins, retries, and nested workflows stay visible without
-handing your application to a framework.
-
-## Example: a release with two outcomes
-
-The following program is a complete Sley graph. Low-risk work publishes now;
-high-risk work waits for review. Both allowed paths sit side by side, and the
-caller gets the resulting status directly.
-
-### Python
-
-```python
-import asyncio
-
-from sley import Flow, node
-
-
-@node
-def decide(context):
-    action = "needs_review" if context.state["risk"] == "high" else "ready"
-    context.emit(action)
-
-
-@node
-def publish(context):
-    context.state["status"] = "published"
-
-
-@node
-def review(context):
-    context.state["status"] = "waiting for review"
-
-
-decide.link(publish, "ready")
-decide.link(review, "needs_review")
-release = Flow(decide)
-
-for risk in ("low", "high"):
-    state = asyncio.run(release.run({"risk": risk}))
-    print(f"{risk}: {state['status']}")
-```
-
-### TypeScript
-
-```typescript
-import { Flow, node } from '@jigging/sley'
-
-interface State {
-  risk: 'low' | 'high'
-  status?: string
-}
-
-const decide = node<State>((context) => {
-  const action = context.state.risk === 'high' ? 'needs_review' : 'ready'
-  context.emit(action)
-})
-
-const publish = node<State>((context) => {
-  context.state.status = 'published'
-})
-
-const review = node<State>((context) => {
-  context.state.status = 'waiting for review'
-})
-
-decide.link(publish, 'ready')
-decide.link(review, 'needs_review')
-const release = new Flow(decide)
-
-for (const risk of ['low', 'high'] as const) {
-  const state = await release.run({ risk })
-  console.log(`${risk}: ${state.status}`)
-}
-```
-
-Both programs print:
-
-```text
-low: published
-high: waiting for review
-```
-
-The decision stays inside `decide`; the allowed outcomes stay in its two links;
-the caller gets the final status from `run()`. No hidden handoff or terminal
-lookup is required.
+Sley puts that shape back in front of you. Write ordinary functions, connect
+the paths they may take, and run the graph. Branching, fan-out, joins, retries,
+and nested workflows stay visible, the final state comes back directly, and
+your application remains ordinary Python or TypeScript.
 
 ## Small by design
 

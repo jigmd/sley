@@ -94,10 +94,10 @@ Default section order:
 - `shell.nix` provides Python Playwright and Chromium so the TypeScript browser
   snapshot runs directly inside the development shell.
 - `README.md` and the documentation home share Sley's result-first positioning
-  and release-workflow example. They bridge explicitly from the reader's
-  problem into the example, sell visible outcomes before API capabilities, and
-  avoid completion-time promises. The README sends newcomers into Quickstart
-  and Learn instead of maintaining a separate tutorial or API tour.
+  and a fluid progression from the reader's problem into its small graph model.
+  They sell visible outcomes before API capabilities, avoid completion-time
+  promises, and send newcomers into Quickstart and Learn instead of maintaining
+  a separate tutorial or API tour.
 
 ## User Preferences
 

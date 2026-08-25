@@ -93,9 +93,9 @@
 - Resolve semantic conflicts in this order: accepted RFC, conformance and tests,
   then public facades. Treat Git history as non-authoritative source material.
 - Lead the landing page with the user pain Sley removes, one credible promise,
-  and compact working code. Sell the resulting status and simpler mental model
-  before listing capabilities. Bridge changes of context explicitly, and avoid
-  estimated completion times. Put boundaries after the value is clear.
+  and a fluid path into its small graph model. Sell the resulting status and
+  simpler mental model before listing capabilities, avoid estimated completion
+  times, and put boundaries after the value is clear.
 - Prefer one causal example over several disconnected fragments. Prefer graph
   definition code over a diagram when it communicates the topology as clearly;
   every remaining diagram must make a flow easier to understand than the same

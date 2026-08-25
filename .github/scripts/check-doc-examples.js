@@ -6,8 +6,6 @@ import { promisify } from 'node:util'
 
 const exec = promisify(execFile)
 const pages = [
-  'README.md',
-  'docs/README.md',
   'docs/quickstart.md',
   'docs/learn/routing.md',
   'docs/learn/data.md',
