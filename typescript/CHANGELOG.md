@@ -1,5 +1,11 @@
 # Sley
 
+## 0.0.3
+
+### Patch Changes
+
+- 34b068c: Export discriminated version 1 graph descriptions, preserve a non-null controlling RunError cause by native identity, and target ES2022 explicitly.
+
 ## 0.0.2
 
 ### Patch Changes
