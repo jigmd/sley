@@ -4,9 +4,13 @@ description: Retry one transient handler safely, resume from a local fallback, a
 
 # Retry and recovery
 
-Retry repeats one complete Node handler. Recovery decides what the graph should
-do after retry stops. Use both only for failures whose meaning is explicit in
-the application.
+A service fails once and succeeds on the next call. Retrying sounds harmless.
+The danger is forgetting that Sley repeats the entire Node handler, including
+every state write and external effect you placed around that call.
+
+Retry answers “should this complete operation run again?” Recovery answers
+“what should the graph do when it still fails?” Use either only when the
+application can explain the failure and the consequence.
 
 ## Retry a transient operation
 
@@ -153,35 +157,74 @@ control.
 {% tab title="Python" %}
 
 ```python
-def recover_fetch(context, failure):
-    context.state["warning"] = failure.message
+import asyncio
+
+from sley import Flow, RetryPolicy, node
+
+
+calls = 0
+
+
+def fetch_handler(context):
+    global calls
+    calls += 1
+    raise ConnectionError("service unavailable")
+
+
+def recover_fetch(context, _failure):
     context.emit("fallback")
+
+
+@node
+def read_cache(context):
+    context.state["value"] = "cached"
 
 
 fetch = node(
     fetch_handler,
-    retry=RetryPolicy(max_attempts=3, should_retry=is_transient),
+    retry=RetryPolicy(max_attempts=2),
     recover=recover_fetch,
 )
 fetch.link(read_cache, "fallback")
+
+state = asyncio.run(Flow(fetch).run({}))
+print(calls, state["value"])
 ```
 
 {% endtab %}
 {% tab title="TypeScript" %}
 
 ```typescript
-const fetch = node(fetchHandler, {
-  retry: { maxAttempts: 3, shouldRetry: isTransient },
-  recover(context, failure) {
-    context.state.warning = failure.message
-    context.emit('fallback')
-  },
+import { Flow, node } from '@jigging/sley'
+
+let calls = 0
+
+const readCache = node<{ value?: string }>((context) => {
+  context.state.value = 'cached'
 })
+
+const fetch = node<{ value?: string }>(
+  () => {
+    calls++
+    throw new Error('service unavailable')
+  },
+  {
+    retry: { maxAttempts: 2 },
+    recover(context) {
+      context.emit('fallback')
+    },
+  },
+)
 fetch.link(readCache, 'fallback')
+
+const state = await new Flow(fetch).run({})
+console.log(calls, state.value)
 ```
 
 {% endtab %}
 {% endtabs %}
+
+Both programs print `2 cached`: two failed attempts, then one recovery route.
 
 Recovery runs once after retry stops. One or more explicit control calls
 replace the failure and route from the Node. If recovery makes no control call,
@@ -202,38 +245,77 @@ local wave.
 {% tab title="Python" %}
 
 ```python
-from sley import ScopeFailure
+import asyncio
+
+from sley import Flow, ScopeFailure, node
+
+
+def dispatch(context):
+    context.emit("work", 1)
+    context.emit("work", -1)
+
+
+def work(context):
+    if context.input < 0:
+        raise ValueError("negative job")
+    context.end(context.input * 2)
 
 
 def recover_batch(context, failure: ScopeFailure):
-    context.state["completed_before_failure"] = list(failure.terminals)
-    context.state["error"] = failure.primary.message
+    context.state["completed"] = [
+        terminal.output for terminal in failure.terminals if terminal.has_output
+    ]
     context.end()
 
 
-batch = Flow(dispatch, concurrency=4, recover=recover_batch)
+dispatch_node = node(dispatch)
+work_node = node(work)
+dispatch_node.link(work_node, "work")
+batch = Flow(dispatch_node, recover=recover_batch)
+
+state = asyncio.run(batch.run({}))
+print(state["completed"])
 ```
 
 {% endtab %}
 {% tab title="TypeScript" %}
 
 ```typescript
-import type { ScopeFailure } from '@jigging/sley'
+import { Flow, node } from '@jigging/sley'
+
+import type { Context, ScopeFailure } from '@jigging/sley'
+
+interface State {
+  completed?: unknown[]
+}
+
+const dispatch = node<State>((context) => {
+  context.emit('work', 1)
+  context.emit('work', -1)
+})
+
+const work = node<State, number>((context) => {
+  if (context.input < 0) throw new Error('negative job')
+  context.end(context.input * 2)
+})
 
 function recoverBatch(context: Context<State>, failure: ScopeFailure): void {
-  context.state.completedBeforeFailure = [...failure.terminals]
-  context.state.error = failure.primary.message
+  context.state.completed = failure.terminals.filter((terminal) => terminal.hasOutput).map((terminal) => terminal.output)
   context.end()
 }
 
-const batch = new Flow(dispatch, {
-  concurrency: 4,
-  recover: recoverBatch,
-})
+dispatch.link(work, 'work')
+const batch = new Flow(dispatch, { recover: recoverBatch })
+
+const state = await batch.run({})
+console.log(state.completed)
 ```
 
 {% endtab %}
 {% endtabs %}
+
+Both programs print one completed sibling result: `[2]` in Python and `[ 2 ]`
+in Node.js.
 
 `ScopeFailure.terminals` contains branches that settled before failure.
 `primary` is the controlling Failure. `result` contains the exact
@@ -244,6 +326,7 @@ then routes from the Flow occurrence. The `end()` above converts the failed
 scope into one successful hard terminal. With zero control calls, Flow recovery
 propagates the failure and original terminals unchanged.
 
-For every failure and result field, see the
-[Runtime semantics](../reference/runtime-semantics.md) and language API
-references.
+You can now place retry around repeatable work and recovery where the right
+scope has enough context to choose a fallback. For every failure and result
+field, use [Runtime semantics](../reference/runtime-semantics.md) and the
+language API references.

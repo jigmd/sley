@@ -1,5 +1,5 @@
 ---
-description: Decide whether Sley fits your workflow and begin with its small graph model.
+description: Turn tangled workflow control flow into a small, explicit graph of ordinary Python or TypeScript functions.
 ---
 
 # Sley
@@ -12,48 +12,147 @@ description: Decide whether Sley fits your workflow and begin with its small gra
   </picture>
 </p>
 
-Sley is a structured graph runtime for Python and TypeScript. It runs ordinary
-functions as nodes, follows explicit links, and waits for every branch inside a
-Flow to settle.
+## Complex workflows. Obvious code.
 
-Sley is useful when the shape of the work matters: a process branches, loops,
-fans out, joins, or needs a clear failure boundary. The graph makes those paths
-visible while your application code remains ordinary code.
+Sley turns tangled workflow logic into code your team can scan and change with
+confidence. Every possible path stays visible, the final state comes back
+directly, and your application remains ordinary Python or TypeScript.
 
-## When to use Sley
+You have probably watched a clean sequence grow into nested conditions,
+callbacks, counters, and fallback logic. The work is still understandable. Its
+shape is not. Sley puts that shape back where you can see it.
 
-Use Sley when you need one or more of these:
+Write ordinary functions, connect the paths they may take, and run the graph.
+Branching, fan-out, joins, retries, and nested workflows stay visible without
+handing your application to a framework.
 
-- several allowed paths that should be visible before execution;
-- fan-out work followed by one structured join;
-- reusable nested workflows with their own exits or concurrency limit;
-- the same small runtime contract in Python and TypeScript.
+## Example: a release with two outcomes
 
-Prefer normal function calls, `if` statements, and loops when they already make
-the process easy to follow. Sley is also not a persistence or distributed-job
-system: it does not provide replay, durable pauses, transactional state,
-timeouts, or cross-machine execution.
+The following program is a complete Sley graph. Low-risk work publishes now;
+high-risk work waits for review. Both allowed paths sit side by side, and the
+caller gets the resulting status directly.
 
-## The shape of a Sley program
+{% tabs %}
+{% tab title="Python" %}
 
-```mermaid
-flowchart LR
-    Prepare --> Decide
-    Decide -->|publish| Publish
-    Decide -->|review| Review
+```python
+import asyncio
+
+from sley import Flow, node
+
+
+@node
+def decide(context):
+    action = "needs_review" if context.state["risk"] == "high" else "ready"
+    context.emit(action)
+
+
+@node
+def publish(context):
+    context.state["status"] = "published"
+
+
+@node
+def review(context):
+    context.state["status"] = "waiting for review"
+
+
+decide.link(publish, "ready")
+decide.link(review, "needs_review")
+release = Flow(decide)
+
+for risk in ("low", "high"):
+    state = asyncio.run(release.run({"risk": risk}))
+    print(f"{risk}: {state['status']}")
 ```
 
-- A **Node** wraps one function that does application work.
-- A **link** names an allowed move to another Node or Flow.
-- A **Context** gives the function shared state, branch input, and control calls.
-- A **Flow** owns an entry point and waits for all work in its scope to settle.
+{% endtab %}
+{% tab title="TypeScript" %}
 
-The common case stays quiet: when a node returns normally without choosing a
-route, Sley follows its unlabelled link. Explicit `emit()` calls choose paths or
-create branches. `end()` finishes one branch, and an optional Flow `combine`
-callback joins completed branches.
+```typescript
+import { Flow, node } from '@jigging/sley'
 
-## Start with a working graph
+interface State {
+  risk: 'low' | 'high'
+  status?: string
+}
 
-The [Quickstart](quickstart.md) installs Sley and runs a complete one-file
-program with visible output. It requires no service, API key, or framework.
+const decide = node<State>((context) => {
+  const action = context.state.risk === 'high' ? 'needs_review' : 'ready'
+  context.emit(action)
+})
+
+const publish = node<State>((context) => {
+  context.state.status = 'published'
+})
+
+const review = node<State>((context) => {
+  context.state.status = 'waiting for review'
+})
+
+decide.link(publish, 'ready')
+decide.link(review, 'needs_review')
+const release = new Flow(decide)
+
+for (const risk of ['low', 'high'] as const) {
+  const state = await release.run({ risk })
+  console.log(`${risk}: ${state.status}`)
+}
+```
+
+{% endtab %}
+{% endtabs %}
+
+Both programs print:
+
+```text
+low: published
+high: waiting for review
+```
+
+The decision stays inside `decide`; the allowed outcomes stay in its two links;
+the caller gets the final status from `run()`. No hidden handoff or terminal
+lookup is required.
+
+## Small by design
+
+- A **node** is one ordinary synchronous or asynchronous function.
+- A **link** makes one allowed next step visible.
+- `emit()` chooses one or more paths.
+- A **Flow** waits for those paths and `run()` returns their final shared state.
+
+That small model is the point. Sley owns in-process graph execution. Your code
+keeps validation, storage, services, UI, and every domain decision.
+
+Use Sley when branching and synchronization have made a workflow's shape hard
+to see. Keep ordinary calls, conditions, loops, `asyncio.gather`, or
+`Promise.all` while they still explain the workflow clearly.
+
+## Learn to think in graphs
+
+These docs do more than teach method names. You will begin with no graph-runtime
+vocabulary and finish able to:
+
+- choose node boundaries that keep work readable;
+- model decisions, loops, fan-out, and fan-in without hiding control;
+- decide what belongs in shared state, branch input, and terminal output;
+- place scope, concurrency, retry, and recovery boundaries deliberately;
+- recognise graph designs that are doing too much;
+- test and explain a workflow from its observable behavior.
+
+The judgment transfers beyond Sley. The examples simply give you a small,
+runnable place to build it.
+
+## Start with one file
+
+```bash
+pip install sley
+```
+
+```bash
+npm install @jigging/sley
+```
+
+The [Quickstart](quickstart.md) takes one file from installation to a completed
+run with visible output. No service, account, API key, or application framework
+is required.

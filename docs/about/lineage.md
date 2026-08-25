@@ -4,6 +4,10 @@ description: See how PocketFlow evolved into Caskada and Sley, including what Sl
 
 # PocketFlow, Caskada, and Sley
 
+Sley did not appear in a vacuum. It exists because two earlier runtimes taught
+us which graph ideas stayed small and which conveniences became difficult to
+reason about. Knowing that history makes Sley's sharp edges easier to judge.
+
 Sley is the third step in one design lineage:
 
 1. **PocketFlow** established a small graph-oriented workflow model.

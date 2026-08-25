@@ -4,8 +4,13 @@ description: Run independent branches under a Flow-local concurrency bound and p
 
 # Concurrency and cycles
 
-Use Flow concurrency for independent branches created inside one scope. Use an
-activation limit when that scope contains a deliberate cycle.
+Fan-out does not automatically make work concurrent, and concurrency does not
+automatically make it faster. Start serial. Raise a Flow's local limit when its
+branches are independent and spend meaningful time waiting on I/O.
+
+That decision introduces two responsibilities: do not depend on settlement
+order, and do not race on shared state. A deliberate cycle adds a third: prove
+that it can stop.
 
 ## Run a bounded batch
 
@@ -154,6 +159,11 @@ backstop even when the normal logic has an exit.
 {% tab title="Python" %}
 
 ```python
+import asyncio
+
+from sley import Flow, node
+
+
 @node
 def revise(context):
     context.state["attempts"] += 1
@@ -170,12 +180,17 @@ review = Flow(revise, max_activations=10)
 async def run_review():
     state = await review.run({"attempts": 0})
     print(state["attempts"])
+
+
+asyncio.run(run_review())
 ```
 
 {% endtab %}
 {% tab title="TypeScript" %}
 
 ```typescript
+import { Flow, node } from '@jigging/sley'
+
 const revise = node<{ attempts: number }>((context) => {
   context.state.attempts++
   if (context.state.attempts >= 3) {
@@ -188,15 +203,21 @@ const revise = node<{ attempts: number }>((context) => {
 revise.link(revise)
 const review = new Flow(revise, { maxActivations: 10 })
 const state = await review.run({ attempts: 0 })
+console.log(state.attempts)
 ```
 
 {% endtab %}
 {% endtabs %}
+
+Both programs print `3`: the domain condition stops the loop before the guard
+is needed.
 
 The count applies to activations started in this Flow invocation. Retry attempts
 and activations inside a nested Flow do not consume the parent's count. Sley
 fails before starting work beyond the bound with an `activation_limit`
 Failure; `run()` exposes it through `RunError`.
 
-Next, decide how transient branch failures should behave in
-[Retry and recovery](retry-and-recovery.md).
+You can now bound both parallel work and repeated work without pretending the
+scheduler owns your data safety. If one of those operations is transient,
+[Retry and recovery](retry-and-recovery.md) places repetition at the smallest
+responsible boundary.

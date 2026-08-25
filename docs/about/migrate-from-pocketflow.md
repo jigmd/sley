@@ -4,23 +4,27 @@ description: Convert PocketFlow lifecycle nodes, shared data, actions, and batch
 
 # Migrate from PocketFlow
 
+The familiar graph shape survives this migration; the lifecycle around it does
+not. Move one behavior at a time so a simpler handler does not quietly change
+validation, side effects, or routing.
+
 PocketFlow and Sley share a small graph idea, but not an authoring or execution
 contract. Treat migration as a behavior conversion rather than an import rename.
 
 ## Translate the core model
 
-| PocketFlow                    | Sley                                     |
-| ----------------------------- | ---------------------------------------- |
-| `Node` / `AsyncNode` subclass | Function wrapped with `node(...)`        |
-| `prep` + `exec` + `post`      | One sync or async handler                |
-| Shared store                  | `context.state`                          |
-| Params                        | `context.input`                          |
-| Action returned from `post`   | Buffered `context.emit(action)`          |
-| `node >> target`              | `node.link(target)`                      |
-| `node - "action" >> target`   | `node.link(target, "action")`            |
-| Batch classes                 | Several `emit(...)` calls in one handler |
-| Aggregation counters          | Flow `combine` callback                  |
-| Shared mutation as result     | State returned by `run()`                |
+| PocketFlow                              | Sley                                             |
+| --------------------------------------- | ------------------------------------------------ |
+| `Node` / `AsyncNode` subclass           | Function wrapped with `node(...)`                |
+| `prep` + `exec` + `post`                | One sync or async handler                        |
+| Shared store                            | `context.state`                                  |
+| Params                                  | Closure, state, or branch input; no direct match |
+| Action returned from `post`             | Buffered `context.emit(action)`                  |
+| `node >> target`                        | `node.link(target)`                              |
+| `node - "action" >> target`             | `node.link(target, "action")`                    |
+| `BatchNode.post(..., exec_res_list)`    | Flow `combine(context, result)`                  |
+| `BatchFlow` replay with per-item Params | Branch inputs sent to a nested Flow              |
+| Shared mutation as result               | State returned by `run()`                        |
 
 ## Collapse the lifecycle without losing its order
 
@@ -53,7 +57,23 @@ async def summarize(context):
 The handler can be synchronous or asynchronous. Validate first. Sley retry
 repeats this whole function, so place non-idempotent effects deliberately.
 
-## Choose state or input for each value
+## Replace Params by ownership, not by name
+
+PocketFlow Params are inherited and merged configuration for a Node or Flow,
+often used to identify one item in a BatchFlow. Sley does not merge a parameter
+context across graph elements.
+
+Choose the destination by what the value means:
+
+- close over stable service or policy configuration;
+- put facts needed across the whole run in state;
+- carry one batch item or instruction as branch input.
+
+A batch item from PocketFlow Params often becomes `context.input`, but mapping
+every Params dictionary there would turn shared configuration into repeated
+messages.
+
+## Choose state or input for application data
 
 State is one mapping shared by every branch in the run. Input belongs to the
 current branch:
@@ -92,10 +112,12 @@ but not state writes or external effects.
 A successful handler with no control call follows its unlabelled link. Without
 one, it exits the current Flow. Most leaf nodes therefore need no `end()`.
 
-## Replace batch classes with a scoped join
+## Replace each batch model deliberately
 
-Use ordinary emissions for fan-out, `end(value)` to publish branch results, and
-a Flow combiner for fan-in:
+PocketFlow `BatchNode` runs `exec` for every item returned by `prep`, then gives
+the complete `exec_res_list` to `post`. In Sley, use emissions for those items,
+`end(value)` for worker results, and a Flow combiner for the corresponding
+fan-in:
 
 ```python
 def collect(context, result):
@@ -113,8 +135,33 @@ The combiner runs after every branch in its Flow settles. It receives terminal
 outputs in settlement order, which may differ from dispatch order under
 concurrency. Carry an index and sort when source order matters.
 
+PocketFlow `BatchFlow` instead reruns a child Flow with different Params. In
+Sley, emit one branch input to a nested Flow for each item. Add a combiner only
+when the parent must join those Flow results; fan-out alone is enough when each
+branch may leave independently.
+
 Handle an empty source explicitly when it must not take the ordinary unlabelled
 path.
+
+## Convert retry and fallback
+
+PocketFlow `max_retries` and Sley `max_attempts` both count total executions,
+including the first. PocketFlow `wait` is measured in seconds; Sley `delay_ms`
+uses milliseconds:
+
+```python
+fetch = node(
+    fetch_handler,
+    retry=RetryPolicy(max_attempts=3, delay_ms=1_000),
+    recover=recover_fetch,
+)
+```
+
+PocketFlow `exec_fallback(prep_res, exc)` returns a replacement `exec` result
+that continues into `post`. Sley Node recovery receives `(context, failure)` and
+must use `emit(...)` or `end(...)` to replace the failure. Returning an
+application value is invalid. With no recovery control call, the original
+failure propagates.
 
 ## Convert completion and failure handling
 
@@ -133,9 +180,10 @@ path.
 2. Reassemble their required order in one handler.
 3. Decide whether each value is shared state or branch input.
 4. Convert default and named edges to target-first links.
-5. Convert batch classes and counters to fan-out plus combine.
-6. Recheck retry side effects, empty fan-out, and concurrent ordering.
-7. Assert the state returned by `run()` and inspect failure paths through
+5. Convert BatchNode aggregation to fan-out plus combine where needed.
+6. Convert BatchFlow Params to explicit inputs for a nested Flow.
+7. Recheck retry counts, delay units, side effects, empty fan-out, and ordering.
+8. Assert the state returned by `run()` and inspect failure paths through
    `start()`.
 
 Continue with [Links and routing](../learn/routing.md) to see the Sley control

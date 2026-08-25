@@ -4,9 +4,13 @@ description: Find a complete Sley project by learning goal, language, and cognit
 
 # Example Projects
 
-The cookbook contains complete applications rather than isolated fragments.
-Each project has one primary lesson, its own installation instructions, and a
-real Sley graph exercised by repository verification.
+The tutorial gave you one evolving workflow. The cookbook lets you follow your
+own problem instead. Pick the smallest project that resembles what you are
+trying to build, run it, and change one decision before moving to a larger one.
+
+These are complete applications rather than isolated fragments. Each project
+has one primary lesson, its own installation instructions, and a real Sley graph
+exercised by repository verification.
 
 Complete the [Quickstart](../quickstart.md) first. Cookbook projects begin at
 application level and may introduce terminal input, files, model providers, or

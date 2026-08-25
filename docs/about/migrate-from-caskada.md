@@ -4,9 +4,13 @@ description: Convert a Caskada v2 Flow to Sley one behavior at a time, including
 
 # Migrate from Caskada v2
 
-Sley is a deliberate successor, not an import-compatible release. Migrate one
-Flow at a time and preserve its observable routes, data, effects, and failure
-behavior before composing it into a larger graph.
+You do not need to redesign an entire Caskada application at once. Choose one
+Flow whose behavior you can observe, move that boundary, and keep the old and
+new results comparable while you learn the different model.
+
+Sley is a deliberate successor, not an import-compatible release. Preserve the
+Flow's routes, data, effects, and failure behavior before composing it into a
+larger graph.
 
 ## Translate the vocabulary
 
@@ -168,8 +172,8 @@ def worker(context):
     return
 ```
 
-`end()` has no output. `end(None)` or `end(undefined)` carries an explicit empty
-value.
+`end()` has no output. `end(None)` or `end(undefined)` carries an explicit
+output whose value is `None` or `undefined`.
 
 ## Replace fan-in counters with `combine`
 

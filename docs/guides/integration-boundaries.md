@@ -4,8 +4,12 @@ description: Integrate services without hiding ownership of validation, timeouts
 
 # Keep Integration Boundaries Explicit
 
+The moment a handler calls a database, model, payment provider, or queue, it is
+easy to let the graph runtime become the accidental owner of every surrounding
+policy. Resist that pull.
+
 Sley schedules graph work. Your application still owns the services that work
-calls depend on and the policies shared beyond one Flow invocation.
+depends on and the policies shared beyond one Flow invocation.
 
 | Concern                                             | Owner                                  |
 | --------------------------------------------------- | -------------------------------------- |
@@ -26,33 +30,80 @@ graph readable and let tests supply a deterministic fake.
 {% tab title="Python" %}
 
 ```python
+import asyncio
+
+from sley import Flow, node
+
+
+def require_query(value):
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("query must be a nonempty string")
+    return value.strip()
+
+
+class FakeSearch:
+    async def search(self, query, *, timeout):
+        return [f"result for {query} (timeout {timeout}s)"]
+
+
 def make_lookup(client):
     @node
     async def lookup(context):
-        query = require_query(context.input)
-        context.end(await client.search(query, timeout=10))
+        query = require_query(context.state["query"])
+        context.state["results"] = await client.search(query, timeout=10)
 
     return lookup
+
+
+state = asyncio.run(Flow(make_lookup(FakeSearch())).run({"query": "  sley  "}))
+print(state["results"][0])
 ```
 
 {% endtab %}
 {% tab title="TypeScript" %}
 
 ```typescript
+import { Flow, node } from '@jigging/sley'
+
+interface State {
+  query: string
+  results?: string[]
+}
+
+interface SearchClient {
+  search(query: string, options: { timeoutMs: number }): Promise<string[]>
+}
+
+function requireQuery(value: unknown): string {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error('query must be a nonempty string')
+  }
+  return value.trim()
+}
+
 function makeLookup(client: SearchClient) {
-  return node(async (context) => {
-    const query = requireQuery(context.input)
-    context.end(await client.search(query, { timeoutMs: 10_000 }))
+  return node<State>(async (context) => {
+    const query = requireQuery(context.state.query)
+    context.state.results = await client.search(query, { timeoutMs: 10_000 })
   })
 }
+
+const fakeSearch: SearchClient = {
+  async search(query, options) {
+    return [`result for ${query} (timeout ${options.timeoutMs}ms)`]
+  },
+}
+
+const state = await new Flow(makeLookup(fakeSearch)).run({ query: '  sley  ' })
+console.log(state.results?.[0])
 ```
 
 {% endtab %}
 {% endtabs %}
 
-`SearchClient`, input validation, and the timeout option belong to the
-application. This does not require a Sley-specific provider wrapper or
-dependency container.
+The programs print the fake result and the timeout chosen by the application.
+`SearchClient`, validation, and timeout policy remain ordinary application
+code. No Sley-specific provider wrapper or dependency container is required.
 
 ## Order fallible work deliberately
 
@@ -93,5 +144,6 @@ API. Use an application queue or a durable workflow engine when work must
 survive process loss or coordinate across machines. That is a system boundary,
 not a missing graph option.
 
-Continue with [Concurrency and cycles](concurrency-and-cycles.md) for the limits
-Sley does own.
+Keeping that line clear lets you change a client, queue, or persistence strategy
+without redesigning the graph. [Concurrency and cycles](concurrency-and-cycles.md)
+covers the local execution limits Sley does own.

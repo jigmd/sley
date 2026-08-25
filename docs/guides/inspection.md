@@ -4,7 +4,10 @@ description: Inspect a compiled Sley graph and structured run result without mis
 
 # Inspect a Graph and Its Result
 
-Sley exposes two complementary views:
+When a workflow takes a surprising route, you need to separate two questions:
+what graph did we define, and how did this particular run settle?
+
+Sley exposes one view for each question:
 
 - `compile().describe()` describes the graph before it runs;
 - `start().result()` describes how its branches settled.
@@ -109,5 +112,7 @@ Sley intentionally does not ship an event bus, observer API, or distributed
 trace. Add instrumentation at service boundaries, or wrap handler functions in
 application code when uniform timing is required.
 
-See [Runtime semantics](../reference/runtime-semantics.md) for every description
+You can now inspect topology without mistaking it for history and inspect a
+result without pretending it is a trace. See
+[Runtime semantics](../reference/runtime-semantics.md) for every description
 and terminal field.

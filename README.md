@@ -6,10 +6,7 @@
   </picture>
 </p>
 
-<p align="center">A structured graph runtime for Python and TypeScript.</p>
-
-Sley is a fork of Caskada. It keeps that history visible while taking the graph
-runtime forward under its own package and project identity.
+<p align="center"><strong>Complex workflows. Obvious code.</strong></p>
 
 <p align="center">
   <a href="https://pypi.org/project/sley"><img src="https://img.shields.io/pypi/v/sley?logo=python&label=Python&style=flat-square" alt="Python package"></a>
@@ -17,18 +14,107 @@ runtime forward under its own package and project identity.
   <a href="https://github.com/jigmd/sley"><img src="https://img.shields.io/github/stars/jigmd/sley?logo=github&style=flat-square" alt="GitHub stars"></a>
 </p>
 
-Sley runs ordinary functions as nodes in nested directed graphs. It provides
-explicit branching, structured fan-out and joining, retries, recovery, local
-concurrency, and typed execution results without depending on an LLM provider
-or application framework.
+Sley turns tangled workflow logic into code your team can scan and change with
+confidence. Every possible path stays visible, the final state comes back
+directly, and your application remains ordinary Python or TypeScript.
 
-## Why Sley
+Write ordinary functions, connect the paths they may take, and run the graph.
+Branching, fan-out, joins, retries, and nested workflows stay visible without
+handing your application to a framework.
 
-A sley is the moving loom frame that carries the reed, keeps warp threads
-separated, and advances the fabric. To sley also means threading the warp in a
-prescribed pattern. The analogy is direct: the graph defines the pattern,
-branches and state are the threads, Sley executes their arrangement, and a
-completed run is the woven result.
+## Example: a release with two outcomes
+
+The following program is a complete Sley graph. Low-risk work publishes now;
+high-risk work waits for review. Both allowed paths sit side by side, and the
+caller gets the resulting status directly.
+
+### Python
+
+```python
+import asyncio
+
+from sley import Flow, node
+
+
+@node
+def decide(context):
+    action = "needs_review" if context.state["risk"] == "high" else "ready"
+    context.emit(action)
+
+
+@node
+def publish(context):
+    context.state["status"] = "published"
+
+
+@node
+def review(context):
+    context.state["status"] = "waiting for review"
+
+
+decide.link(publish, "ready")
+decide.link(review, "needs_review")
+release = Flow(decide)
+
+for risk in ("low", "high"):
+    state = asyncio.run(release.run({"risk": risk}))
+    print(f"{risk}: {state['status']}")
+```
+
+### TypeScript
+
+```typescript
+import { Flow, node } from '@jigging/sley'
+
+interface State {
+  risk: 'low' | 'high'
+  status?: string
+}
+
+const decide = node<State>((context) => {
+  const action = context.state.risk === 'high' ? 'needs_review' : 'ready'
+  context.emit(action)
+})
+
+const publish = node<State>((context) => {
+  context.state.status = 'published'
+})
+
+const review = node<State>((context) => {
+  context.state.status = 'waiting for review'
+})
+
+decide.link(publish, 'ready')
+decide.link(review, 'needs_review')
+const release = new Flow(decide)
+
+for (const risk of ['low', 'high'] as const) {
+  const state = await release.run({ risk })
+  console.log(`${risk}: ${state.status}`)
+}
+```
+
+Both programs print:
+
+```text
+low: published
+high: waiting for review
+```
+
+The decision stays inside `decide`; the allowed outcomes stay in its two links;
+the caller gets the final status from `run()`. No hidden handoff or terminal
+lookup is required.
+
+## Small by design
+
+- A **node** is one ordinary synchronous or asynchronous function.
+- A **link** makes one allowed next step visible.
+- `emit()` chooses one or more paths.
+- A **Flow** waits for those paths and `run()` returns their final shared state.
+
+Use Sley when branching and synchronization have made a workflow's shape hard
+to see. Keep ordinary calls, conditions, loops, `asyncio.gather`, or
+`Promise.all` while they still explain the workflow clearly.
 
 ## Install
 
@@ -40,156 +126,27 @@ pip install sley
 npm install @jigging/sley
 ```
 
-Python 3.13 or newer is required. The TypeScript package ships ESM and CommonJS
-builds.
+Python requires version 3.13 or newer. Package and runtime details live in the
+[Python](https://sley.jig.md/reference/python) and
+[TypeScript](https://sley.jig.md/reference/typescript) references.
 
-## Python
+## Start learning
 
-```python
-import asyncio
+The [Quickstart](https://sley.jig.md/quickstart) takes one file from installation
+to visible output. The Learn path then evolves that same release workflow from a
+linear graph through routing, branch data, fan-out, joins, nested boundaries,
+failure evidence, and advanced graph design.
 
-from sley import Flow, node
+- [Documentation](https://sley.jig.md)
+- [Quickstart](https://sley.jig.md/quickstart)
+- [Core model](https://sley.jig.md/learn/core-model)
+- [Example projects](https://sley.jig.md/examples)
+- [Migration from Caskada](https://sley.jig.md/about/migrate-from-caskada)
+- [Runtime semantics](https://sley.jig.md/reference/runtime-semantics)
 
-
-@node
-def normalize(context):
-    context.state["question"] = context.state["question"].strip()
-
-
-@node
-def answer(context):
-    context.state["answer"] = f"You asked: {context.state['question']}"
-
-
-normalize.link(answer)
-
-
-async def main() -> None:
-    state = await Flow(normalize).run({"question": "  Why?  "})
-    print(state["answer"])
-
-
-asyncio.run(main())
-```
-
-## TypeScript
-
-```typescript
-import { Flow, node } from '@jigging/sley'
-
-interface State {
-  question: string
-  answer?: string
-}
-
-const normalize = node<State>((context) => {
-  context.state.question = context.state.question.trim()
-})
-
-const answer = node<State>((context) => {
-  context.state.answer = `You asked: ${context.state.question}`
-})
-
-normalize.link(answer)
-
-const state = await new Flow(normalize).run({ question: '  Why?  ' })
-console.log(state.answer)
-```
-
-Both programs print `You asked: Why?`.
-
-## Core Model
-
-### Nodes
-
-`node(handler)` turns a function into one graph occurrence. A handler receives
-one `Context` and returns no application value.
-
-```python
-@node
-def decide(context):
-    if needs_review(context.state):
-        context.emit("review")
-```
-
-Nodes connect target first:
-
-```python
-decide.link(review, "review")
-decide.link(publish)  # unlabelled link
-```
-
-The equivalent TypeScript spelling is identical:
-
-```typescript
-decide.link(review, 'review')
-decide.link(publish)
-```
-
-### Control
-
-- `context.emit()` selects the unlabelled link.
-- `context.emit("review")` selects a named link.
-- `context.emit("work", item)` also supplies the next branch's
-  `context.input`.
-- A successful normal handler with no control call behaves like one implicit
-  `emit()`.
-- `context.end(value)` creates a hard terminal for the current branch and
-  bypasses links. It does not stop the handler function, so use a normal
-  `return` when later statements should not run.
-
-Several control calls create a buffered fan-out. Sley commits that buffer only
-after the handler returns normally; state writes and external effects are not
-rolled back.
-
-### Data
-
-`context.state` is the one mutable top-level map shared by every branch in one
-run. Sley shallow-copies the caller's initial mapping once, so `run()` returns
-the authoritative final state and does not mutate the caller's top-level map.
-Nested values remain shared references.
-
-`context.input` is the value carried by one branch. Omitted input forwards the
-current input. Sley preserves application values but does not validate their
-schema or prove payload compatibility between links.
-
-### Flows And Combine
-
-A `Flow` is a structured scope. It waits until all of its branches settle, then
-optionally invokes one `combine` callback.
-
-```python
-def combine(context, result):
-    context.state["total"] = sum(result.outputs)
-
-
-batch = Flow(dispatch, combine=combine, concurrency=8)
-```
-
-Worker branches publish values with `context.end(value)`. The combiner reads
-those values through `result.outputs`. Zero combiner emissions preserve the
-original terminals; one or more emissions replace them with new outward
-continuations.
-
-### Results
-
-`await flow.run(initial_state)` is the simple API. It returns the final state for
-every completed run and raises `RunError` on failure. The error retains the
-failed result and exposes a controlling application error through standard
-native exception chaining.
-
-`flow.start(initial_state)` returns a `RunHandle` whose `result()` method exposes
-the completed or failed result, including state and settled terminals.
-
-## Learn
-
-- [Website](https://sley.jig.md)
-- [Quickstart](https://github.com/jigmd/sley/blob/main/docs/quickstart.md)
-- [Core model](https://github.com/jigmd/sley/blob/main/docs/learn/core-model.md)
-- [Cookbook](https://github.com/jigmd/sley/tree/main/cookbook)
-- [Media kit](https://github.com/jigmd/sley/tree/main/media)
-- [Migration from Caskada](https://github.com/jigmd/sley/blob/main/docs/about/migrate-from-caskada.md)
-- [Normative runtime contract](https://github.com/jigmd/sley/blob/main/architecture/rfcs/0001-sley-runtime.md)
+Sley evolved through PocketFlow and Caskada. The
+[lineage](https://sley.jig.md/about/lineage) records what changed and which
+tradeoffs remain intentional.
 
 ## License
 

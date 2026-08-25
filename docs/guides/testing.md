@@ -4,9 +4,13 @@ description: Test application logic directly, then run small real Sley graphs to
 
 # Test a Flow
 
-Test domain logic as ordinary code. Test graph behavior by running a real
-`Flow`. This keeps failures readable and avoids mocks that reproduce Sley's own
-runtime.
+A graph can look right and still route the wrong outcome, mishandle an empty
+fan-out, or recover at the wrong boundary. You do not need to mock Sley to catch
+those mistakes.
+
+Test domain logic as ordinary code. Test graph behavior by running a small real
+`Flow`. This keeps failures readable and avoids mocks that reproduce the
+runtime you meant to verify.
 
 ## Start with one observable outcome
 
@@ -170,5 +174,7 @@ through a small handler factory, then run the same graph topology as the
 application. The [Integration boundaries](integration-boundaries.md) guide
 shows that dependency shape.
 
-Next, learn how to [inspect topology and results](inspection.md) without
-treating logs as graph control.
+Your tests now protect decisions and boundaries rather than implementation
+noise. When a failure needs diagnosis rather than an assertion, learn how to
+[inspect topology and results](inspection.md) without treating logs as graph
+control.

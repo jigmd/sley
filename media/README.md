@@ -9,6 +9,9 @@ the `l` and beneath the `e`.
 | Dark background        | [Reverse SVG](sley-wordmark-reverse.svg) | [Reverse PNG](sley-wordmark-reverse.png) |
 | One-color reproduction | [Monochrome SVG](sley-wordmark-mono.svg) | [Monochrome PNG](sley-wordmark-mono.png) |
 
+The [favicon SVG](sley-favicon.svg) and [180 x 180 PNG](sley-favicon.png)
+use the `s` and thread at small sizes.
+
 Prefer SVG whenever the destination supports it. Preserve the aspect ratio and
 leave clear space around the wordmark. Do not rearrange the letters, move the
 thread, add effects, or place the primary version on a dark background.

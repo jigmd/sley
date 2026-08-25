@@ -4,9 +4,9 @@ description: Browse complete TypeScript projects by learning goal, Sley mechanis
 
 # TypeScript Examples
 
-Choose the smallest project that teaches the mechanism you need. Complexity is
-an estimate of cognitive load, not a quality score; lower is usually the better
-starting point.
+Do not choose by ambition. Choose the smallest project that answers your next
+question, run it, and change one behavior. Complexity estimates cognitive load,
+not quality; lower is usually the more useful starting point.
 
 ## TypeScript projects
 

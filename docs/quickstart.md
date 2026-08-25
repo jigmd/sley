@@ -1,16 +1,12 @@
 ---
-description: Install Sley and run a two-node graph with visible output in one file.
+description: Build and run your first Sley graph in one file, then see exactly what made it a graph.
 ---
 
 # Quickstart
 
-In this quickstart, one node cleans a question and another produces a response.
-The completed Flow returns the final shared state.
-
-```mermaid
-flowchart LR
-    Normalize --> Answer
-```
+Build the smallest useful Sley graph: prepare a release name, publish it, and
+get `published: hello-sley` back. It runs in one file, with no service, account,
+or graph theory between you and the result.
 
 ## Install Sley
 
@@ -26,9 +22,6 @@ python -m pip install sley
 {% endtab %}
 {% tab title="TypeScript" %}
 
-This example uses the type-stripping support in Node.js 24 or newer, so no
-TypeScript runner is required.
-
 ```bash
 npm install @jigging/sley
 ```
@@ -36,7 +29,11 @@ npm install @jigging/sley
 {% endtab %}
 {% endtabs %}
 
-## Create one file
+## Build one path
+
+The target is one final status: `published: hello-sley`. `prepare` turns the
+title into a slug; `publish` records the result. One link makes that order
+visible.
 
 {% tabs %}
 {% tab title="Python" %}
@@ -50,22 +47,23 @@ from sley import Flow, node
 
 
 @node
-def normalize(context):
-    context.state["question"] = context.state["question"].strip()
+def prepare(context):
+    title = context.state["title"].strip().lower()
+    context.state["slug"] = title.replace(" ", "-")
 
 
 @node
-def answer(context):
-    context.state["answer"] = f"You asked: {context.state['question']}"
+def publish(context):
+    context.state["status"] = f"published: {context.state['slug']}"
 
 
-normalize.link(answer)
-questions = Flow(normalize)
+prepare.link(publish)
+release = Flow(prepare)
 
 
 async def main():
-    state = await questions.run({"question": "  Why?  "})
-    print(state["answer"])
+    state = await release.run({"title": "  Hello Sley  "})
+    print(state["status"])
 
 
 asyncio.run(main())
@@ -86,26 +84,30 @@ Create `quickstart.mts`:
 import { Flow, node } from '@jigging/sley'
 
 interface State {
-  question: string
-  answer?: string
+  title: string
+  slug?: string
+  status?: string
 }
 
-const normalize = node<State>((context) => {
-  context.state.question = context.state.question.trim()
+const prepare = node<State>((context) => {
+  context.state.slug = context.state.title.trim().toLowerCase().replaceAll(' ', '-')
 })
 
-const answer = node<State>((context) => {
-  context.state.answer = `You asked: ${context.state.question}`
+const publish = node<State>((context) => {
+  context.state.status = `published: ${context.state.slug}`
 })
 
-normalize.link(answer)
-const questions = new Flow(normalize)
+prepare.link(publish)
+const release = new Flow(prepare)
 
-const state = await questions.run({ question: '  Why?  ' })
-console.log(state.answer)
+const state = await release.run({ title: '  Hello Sley  ' })
+console.log(state.status)
 ```
 
 Run it:
+
+Running an `.mts` file directly requires Node.js 24 or newer. On an earlier
+version, use the TypeScript runner already configured by your project.
 
 ```bash
 node quickstart.mts
@@ -117,20 +119,36 @@ node quickstart.mts
 Both programs print:
 
 ```text
-You asked: Why?
+published: hello-sley
 ```
 
-## What happened
+## What made this a graph?
 
-1. `node` turned each ordinary function into a graph node.
-2. `normalize.link(answer)` created an unlabelled path from the first node to
-   the second.
-3. `normalize` returned normally without an explicit control call, so Sley
-   followed that path.
-4. Both nodes read and changed the same run-owned `context.state`.
-5. `answer` had no next link, so the branch left the Flow normally.
-6. `run()` returned the final state.
+The functions are familiar. Three lines give them graph behavior:
 
-That is the complete linear model. Continue with the
-[Core model](learn/core-model.md) for the small set of concepts that also covers
-branching and joining.
+```text
+prepare.link(publish)   allow one path from prepare to publish
+Flow(prepare)           make prepare the entry point
+release.run(state)      start the graph and wait for it to finish
+```
+
+`@node` / `node(...)` wraps each function as a graph node. When `prepare`
+returns normally, Sley follows its unlabelled link to `publish`. The two nodes
+share one run-owned state object, and `run()` returns that state after the Flow
+settles.
+
+`publish` has no outgoing link. Its normal return therefore leaves the Flow and
+completes this run. A leaf does not need a special finish call.
+
+## Change one thing
+
+Change the title and predict the slug before you run the file again. Then add a
+third node named `announce`, link `publish` to it, and have it write a message
+to state.
+
+That small exercise is the first graph-authoring habit: change topology and
+application work separately, then predict the observable result.
+
+You can now build and run a linear graph. The [Core model](learn/core-model.md)
+gives names to the four ideas you just used, so adding a decision next will not
+make the model feel larger than it is.

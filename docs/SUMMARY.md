@@ -13,6 +13,7 @@
 - [Fan-out, End, and combine](learn/fan-out-and-combine.md)
 - [Nested Flows](learn/nested-flows.md)
 - [Failures and results](learn/failures-and-results.md)
+- [Design graphs that stay clear](learn/graph-design.md)
 
 ## Guides
 

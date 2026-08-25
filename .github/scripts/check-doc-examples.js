@@ -7,6 +7,7 @@ import { promisify } from 'node:util'
 const exec = promisify(execFile)
 const pages = [
   'README.md',
+  'docs/README.md',
   'docs/quickstart.md',
   'docs/learn/routing.md',
   'docs/learn/data.md',
@@ -17,10 +18,11 @@ const pages = [
   'docs/guides/concurrency-and-cycles.md',
   'docs/guides/retry-and-recovery.md',
   'docs/guides/inspection.md',
+  'docs/guides/integration-boundaries.md',
   'docs/guides/testing.md',
 ]
 
-function importedExample(markdown, language, file) {
+function importedExamples(markdown, language, file) {
   const fence = '```'
   const pattern = new RegExp(`${fence}${language}\\n([\\s\\S]*?)${fence}`, 'g')
   const blocks = [...markdown.matchAll(pattern)]
@@ -28,33 +30,38 @@ function importedExample(markdown, language, file) {
     .filter((code) => /from ['"]@jigging\/sley['"]|from sley import/.test(code))
 
   if (blocks.length === 0) throw new Error(`${file}: missing complete ${language} example`)
-  return blocks[0]
+  return blocks
 }
 
 const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'sley-docs-'))
 const typescriptFiles = []
+let exampleCount = 0
 
 try {
   for (const [index, file] of pages.entries()) {
     const markdown = await fs.readFile(file, 'utf8')
-    const python = path.join(temporary, `${index}.py`)
-    const typescript = path.resolve('typescript', `.docs-example-${index}.mts`)
+    const pythonExamples = importedExamples(markdown, 'python', file)
+    const typescriptExamples = importedExamples(markdown, 'typescript', file)
 
-    await fs.writeFile(python, importedExample(markdown, 'python', file))
-    await fs.writeFile(typescript, importedExample(markdown, 'typescript', file))
-    typescriptFiles.push(typescript)
+    for (const [exampleIndex, code] of pythonExamples.entries()) {
+      const python = path.join(temporary, `${index}-${exampleIndex}.py`)
+      await fs.writeFile(python, code)
+      await exec('python', [python], {
+        env: { ...process.env, PYTHONPATH: path.resolve('python') },
+      })
+      exampleCount++
+    }
 
-    await exec('python', [python], {
-      env: { ...process.env, PYTHONPATH: path.resolve('python') },
-    })
-    await exec('node', [typescript])
+    for (const [exampleIndex, code] of typescriptExamples.entries()) {
+      const typescript = path.resolve('typescript', `.docs-example-${index}-${exampleIndex}.mts`)
+      await fs.writeFile(typescript, code)
+      typescriptFiles.push(typescript)
+      await exec('node', [typescript])
+      exampleCount++
+    }
   }
 
-  await exec('pnpm', [
-    '--dir',
-    'typescript',
-    'exec',
-    'tsc',
+  await exec(path.resolve('node_modules/.bin/tsc'), [
     '--noEmit',
     '--strict',
     '--target',
@@ -71,4 +78,4 @@ try {
   await fs.rm(temporary, { recursive: true, force: true })
 }
 
-console.log(`Ran ${pages.length * 2} documentation examples.`)
+console.log(`Ran ${exampleCount} complete documentation examples.`)

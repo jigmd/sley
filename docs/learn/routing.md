@@ -1,20 +1,16 @@
 ---
-description: Connect nodes with unlabelled and named links, then choose a route at runtime.
+description: Add a real decision to a graph with one ordinary path and explicit named routes.
 ---
 
-# Links and routing
+# Links and Routing
 
-Links describe allowed paths. A node follows its unlabelled link after an
-ordinary return, or calls `emit(action)` to choose a named link.
+Your first release always published. Real workflows have moments where the next
+step depends on what just happened. This is where a graph starts paying for
+itself: the decision lives in one node, while every allowed outcome is visible
+in its links.
 
-This example sends each score to approval or manual review:
-
-```mermaid
-flowchart LR
-    Normalize --> Decide
-    Decide -->|approve| Approve
-    Decide -->|review| Review
-```
+We will keep the preparation step and route low-risk releases to publishing and
+high-risk releases to review.
 
 {% tabs %}
 {% tab title="Python" %}
@@ -26,36 +22,36 @@ from sley import Flow, node
 
 
 @node
-def normalize(context):
-    context.state["score"] = max(0, min(100, context.state["score"]))
+def prepare(context):
+    context.state["slug"] = context.state["title"].strip().lower().replace(" ", "-")
 
 
 @node
 def decide(context):
-    action = "approve" if context.state["score"] >= 70 else "review"
+    action = "needs_review" if context.state["risk"] == "high" else "ready"
     context.emit(action)
 
 
 @node
-def approve(context):
-    context.state["decision"] = "approved"
+def publish(context):
+    context.state["status"] = f"published: {context.state['slug']}"
 
 
 @node
 def review(context):
-    context.state["decision"] = "manual review"
+    context.state["status"] = f"review: {context.state['slug']}"
 
 
-normalize.link(decide)
-decide.link(approve, "approve")
-decide.link(review, "review")
-scores = Flow(normalize)
+prepare.link(decide)
+decide.link(publish, "ready")
+decide.link(review, "needs_review")
+release = Flow(prepare)
 
 
 async def main():
-    for score in (82, 64):
-        state = await scores.run({"score": score})
-        print(f"{score}: {state['decision']}")
+    for risk in ("low", "high"):
+        state = await release.run({"title": "Hello Sley", "risk": risk})
+        print(f"{risk}: {state['status']}")
 
 
 asyncio.run(main())
@@ -68,35 +64,37 @@ asyncio.run(main())
 import { Flow, node } from '@jigging/sley'
 
 interface State {
-  score: number
-  decision?: string
+  title: string
+  risk: 'low' | 'high'
+  slug?: string
+  status?: string
 }
 
-const normalize = node<State>((context) => {
-  context.state.score = Math.max(0, Math.min(100, context.state.score))
+const prepare = node<State>((context) => {
+  context.state.slug = context.state.title.trim().toLowerCase().replaceAll(' ', '-')
 })
 
 const decide = node<State>((context) => {
-  const action = context.state.score >= 70 ? 'approve' : 'review'
+  const action = context.state.risk === 'high' ? 'needs_review' : 'ready'
   context.emit(action)
 })
 
-const approve = node<State>((context) => {
-  context.state.decision = 'approved'
+const publish = node<State>((context) => {
+  context.state.status = `published: ${context.state.slug}`
 })
 
 const review = node<State>((context) => {
-  context.state.decision = 'manual review'
+  context.state.status = `review: ${context.state.slug}`
 })
 
-normalize.link(decide)
-decide.link(approve, 'approve')
-decide.link(review, 'review')
-const scores = new Flow(normalize)
+prepare.link(decide)
+decide.link(publish, 'ready')
+decide.link(review, 'needs_review')
+const release = new Flow(prepare)
 
-for (const score of [82, 64]) {
-  const state = await scores.run({ score })
-  console.log(`${score}: ${state.decision}`)
+for (const risk of ['low', 'high'] as const) {
+  const state = await release.run({ title: 'Hello Sley', risk })
+  console.log(`${risk}: ${state.status}`)
 }
 ```
 
@@ -106,31 +104,51 @@ for (const score of [82, 64]) {
 The output is:
 
 ```text
-82: approved
-64: manual review
+low: published: hello-sley
+high: review: hello-sley
 ```
 
-## Unlabelled paths are the normal path
+## The quiet path is unlabelled
 
-`normalize` makes no control call. For a node handler, that successful return
-acts like one `emit()` and follows the unlabelled link to `decide`.
+`prepare` makes no control call. A successful node handler with zero control
+calls behaves like one implicit `emit()`, so Sley follows the unlabelled link to
+`decide`.
 
 If a node has no unlabelled link, the same continuation leaves its current Flow
-normally. That is how both leaf nodes finish this workflow.
+normally. That is how `publish` and `review` finish. Ordinary leaves stay
+ordinary; neither needs `end()`.
 
-The string `"default"` has no special meaning. It is an ordinary named action,
-distinct from the unlabelled path.
+The string `"default"` has no special meaning. It is a normal action label and
+is different from the unlabelled path.
 
-## Named paths fail fast
+## Named routes expose decisions
 
-Sley resolves a named emission against the source element's matching link. A
-named action with no link or declared Flow exit fails with an `unknown_action`
-failure; it is never ignored and never guesses a target.
+`decide` emits the outcome `ready` or `needs_review`. Sley resolves that action
+against the node's links. If no matching link or declared Flow exit exists, the
+run fails with `unknown_action`. A misspelled decision never disappears and
+never guesses a destination.
 
-Links may point backward or to the same node, which creates a loop. Cyclic
-graphs should set an explicit Flow activation limit; the
-[Concurrency and cycles](../guides/concurrency-and-cycles.md) guide covers that
-guard after the core lessons.
+Name actions after what the decision means, not after the current target. A
+route named `needs_review` can later lead to a queue, notification, or nested
+approval Flow without changing the decision itself.
 
-Next, [State and input](data.md) separates facts shared by the run from the
-message carried along one path.
+## The graph-design lesson
+
+A decision node should answer one domain question. Its links should enumerate
+the allowed answers. When one node both decides and performs every outcome, the
+topology becomes invisible again inside its body.
+
+Links may point backward or to the same node, so the same mechanism can express
+a loop. A deliberate cycle needs an exit and an activation guard; the
+[Concurrency and cycles](../guides/concurrency-and-cycles.md) guide builds one
+when you need it.
+
+## Change one thing
+
+Add a third risk named `blocked`, a `reject` node, and a `rejected` action. Make
+the `blocked` risk emit `rejected`. Before running the code, check that the
+decision node has exactly three possible answers and that each answer has one
+link.
+
+The graph can now choose where work goes. Next, [State and input](data.md) makes
+the data carried by each choice just as explicit as its destination.

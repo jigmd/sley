@@ -1,87 +1,111 @@
 ---
-description: Learn the four pieces of Sley's graph model and how work settles.
+description: Build a mental model of nodes, links, Context, and Flows that stays useful as your graph grows.
 ---
 
-# Core model
+# The Core Model
 
-This page gives you the whole Sley model before the following lessons build it
-one part at a time. It assumes you have completed the [Quickstart](../quickstart.md).
+Your first graph was deliberately boring: prepare, then publish. That is useful.
+A graph does not become a different kind of program. It makes the shape of an
+ordinary program explicit.
 
-## Four pieces
+You only need four pieces to reason about Sley.
 
-```mermaid
-flowchart LR
-    Handler["ordinary function"] --> Node
-    Node -->|link| Next["Node or Flow"]
-    Flow --> Result["final state or full result"]
-    Context --> Node
-```
+## Four questions, four pieces
 
-| Piece       | What it owns                                                        |
-| ----------- | ------------------------------------------------------------------- |
-| **Node**    | One sync or async function, plus optional retry and recovery policy |
-| **Link**    | One allowed path from a Node or nested Flow to its next target      |
-| **Context** | Shared state, this branch's input, and buffered control calls       |
-| **Flow**    | An entry point and a scope that waits for all of its branches       |
+| Ask this question                          | Sley answers with |
+| ------------------------------------------ | ----------------- |
+| What unit of work runs?                    | **Node**          |
+| Where may work go next?                    | **Link**          |
+| What can the current node read and decide? | **Context**       |
+| What work belongs in one boundary?         | **Flow**          |
 
-Nodes and Flows are both graph elements, so either can be the target of a link.
+### A Node does one meaningful piece of work
 
-{% tabs %}
-{% tab title="Python" %}
+`node(handler)` wraps one synchronous or asynchronous function. The function
+can validate data, call a service, or update state just as it would outside a
+graph.
+
+A useful node boundary gives the work one name and one reason to change. If a
+function has no meaningful decision or boundary around it, it may not need to
+be a separate node.
+
+### A Link makes one allowed path visible
 
 ```python
-prepare.link(decide)
-decide.link(publish, "publish")
-decide.link(review, "review")
-workflow = Flow(prepare)
+prepare.link(publish)
 ```
 
-{% endtab %}
-{% tab title="TypeScript" %}
+The source owns the link. The target comes first because it is required; an
+optional action label comes second. Nodes and nested Flows can both be link
+targets.
 
-```typescript
-prepare.link(decide)
-decide.link(publish, 'publish')
-decide.link(review, 'review')
-const workflow = new Flow(prepare)
+One source can have one unlabelled link and one link for each named action. A
+duplicate fails immediately instead of leaving routing ambiguous.
+
+### Context belongs to one node run
+
+When a node runs, it receives `context`:
+
+- `context.state` contains facts shared for this run;
+- `context.input` contains the message carried by this branch;
+- `context.emit(...)` chooses where work goes next.
+
+A node may run more than once, but each occurrence gets its own Context.
+
+### A Flow owns a settlement boundary
+
+```python
+release = Flow(prepare)
 ```
 
-{% endtab %}
-{% endtabs %}
+A Flow names an entry point and waits for every path created inside its boundary
+to finish.
 
-The target comes first in `link(target, action?)`. Each action on one graph
-element has at most one target, so a route is unambiguous.
+The entry node returning is not enough when that node created more work. The
+Flow completes only after those paths finish or fail. Later lessons add precise
+names for those outcomes when fan-out makes the distinction useful.
 
-## Data has three roles
+## Keep work and movement separate
 
-| Data                 | Use it for                                            |
-| -------------------- | ----------------------------------------------------- |
-| `context.state`      | Facts shared by every branch for the life of one run  |
-| `context.input`      | The message carried by this branch                    |
-| `context.end(value)` | A completed branch value intended for a Flow boundary |
+This is the first design principle worth carrying beyond Sley:
 
-Sley validates its own graph and control protocol. Your application owns the
-shape and validation of values carried through these channels.
+- node bodies explain **what happens**;
+- links and control calls explain **where work goes**.
 
-## A node settles before Sley moves
+When those concerns are mixed across nested conditionals and callbacks, a
+reader must execute the program in their head to discover its possible paths.
+A graph earns its keep when it makes those paths readable before execution.
 
-A node function does not return an application result. It changes state and
-records zero, one, or several control intents through its Context.
+Do not turn every function into a node. Normal function calls remain the best
+tool for local implementation detail. Create a node when the step matters to
+the workflow's topology, policy, or failure boundary.
 
-- No explicit control call means one implicit unlabelled continuation.
-- `emit()` chooses a continuation; several emissions create several branches.
-- `end()` creates a hard terminal for the current branch.
+## Predict one change
 
-Control calls do not stop the host function. Sley commits the complete control
-buffer only after the function returns normally, so a failed callback cannot
-leak a partial fan-out.
+Start from the Quickstart and add one node:
 
-## A Flow settles after its branches
+```python
+@node
+def announce(context):
+    context.state["message"] = "release announced"
 
-A Flow completes only after every branch in its scope has exited, ended, or
-failed. `run(initialState)` is the everyday API: it returns final shared state
-or raises `RunError`. `start(initialState)` exposes the full completed or failed
-result when terminal and failure details matter.
 
-Next, [Links and routing](routing.md) turns the linear quickstart into an
-explicit decision.
+publish.link(announce)
+```
+
+Before running it, predict which function changes the slug, which function
+changes the status, and which link makes `announce` run. The same change in
+TypeScript uses `const announce = node(...)` and the identical
+`publish.link(announce)` call.
+
+Now look back at the Quickstart and answer these without running it:
+
+1. Which element is the Flow entry?
+2. Why does `publish` run when `prepare` makes no control call?
+3. What must finish before the Flow completes?
+4. Which code would you change to insert approval without editing `prepare`?
+
+If you can answer those, you already understand the linear runtime model.
+
+The release still publishes every time. [Links and routing](routing.md) adds the
+first real graph decision while keeping the four-piece model intact.

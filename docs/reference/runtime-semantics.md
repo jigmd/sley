@@ -4,9 +4,10 @@ description: The exact cross-language rules for graph definition, control, Flow 
 
 # Runtime semantics
 
-This page states the behavior shared by Sley's Python and TypeScript ports. See
-the [Python API](python.md) or [TypeScript API](typescript.md) for exact
-host-language signatures.
+Use this reference when you need to predict exactly how a graph routes, settles,
+retries, or fails. It states the behavior shared by Sley's Python and TypeScript
+ports. The [Python API](python.md) and [TypeScript API](typescript.md) give the
+exact host-language signatures.
 
 ## Graph definitions
 
@@ -241,16 +242,16 @@ exist. `cause` preserves the host-language application error or thrown value;
 The execution model is shared; these boundaries deliberately follow each host
 language:
 
-| Concern                      | Python                                     | TypeScript                |
-| ---------------------------- | ------------------------------------------ | ------------------------- |
-| Initial state                | String-keyed `Mapping`, captured as `dict` | Plain string-keyed object |
-| Missing application field    | Normal `KeyError` for indexed access       | Normally `undefined`      |
-| Empty value with output      | `end(None)`                                | `end(undefined)`          |
-| Unlabelled input replacement | `emit(input=value)`                        | `emit(undefined, value)`  |
-| Callback return              | `None`                                     | `undefined`               |
-| Captured application failure | Ordinary `Exception`                       | Any thrown value          |
-| Result collections           | Tuples                                     | Readonly arrays           |
-| Public field spelling        | `snake_case`                               | `camelCase`               |
+| Concern                              | Python                                     | TypeScript                |
+| ------------------------------------ | ------------------------------------------ | ------------------------- |
+| Initial state                        | String-keyed `Mapping`, captured as `dict` | Plain string-keyed object |
+| Missing application field            | Normal `KeyError` for indexed access       | Normally `undefined`      |
+| Explicit `None` / `undefined` output | `end(None)`                                | `end(undefined)`          |
+| Unlabelled input replacement         | `emit(input=value)`                        | `emit(undefined, value)`  |
+| Callback return                      | `None`                                     | `undefined`               |
+| Captured application failure         | Ordinary `Exception`                       | Any thrown value          |
+| Result collections                   | Tuples                                     | Readonly arrays           |
+| Public field spelling                | `snake_case`                               | `camelCase`               |
 
 Invalid calls outside the portable signatures also retain native behavior. For
 example, Python can raise `TypeError` for invalid arity before Sley validates a

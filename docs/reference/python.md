@@ -11,8 +11,10 @@ Sley requires Python 3.13 or newer. The package includes inline typing through
 from sley import Flow, node
 ```
 
-The sections below cover every name exported by `sley`. For execution rules,
-see [Runtime semantics](runtime-semantics.md).
+Use this reference when you need an exact Python signature, default, result
+field, or error. It covers every name exported by `sley`. For the shared
+execution rules behind those names, use
+[Runtime semantics](runtime-semantics.md).
 
 ## Graph construction
 
@@ -21,21 +23,28 @@ see [Runtime semantics](runtime-semantics.md).
 ```python
 @overload
 def node(
-    handler,
+    handler: Callable[[Context[State, Input]], None | Awaitable[None]],
     /,
     *,
     name: str | None = None,
     retry: RetryPolicy | None = None,
-    recover=None,
-) -> Node: ...
+    recover: Callable[
+        [Context[State, Input], Failure], None | Awaitable[None]
+    ] | None = None,
+) -> Node[State, Input]: ...
 
 @overload
 def node(
     *,
     name: str | None = None,
     retry: RetryPolicy | None = None,
-    recover=None,
-) -> Callable[[Handler], Node]: ...
+    recover: Callable[
+        [Context[State, Input], Failure], None | Awaitable[None]
+    ] | None = None,
+) -> Callable[
+    [Callable[[Context[State, Input]], None | Awaitable[None]]],
+    Node[State, Input],
+]: ...
 ```
 
 `node` accepts a handler directly or acts as `@node` / `@node(...)`. It infers
@@ -57,16 +66,20 @@ also returns `None`, synchronously or asynchronously.
 class Node(GraphElement[State], Generic[State, Input]):
     def __init__(
         self,
-        handler,
+        handler: Callable[[Context[State, Input]], None | Awaitable[None]],
         *,
         name: str,
         retry: RetryPolicy,
-        recover,
+        recover: Callable[
+            [Context[State, Input], Failure], None | Awaitable[None]
+        ] | None,
     ) -> None: ...
 
-    handler: Callable
+    handler: Callable[[Context[State, Input]], None | Awaitable[None]]
     retry: RetryPolicy
-    recover: Callable | None
+    recover: Callable[
+        [Context[State, Input], Failure], None | Awaitable[None]
+    ] | None
 ```
 
 `Node` is the final configured graph value returned by `node(...)`; authors do
@@ -87,10 +100,11 @@ class GraphElement(Generic[State]):
     def links(self) -> tuple[Link[State], ...]: ...
 ```
 
-`Node` and `Flow` inherit this interface. Application code normally receives a
-GraphElement through those concrete types rather than constructing the base
-class. `links()` returns declaration-ordered links. `link()` is target-first,
-returns `None`, and is not chainable.
+`Node` and `Flow` inherit this interface. Do not use a directly constructed
+`GraphElement` as executable work: it has no handler or owned Flow scope, so a
+graph containing it fails compilation with `GraphDefinitionError`. Use `Node`
+or `Flow`. `links()` returns declaration-ordered links. `link()` is
+target-first, returns `None`, and is not chainable.
 
 ### `Action` and `Link`
 
@@ -117,16 +131,24 @@ class Flow(GraphElement[State], Generic[State]):
         exits: Iterable[Action] = (),
         concurrency: int = 1,
         max_activations: int | None = None,
-        combine=None,
-        recover=None,
+        combine: Callable[
+            [Context[State, object], ScopeResult], None | Awaitable[None]
+        ] | None = None,
+        recover: Callable[
+            [Context[State, object], ScopeFailure], None | Awaitable[None]
+        ] | None = None,
     ) -> None: ...
 
     entry: GraphElement[State]
     exits: tuple[Action, ...]
     concurrency: int
     max_activations: int | None
-    combine: Callable | None
-    recover: Callable | None
+    combine: Callable[
+        [Context[State, object], ScopeResult], None | Awaitable[None]
+    ] | None
+    recover: Callable[
+        [Context[State, object], ScopeFailure], None | Awaitable[None]
+    ] | None
 
     def compile(self) -> CompiledFlow[State]: ...
     def start(self, initial_state: State) -> RunHandle[State]: ...
@@ -224,14 +246,16 @@ an explicit `None` output. Neither `emit` nor `end` exits the Python function.
 @dataclass(frozen=True, slots=True)
 class RetryPolicy:
     max_attempts: int = 1
-    should_retry: Callable[[Failure], bool] = _retry_all
+    should_retry: Callable[[Failure], bool] = ...
     delay_ms: int | Callable[[int, Failure], int] = 0
 ```
 
 `max_attempts` is a positive integer counting the first attempt. `delay_ms` is
 a nonnegative integer number of milliseconds or a synchronous callback. The
 callback's integer argument is the attempt that just failed. `should_retry`
-must be synchronous and return exactly `bool`.
+must be synchronous and return exactly `bool`. The `...` above denotes Sley's
+built-in always-true predicate; that private helper is not part of the public
+API.
 
 ## Terminals and scope values
 

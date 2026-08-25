@@ -4,7 +4,11 @@ description: Validate untrusted state and branch input before effects, then use 
 
 # Validation and types
 
-Sley validates graph control, not application data. The reliable boundary is:
+Sooner or later, your graph receives data it did not create: JSON from an API,
+model output, a queue message, or user input. Types can describe what you hope
+arrived. They cannot make that value trustworthy at runtime.
+
+Sley validates graph control, not application data. Your reliable boundary is:
 
 1. accept dynamic data as `object` or `unknown`;
 2. parse it before state writes or external effects;
@@ -164,5 +168,7 @@ with `RunError`; `start().result()` exposes the structured `Failed` value.
 Deterministic schema errors usually should not be retried. Recover them only
 when the graph has an intentional route for invalid user data.
 
-For transient operations after validation, continue to
-[Retry and recovery](retry-and-recovery.md).
+You now have a boundary where invalid data fails before it can leak into state,
+effects, or routing. When the validated operation itself can fail transiently,
+[Retry and recovery](retry-and-recovery.md) helps you decide what is safe to
+repeat.

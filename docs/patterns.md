@@ -4,8 +4,12 @@ description: Choose the smallest Sley graph pattern that fits a workflow, then o
 
 # Choose a Pattern
 
+You know the mechanism you need; now you want to see it survive contact with a
+real application. Choose the smallest complete project that answers your next
+question. You do not need to climb the table in order.
+
 Start with an ordinary function. Add a Sley graph when the workflow has visible
-decisions, repeated work, a structured join, or reusable nested scopes.
+decisions, repeated work, a structured join, or a reusable scope.
 
 | Need                       | Smallest graph shape                         | Complete example                                                                                  |
 | -------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -26,15 +30,15 @@ decisions, repeated work, a structured join, or reusable nested scopes.
 Sley has no special Agent, RAG, Batch, or Human-in-the-loop class. Those names
 describe application structures made from the same small runtime model:
 
-```mermaid
-flowchart LR
-    Decide -->|search| Search
-    Search --> Decide
-    Decide -->|answer| Answer
+```python
+decide.link(search, "search")
+search.link(decide)
+decide.link(answer, "answer")
 ```
 
-The graph shows the behavior directly. Model calls, databases, queues, and user
-interfaces remain ordinary dependencies inside or around handlers.
+Those three links reveal a search loop and its answer exit. Model calls,
+databases, queues, and user interfaces remain ordinary dependencies inside or
+around the handlers.
 
 ## Prefer Flow combine for synchronization
 

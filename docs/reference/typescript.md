@@ -12,8 +12,10 @@ import { Flow, node } from '@jigging/sley'
 import type { Context, RunResult } from '@jigging/sley'
 ```
 
-The sections below cover all eight runtime values and every exported type. See
-[Runtime semantics](runtime-semantics.md) for the shared execution contract.
+Use this reference when you need an exact TypeScript signature, default, result
+field, or runtime error. It covers all eight runtime values and every exported
+type. For the shared execution rules behind them, use
+[Runtime semantics](runtime-semantics.md).
 
 ## Graph construction
 

@@ -1,19 +1,21 @@
 ---
-description: Choose between shared run state, branch input, and completed branch output.
+description: Decide whether a value belongs to the whole run, one branch, or a completed branch result.
 ---
 
-# State and input
+# State and Input
 
-Routing chooses where work goes. Data channels make the value's role explicit:
-shared state stores run-wide facts, while input carries a message along one
-branch.
+The release graph now chooses between publishing and review, but both routes
+still reach into shared state for everything. That becomes confusing as soon as
+each path needs its own instruction.
 
-```mermaid
-flowchart LR
-    Prepare -->|"input: 7"| Label
-    State["state: prefix"] -. shared .-> Prepare
-    State -. shared .-> Label
-```
+We will keep the graph from the routing lesson and add only branch payloads.
+The title, slug, and risk remain facts about the whole run. A publishing channel
+or review request belongs to the branch that receives it.
+
+| Data            | Use it for                                    |
+| --------------- | --------------------------------------------- |
+| `context.state` | Facts shared for the life of one run          |
+| `context.input` | The message carried by this particular branch |
 
 {% tabs %}
 {% tab title="Python" %}
@@ -26,27 +28,42 @@ from sley import Flow, node
 
 @node
 def prepare(context):
-    context.emit("label", 7)
+    context.state["slug"] = context.state["title"].strip().lower().replace(" ", "-")
 
 
 @node
-def label(context):
-    context.state["label"] = f"{context.state['prefix']}-{context.input}"
+def decide(context):
+    if context.state["risk"] == "high":
+        context.emit(
+            "needs_review",
+            {"owner": "release team", "reason": "risk is high"},
+        )
+    else:
+        context.emit("ready", {"channel": "stable"})
 
 
-prepare.link(label, "label")
-labels = Flow(prepare)
+@node
+def review(context):
+    request = context.input
+    context.state["status"] = (
+        f"{context.state['slug']}: {request['owner']} reviews because {request['reason']}"
+    )
 
 
-async def main():
-    initial = {"prefix": "ticket"}
-    state = await labels.run(initial)
+@node
+def publish(context):
+    context.state["status"] = (
+        f"published: {context.state['slug']} to {context.input['channel']}"
+    )
 
-    print(state["label"])
-    print("label" in initial)
 
+prepare.link(decide)
+decide.link(review, "needs_review")
+decide.link(publish, "ready")
+release = Flow(prepare)
 
-asyncio.run(main())
+state = asyncio.run(release.run({"title": "Hello Sley", "risk": "high"}))
+print(state["status"])
 ```
 
 {% endtab %}
@@ -56,77 +73,105 @@ asyncio.run(main())
 import { Flow, node } from '@jigging/sley'
 
 interface State {
-  prefix: string
-  label?: string
+  title: string
+  risk: 'low' | 'high'
+  slug?: string
+  status?: string
+}
+
+interface ReviewRequest {
+  owner: string
+  reason: string
+}
+
+interface PublishTarget {
+  channel: string
 }
 
 const prepare = node<State>((context) => {
-  context.emit('label', 7)
+  context.state.slug = context.state.title.trim().toLowerCase().replaceAll(' ', '-')
 })
 
-const label = node<State, number>((context) => {
-  context.state.label = `${context.state.prefix}-${context.input}`
+const decide = node<State>((context) => {
+  if (context.state.risk === 'high') {
+    context.emit('needs_review', { owner: 'release team', reason: 'risk is high' })
+  } else {
+    context.emit('ready', { channel: 'stable' })
+  }
 })
 
-prepare.link(label, 'label')
-const labels = new Flow(prepare)
+const review = node<State, ReviewRequest>((context) => {
+  const request = context.input
+  context.state.status = `${context.state.slug}: ${request.owner} reviews because ${request.reason}`
+})
 
-const initial: State = { prefix: 'ticket' }
-const state = await labels.run(initial)
+const publish = node<State, PublishTarget>((context) => {
+  context.state.status = `published: ${context.state.slug} to ${context.input.channel}`
+})
 
-console.log(state.label)
-console.log('label' in initial)
+prepare.link(decide)
+decide.link(review, 'needs_review')
+decide.link(publish, 'ready')
+const release = new Flow(prepare)
+
+const state = await release.run({ title: 'Hello Sley', risk: 'high' })
+console.log(state.status)
 ```
 
 {% endtab %}
 {% endtabs %}
 
-{% tabs %}
-{% tab title="Python output" %}
+Both programs print:
 
 ```text
-ticket-7
-False
+hello-sley: release team reviews because risk is high
 ```
 
-{% endtab %}
-{% tab title="TypeScript output" %}
+Only the `emit(...)` calls and the receiving handlers changed. The topology is
+still `prepare -> decide -> publish or review`, and the slug created in the
+first lesson still matters at the end.
 
-```text
-ticket-7
-false
-```
+## State is the run's shared notebook
 
-{% endtab %}
-{% endtabs %}
+Sley shallow-copies the initial top-level mapping or object once. Every branch
+and nested Flow in that run shares the copied state, and `run()` returns it. The
+caller's top-level value is not mutated.
 
-## Shared state belongs to the run
+Nested objects are not copied. A list, client, cache, or object placed in the
+initial state remains the same reference. Concurrent branches therefore need
+the same coordination as ordinary concurrent code.
 
-Sley shallow-copies the initial top-level mapping once. Every branch and nested
-Flow in that run shares the copied state, and `run()` returns it. That is why the
-returned state contains `label` while the caller's top-level `initial` value
-does not.
+Use state for facts that unrelated later steps need: the release title, slug,
+risk, policy, final status, or an injected service.
 
-Nested objects are not copied. A list, object, client, or index stored inside
-the initial state remains the same reference. Concurrent branches therefore
-need the same coordination that ordinary concurrent code needs.
+## Input is one branch's message
 
-## Input belongs to one branch
+`emit("needs_review", request)` binds `request` to `context.input` in the next
+activation. Another branch can carry a completely different value. Omitting a
+replacement input forwards the current input unchanged.
 
-`emit("label", 7)` carries `7` to the next activation as `context.input`.
-Omitting a new input forwards the current input unchanged. Sley preserves the
-value; it does not clone, freeze, or validate it.
+Use input for the item or instruction this branch is processing. That choice
+keeps fan-out honest: several workers may share policy in state while each
+receives its own check, document, or request as input.
 
-Use state for facts that unrelated later steps need. Use input for the specific
-item one branch is processing. Use `end(value)` when a completed branch should
-publish a value to a Flow combiner; the next lesson shows that third role.
+## Sley preserves data; your application validates it
 
-{% hint style="warning" %}
-Types describe one handler's expectation, but Sley does not prove that linked
-nodes agree or validate dynamic data. Python retains normal `KeyError` behavior
-for a missing key; TypeScript retains normal `undefined` behavior. Validate
-untrusted values before state changes or external effects.
-{% endhint %}
+Types make one handler's expectation visible, but Sley does not prove that
+linked nodes agree on payload shape. Python keeps normal `KeyError` behavior for
+a missing key. TypeScript keeps normal `undefined` behavior for a missing
+property.
 
-Next, [Fan-out, End, and combine](fan-out-and-combine.md) sends several inputs
-through independent branches and joins their completed values once.
+Validate untrusted values before state writes, external effects, or graph
+control. This is not a gap to hide with magic data wrappers; it is an
+application boundary to make deliberate.
+
+## Change one thing
+
+Run the example with low risk. Predict which input shape reaches `publish` and
+which values remain available to both routes through state. Then move `slug`
+into branch input and decide whether the graph became clearer or merely more
+repetitive.
+
+You can now give each path its own message without losing shared release facts.
+[Fan-out, End, and combine](fan-out-and-combine.md) uses that same idea several
+times at once, then rejoins the work without a shared counter.
