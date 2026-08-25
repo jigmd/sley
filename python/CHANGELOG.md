@@ -1,5 +1,11 @@
 # Sley
 
+## 0.0.3
+
+### Patch Changes
+
+- 34b068c: Export typed version 1 graph descriptions and preserve a non-null controlling RunError cause by native identity.
+
 ## 0.0.2
 
 ### Patch Changes
