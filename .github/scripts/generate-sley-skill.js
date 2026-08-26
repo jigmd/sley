@@ -8,33 +8,38 @@
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 
-const SITE = 'https://sley.jig.md'
-const copies = new Map([
-  ['docs/quickstart.md', 'skills/sley/references/quickstart.md'],
-  ['docs/reference/python.md', 'skills/sley/references/python.md'],
-  ['docs/reference/typescript.md', 'skills/sley/references/typescript.md'],
-  ['docs/reference/runtime-semantics.md', 'skills/sley/references/runtime-semantics.md'],
-])
+const sourceDirectories = ['docs/reference', 'docs/guides']
+const skillDirectory = 'skills/sley'
+const sources = (
+  await Promise.all(
+    sourceDirectories.map(async (directory) =>
+      (await fs.readdir(directory)).filter((name) => name.endsWith('.md')).map((name) => path.join(directory, name)),
+    ),
+  )
+)
+  .flat()
+  .sort()
+const copies = new Map(sources.map((source) => [source, path.join(skillDirectory, path.relative('docs', source))]))
 
-function portableLinks(markdown, source, target) {
-  return markdown.replace(/\]\(([^)]+)\)/g, (match, link) => {
-    if (/^(?:[a-z]+:|#)/i.test(link)) return match
+function validateLinks(markdown, source) {
+  for (const [, link] of markdown.matchAll(/\]\(([^)]+)\)/g)) {
+    if (link.startsWith('#')) continue
+    if (/^[a-z]+:/i.test(link)) throw new Error(`${source}: external reference ${link}`)
 
-    const [pathname, fragment] = link.split('#', 2)
+    const [pathname] = link.split('#')
     const sourcePath = path.normalize(path.join(path.dirname(source), pathname))
-    const copiedPath = copies.get(sourcePath)
-    const portablePath = copiedPath
-      ? path.relative(path.dirname(target), copiedPath)
-      : `${SITE}/${sourcePath.replace(/^docs\//, '').replace(/\.md$/, '')}`
-
-    return `](${portablePath}${fragment ? `#${fragment}` : ''})`
-  })
+    if (!copies.has(sourcePath)) throw new Error(`${source}: uncopied reference ${link}`)
+  }
 }
 
-await fs.mkdir('skills/sley/references', { recursive: true })
+for (const directory of sourceDirectories) {
+  await fs.rm(path.join(skillDirectory, path.basename(directory)), { recursive: true, force: true })
+}
 for (const [source, target] of copies) {
   const markdown = await fs.readFile(source, 'utf8')
-  await fs.writeFile(target, portableLinks(markdown, source, target))
+  validateLinks(markdown, source)
+  await fs.mkdir(path.dirname(target), { recursive: true })
+  await fs.writeFile(target, markdown)
 }
 
 console.log(`Generated ${copies.size} Sley skill references.`)

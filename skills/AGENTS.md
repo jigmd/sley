@@ -16,9 +16,11 @@
 - Keep descriptions precise enough to trigger only for the capability they name.
 - Keep shared decisions in `SKILL.md`; put language-specific or advanced detail
   behind explicit reference pointers.
-- `sley/references/` is generated from selected canonical docs by
-  `.github/scripts/generate-sley-skill.js`. Edit the source docs, then
-  regenerate the copies.
+- `sley/reference/` and `sley/guides/` mirror the corresponding canonical docs
+  directories through `.github/scripts/generate-sley-skill.js`. Edit the source
+  docs, then regenerate the copies.
+- The generated Sley reference bundle includes every API Reference and Guide
+  page. Every link in the portable skill stays inside the skill.
 
 ## Work Guidance
 

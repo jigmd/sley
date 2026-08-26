@@ -12,17 +12,26 @@ conditions, callbacks, or counters it replaces.
 
 ## Choose the path
 
-- For a new graph or first use, read
-  [references/quickstart.md](references/quickstart.md).
-- For exact Python exports or signatures, search
-  [references/python.md](references/python.md) for the public name in use.
-- For exact JavaScript or TypeScript exports or signatures, search
-  [references/typescript.md](references/typescript.md) for the public name in
-  use.
-- For routing, settlement, fan-out, combine, nested Flows, retries, recovery,
-  results, concurrency, cycles, or inspection, search
-  [references/runtime-semantics.md](references/runtime-semantics.md) for the
+- For Python construction, typing, results, or errors, search
+  [reference/python.md](reference/python.md) for the public name in use.
+- For JavaScript or TypeScript construction, typing, results, or errors, search
+  [reference/typescript.md](reference/typescript.md) for the public name in use.
+- For graph definitions, control, routing, settlement, fan-out, combine, nested
+  Flows, scheduling, results, failures, or intentional limits, search
+  [reference/runtime-semantics.md](reference/runtime-semantics.md) for the
   relevant heading.
+- For application schemas and payload trust boundaries, read
+  [guides/validation-and-types.md](guides/validation-and-types.md).
+- For bounded parallelism, shared-state safety, or loops, read
+  [guides/concurrency-and-cycles.md](guides/concurrency-and-cycles.md).
+- For transient operations and fallback policy, read
+  [guides/retry-and-recovery.md](guides/retry-and-recovery.md).
+- For compiled topology and terminal evidence, read
+  [guides/inspection.md](guides/inspection.md).
+- For services, blocking work, shared clients, or provider limits, read
+  [guides/integration-boundaries.md](guides/integration-boundaries.md).
+- For verification strategy and failure assertions, read
+  [guides/testing.md](guides/testing.md).
 
 ## Build the graph
 
@@ -57,6 +66,11 @@ run.
 - Prefer branch inputs and terminal outputs over shared counters or result lists
   when work fans out.
 - Validate untrusted state or input before writes, effects, or control calls.
+- Pair fan-out with the Flow that owns its `combine` boundary. Nest around owned
+  behavior or policy, not file organization.
+- Give every cycle a domain exit and an explicit activation guard.
+- Put retry around the smallest safe repeatable operation. Recover at the
+  smallest boundary with enough context to choose the fallback.
 
 ## Completion criterion
 

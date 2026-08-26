@@ -87,9 +87,10 @@
   not the core runtime journey.
 - GitBook owns published per-page Markdown, `llms.txt`, `llms-full.txt`, and MCP.
   Do not maintain duplicate machine-documentation bundles in the repository.
-- Selected canonical pages are copied into `skills/sley/references/` by
+- Every Reference and Guide page is copied into the matching top-level
+  `skills/sley/reference/` or `skills/sley/guides/` directory by
   `.github/scripts/generate-sley-skill.js`; edit these docs, then regenerate the
-  portable skill references.
+  portable skill. The bundle contains only internal links.
 
 ## Work Guidance
 

@@ -272,4 +272,4 @@ concurrency policy, or provider integration. Applications use ordinary
 host-language and service-client facilities for those concerns.
 
 For application boundaries, continue to
-[Validation and types](https://sley.jig.md/guides/validation-and-types).
+[Validation and types](../guides/validation-and-types.md).
