@@ -5,11 +5,13 @@ on:
     paths:
       - 'README.md'
       - 'docs/**'
+      - 'skills/**'
       - 'cookbook/**/README.md'
       - '.gitbook.yaml'
       - '.github/scripts/check-doc-examples.js'
       - '.github/scripts/check-docs.js'
       - '.github/scripts/generate-examples.js'
+      - '.github/scripts/generate-sley-skill.js'
       - '.github/workflows/docs.yml'
       - 'prettier.config.mjs'
   push:
@@ -18,11 +20,13 @@ on:
     paths:
       - 'README.md'
       - 'docs/**'
+      - 'skills/**'
       - 'cookbook/**/README.md'
       - '.gitbook.yaml'
       - '.github/scripts/check-doc-examples.js'
       - '.github/scripts/check-docs.js'
       - '.github/scripts/generate-examples.js'
+      - '.github/scripts/generate-sley-skill.js'
       - '.github/workflows/docs.yml'
       - 'prettier.config.mjs'
 
@@ -55,6 +59,9 @@ jobs:
       - name: Generate example catalogs
         run: node .github/scripts/generate-examples.js
 
+      - name: Generate Sley skill references
+        run: node .github/scripts/generate-sley-skill.js
+
       - name: Check documentation
         run: node .github/scripts/check-docs.js
 
@@ -65,16 +72,19 @@ jobs:
         run: >-
           pnpm exec prettier --check README.md docs .gitbook.yaml
           .github/scripts/check-doc-examples.js .github/scripts/check-docs.js
-          .github/scripts/generate-examples.js .github/workflows/docs.yml
-          prettier.config.mjs
+          .github/scripts/generate-examples.js
+          .github/scripts/generate-sley-skill.js .github/workflows/docs.yml
+          prettier.config.mjs skills
 
-      - name: Require generated catalogs in pull requests
+      - name: Require generated documentation in pull requests
         if: github.event_name == 'pull_request'
-        run: git diff --exit-code -- docs/examples/python.md docs/examples/typescript.md
+        run: >-
+          git diff --exit-code -- docs/examples/python.md
+          docs/examples/typescript.md skills/sley/references
 
-      - name: Commit generated catalogs on main
+      - name: Commit generated documentation on main
         if: github.event_name == 'push'
         uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
-          commit_message: Update generated example catalogs [skip ci]
-          file_pattern: docs/examples/python.md docs/examples/typescript.md
+          commit_message: Update generated documentation [skip ci]
+          file_pattern: docs/examples/python.md docs/examples/typescript.md skills/sley/references/*.md

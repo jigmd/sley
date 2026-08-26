@@ -87,6 +87,9 @@
   not the core runtime journey.
 - GitBook owns published per-page Markdown, `llms.txt`, `llms-full.txt`, and MCP.
   Do not maintain duplicate machine-documentation bundles in the repository.
+- Selected canonical pages are copied into `skills/sley/references/` by
+  `.github/scripts/generate-sley-skill.js`; edit these docs, then regenerate the
+  portable skill references.
 
 ## Work Guidance
 
@@ -123,6 +126,8 @@
   explanatory excerpts import-free.
 - Run `node .github/scripts/generate-examples.js` after cookbook README changes;
   a second run must leave no diff.
+- Run `node .github/scripts/generate-sley-skill.js` after changing a copied skill
+  source; a second run must leave no diff.
 - Run primary documentation examples in both languages and check their shown
   output.
 - Run Prettier and `git diff --check` over changed documentation and scripts.

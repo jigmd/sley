@@ -124,6 +124,7 @@ When the user requests a durable behavior change, record it here or in the relev
 
 ## Child DOX Index
 
+- `skills/AGENTS.md` owns portable agent skills and their authoring contracts.
 - `conformance/AGENTS.md` owns language-neutral executable contracts,
   reference interpreters, and cross-port snapshot verification.
 - `cookbook/AGENTS.md` owns instructional examples, cookbook project structure,
