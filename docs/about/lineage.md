@@ -2,7 +2,7 @@
 description: See how PocketFlow evolved into Caskada and Sley, including what Sley improves and what it deliberately gives up.
 ---
 
-# PocketFlow, Caskada, and Sley
+# Where Sley comes from
 
 Sley did not appear in a vacuum. It exists because two earlier runtimes taught
 us which graph ideas stayed small and which conveniences became difficult to
@@ -83,3 +83,11 @@ queue when no graph runtime is needed.
 
 Ready to move? Follow the [Caskada migration](migrate-from-caskada.md) or
 [PocketFlow migration](migrate-from-pocketflow.md).
+
+---
+
+**Still wondering what a sley actually is?**
+
+You have reached the [hardware documentation](https://youtu.be/odf8Ju2k-Vs).
+
+Same threading problem. More yarn.

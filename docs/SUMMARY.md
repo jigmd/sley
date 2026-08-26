@@ -42,6 +42,6 @@
 
 ## About
 
-- [PocketFlow, Caskada, and Sley](about/lineage.md)
+- [Where Sley comes from](about/lineage.md)
 - [Migrate from Caskada](about/migrate-from-caskada.md)
 - [Migrate from PocketFlow](about/migrate-from-pocketflow.md)
