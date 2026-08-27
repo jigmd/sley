@@ -2,6 +2,7 @@
   "name": "typescript-agent",
   "version": "1.0.0",
   "main": "main.ts",
+  "type": "module",
   "scripts": {
     "agent": "tsx --env-file=.env main.ts"
   },
@@ -14,8 +15,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@phukon/duckduckgo-search": "^1.2.0",
-    "@jigging/sley": "^0.0.1",
+    "@jigging/sley": "^0.0.3",
     "openai": "^7.4.0",
     "yaml": "^2.9.0"
   }

@@ -4,17 +4,16 @@ import { callLLM } from './utils'
 
 import type { ChatState } from './types'
 
-function promptUser(): Promise<string> {
-  const terminal = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-  return new Promise((resolve) => {
-    terminal.question('You: ', (input) => {
-      terminal.close()
-      resolve(input)
-    })
-  })
+const terminal = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+})
+const inputLines = terminal[Symbol.asyncIterator]()
+
+async function promptUser(): Promise<string> {
+  process.stdout.write('You: ')
+  const next = await inputLines.next()
+  return next.done ? 'exit' : next.value
 }
 
 const chat = node<ChatState>(async (context) => {
@@ -40,4 +39,8 @@ const chat = node<ChatState>(async (context) => {
 })
 
 chat.link(chat)
-await new Flow(chat).run({})
+try {
+  await new Flow(chat, { maxActivations: 100 }).run({})
+} finally {
+  terminal.close()
+}

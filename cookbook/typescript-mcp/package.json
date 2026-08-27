@@ -1,5 +1,5 @@
 {
-  "name": "typescript-resilient-batch",
+  "name": "typescript-mcp",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -7,9 +7,13 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@jigging/sley": "^0.0.3"
+    "@jigging/sley": "^0.0.3",
+    "@modelcontextprotocol/client": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^24.13.3",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3"
   }

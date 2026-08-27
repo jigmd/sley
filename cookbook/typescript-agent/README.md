@@ -20,6 +20,9 @@ normally.
 
 Long-lived research and the final answer stay in `context.state`. This example
 keeps its small static data model in `types.ts`, separate from the workflow.
+The Flow caps the search/decision cycle at 20 activations. The search boundary
+uses the runtime's `fetch` with a ten-second timeout; provider, search, and
+rate-limit policy remain application concerns.
 
 ## Decision Contract
 
