@@ -9,7 +9,8 @@
     "python-agent": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["Final Answer", "Cookbook smoke response"]
+      "driver": "agent",
+      "expect_stdout": ["Final Answer", "Cookbook smoke response", "Agent search-route contract passed"]
     },
     "python-async-basic": {
       "runtime": "python",
@@ -22,7 +23,7 @@
       "command": ["python", "main.py"],
       "clean": ["translations"],
       "expect_stdout": ["Translation Complete"],
-      "expect_files": [{ "glob": "translations/README_*.md", "count": 8 }]
+      "expect_files": [{ "glob": "translations/README_*.md", "count": 8, "contains": "# Sley" }]
     },
     "python-batch-flow": {
       "runtime": "python",
@@ -34,7 +35,13 @@
     "python-batch-node": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["Processing sales.csv", "Final Statistics", "Total Transactions: 10,000"]
+      "driver": "batch_node",
+      "expect_stdout": ["Processing sales.csv", "Final Statistics", "Total Transactions: 10,000", "Batch node edge contract passed"]
+    },
+    "python-best-of-n-judge": {
+      "runtime": "python",
+      "command": ["python", "main.py"],
+      "expect_stdout": ["Blind tournament selected", "Cookbook selected answer"]
     },
     "python-chat": {
       "runtime": "python",
@@ -51,8 +58,8 @@
     "python-chat-memory": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "stdin": "hello\nexit\n",
-      "expect_stdout": ["Assistant: Cookbook smoke response", "Goodbye"]
+      "stdin": "one\ntwo\nthree\nfour\nfive\nexit\n",
+      "expect_stdout": ["Assistant: Cookbook smoke response", "Added conversation to index", "Retrieved conversation", "Goodbye"]
     },
     "python-communication": {
       "runtime": "python",
@@ -79,13 +86,13 @@
     "python-llm-streaming": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "stdin": "\n",
-      "expect_stdout": ["User interrupted streaming"]
+      "expect_stdout": ["Press Ctrl+C", "Cookbook smoke response"]
     },
     "python-majority-vote": {
       "runtime": "python",
       "command": ["python", "main.py", "--tries", "3"],
-      "expect_stdout": ["Majority vote => 0.5", "Final Answer"]
+      "driver": "majority_vote",
+      "expect_stdout": ["Majority vote => 0.5", "Final Answer", "Majority vote edge contracts passed"]
     },
     "python-map-reduce": {
       "runtime": "python",
@@ -95,8 +102,9 @@
     "python-mcp": {
       "runtime": "python",
       "command": ["python", "main.py"],
+      "driver": "mcp",
       "timeout": 60,
-      "expect_stdout": ["Selected tool: add", "Final Answer"]
+      "expect_stdout": ["Selected tool: add", "Final Answer", "MCP validation contracts passed"]
     },
     "python-multi-agent": {
       "runtime": "python",
@@ -106,19 +114,26 @@
     "python-nested-batch": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["Processing school grades", "School Average"]
+      "driver": "nested_batch",
+      "expect_stdout": ["Processing school grades", "School Average", "Nested batch edge contracts passed"]
     },
     "python-node": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["Summary: Cookbook smoke response"]
+      "driver": "node_retry",
+      "expect_stdout": ["Summary: Cookbook smoke response", "Retry and recovery contracts passed"]
+    },
+    "python-orchestrator-workers": {
+      "runtime": "python",
+      "command": ["python", "main.py"],
+      "expect_stdout": ["Planner froze the foundation", "Cookbook integrated brief"]
     },
     "python-parallel-batch": {
       "runtime": "python",
       "command": ["python", "main.py"],
       "clean": ["translations"],
       "expect_stdout": ["Translation Complete"],
-      "expect_files": [{ "glob": "translations/README_*.md", "count": 8 }]
+      "expect_files": [{ "glob": "translations/README_*.md", "count": 8, "contains": "# Sley" }]
     },
     "python-parallel-batch-flow": {
       "runtime": "python",
@@ -127,10 +142,16 @@
       "expect_stdout": ["Processing complete"],
       "expect_files": [{ "glob": "output/*.jpg", "count": 9 }]
     },
+    "python-quality-loop": {
+      "runtime": "python",
+      "command": ["python", "main.py"],
+      "expect_stdout": ["Outcome: parity", "Cookbook benchmark candidate"]
+    },
     "python-rag": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["Index created", "Generated Answer", "Cookbook smoke response"]
+      "driver": "rag",
+      "expect_stdout": ["Index created", "Generated Answer", "Cookbook smoke response", "RAG edge contracts passed"]
     },
     "python-resilient-batch": {
       "runtime": "python",
@@ -150,23 +171,23 @@
     "python-supervisor": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["Supervisor approved answer", "Final Answer"]
+      "expect_stdout": ["Evaluator requested a revision", "Evaluator approved candidate"]
     },
     "python-text2sql": {
       "runtime": "python",
-      "command": ["python", "main.py"],
-      "expect_stdout": ["GENERATED SQL", "Workflow Completed Successfully"]
+      "driver": "text2sql",
+      "expect_stdout": ["Text-to-SQL contract passed"]
     },
     "python-thinking": {
       "runtime": "python",
       "command": ["python", "main.py"],
-      "expect_stdout": ["FINAL SOLUTION", "Cookbook smoke solution"]
+      "driver": "thinking",
+      "expect_stdout": ["Final Answer", "Cookbook smoke solution", "Thinking loop edge contracts passed"]
     },
     "python-tool-crawler": {
       "runtime": "python",
-      "command": ["python", "main.py"],
-      "stdin": "https://example.test\n2\n",
-      "expect_stdout": ["Report generated", "Total pages analyzed: 2"]
+      "driver": "crawler",
+      "expect_stdout": ["Crawler contract passed"]
     },
     "python-tool-database": {
       "runtime": "python",
@@ -225,13 +246,64 @@
     "typescript-chat": {
       "runtime": "typescript",
       "command": ["./node_modules/.bin/tsx", "chat.ts"],
-      "stdin": "exit\n",
-      "expect_stdout": ["Welcome to the chat", "Goodbye"]
+      "stdin": "hello\nexit\n",
+      "expect_stdout": ["Assistant: Cookbook smoke response", "Goodbye"]
+    },
+    "typescript-hello-world": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Hello, Sley!"]
+    },
+    "typescript-inspection": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Schema version: 1", "Nodes: charge -> receipt", "Run status: completed", "Receipt: receipt:A-104"]
+    },
+    "typescript-mcp": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "timeout": 60,
+      "expect_stdout": ["Discovered tools: add, multiply", "Selected tool: add", "Tool result: 7"]
+    },
+    "typescript-nested-flow": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Loaded beta", "Results: alpha.ready, beta.ready, gamma.ready"]
+    },
+    "typescript-orchestrator-workers": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Planner froze the foundation", "Integrated brief", "observable success check"]
+    },
+    "typescript-quality-loop": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": [
+        "Evaluator requested a revision",
+        "Whole-artifact judge requested a revision",
+        "Outcome: parity",
+        "Cookbook benchmark candidate"
+      ]
     },
     "typescript-resilient-batch": {
       "runtime": "typescript",
       "command": ["./node_modules/.bin/tsx", "main.ts"],
       "expect_stdout": ["Imported record 1", "Recovery kept 1 completed record", "Run status: completed"]
+    },
+    "typescript-retry-recovery": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": [
+        "Transient attempt 3",
+        "Summary: Retries repeat the complete",
+        "Permanent attempt 3",
+        "Recovered summary: Fallback after 3 attempts"
+      ]
+    },
+    "typescript-workflow": {
+      "runtime": "typescript",
+      "command": ["./node_modules/.bin/tsx", "main.ts"],
+      "expect_stdout": ["Outline ready", "Draft ready", "Article polished", "Final article:"]
     }
   }
 }

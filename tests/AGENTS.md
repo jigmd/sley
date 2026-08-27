@@ -18,6 +18,14 @@
   test harness; teaching source must not contain smoke-test branches.
 - Installed runs resolve Python `sley` and TypeScript `@jigging/sley` to the
   current checkout before validating each project's declared dependencies.
+- The pnpm lockfile resolves every TypeScript cookbook's publishable Sley range
+  to the local workspace package during repository development.
+- Advanced cookbook contracts keep the normal entry-point smoke case and add
+  focused drivers for meaningful alternate, invalid-input, and stopping paths.
+- TypeScript cookbook contracts pass strict type checking before execution.
+- Catalog tests reject deliberate cookbook cycles without activation backstops,
+  implausible mechanism labels, embedded source credentials, provider settings
+  that cannot be overridden, and provider model IDs known to be retired.
 
 ## Work Guidance
 

@@ -59,8 +59,8 @@ def validate_catalog(catalog: dict[str, dict[str, Any]]) -> None:
         runtime = contract.get("runtime")
         if runtime not in {"python", "typescript"}:
             raise ContractError(f"{name}: runtime must be python or typescript")
-        if bool(contract.get("command")) == bool(contract.get("driver")):
-            raise ContractError(f"{name}: configure exactly one of command or driver")
+        if not contract.get("command") and not contract.get("driver"):
+            raise ContractError(f"{name}: configure a command, driver, or both")
         if not contract.get("expect_stdout") and not contract.get("expect_files"):
             raise ContractError(
                 f"{name}: contract needs at least one observable assertion"
@@ -135,10 +135,10 @@ def _link_typescript_workspace(name: str, project_dir: Path) -> None:
     if staged_sley.is_symlink():
         staged_sley.unlink()
     elif staged_sley.exists():
-        raise ContractError(f"{name}: expected @jigging/sley dependency to be a symlink")
-    os.symlink(
-        staged_workspace / "typescript", staged_sley, target_is_directory=True
-    )
+        raise ContractError(
+            f"{name}: expected @jigging/sley dependency to be a symlink"
+        )
+    os.symlink(staged_workspace / "typescript", staged_sley, target_is_directory=True)
 
 
 def _stage_project(name: str, temp_root: Path) -> Path:
@@ -167,13 +167,39 @@ def _clean_outputs(project_dir: Path, paths: list[str]) -> None:
             target.unlink()
 
 
-def _command(contract: dict[str, Any]) -> list[str]:
+def _commands(contract: dict[str, Any]) -> list[list[str]]:
+    commands = []
+    if contract.get("command"):
+        command = list(contract["command"])
+        if contract["runtime"] == "python" and command[0] == "python":
+            command[0] = sys.executable
+        commands.append(command)
     if contract.get("driver"):
-        return [sys.executable, str(HERE / "drivers.py"), contract["driver"]]
-    command = list(contract["command"])
-    if contract["runtime"] == "python" and command[0] == "python":
-        command[0] = sys.executable
-    return command
+        commands.append([sys.executable, str(HERE / "drivers.py"), contract["driver"]])
+    return commands
+
+
+def _typecheck_typescript(project_dir: Path) -> None:
+    sources = sorted(path.name for path in project_dir.glob("*.ts"))
+    if not sources:
+        raise ContractError("TypeScript cookbook has no source files")
+    _run_checked(
+        [
+            str(project_dir / "node_modules" / ".bin" / "tsc"),
+            "--noEmit",
+            "--strict",
+            "--target",
+            "ES2022",
+            "--module",
+            "ESNext",
+            "--moduleResolution",
+            "bundler",
+            "--skipLibCheck",
+            "false",
+            *sources,
+        ],
+        project_dir,
+    )
 
 
 def _environment(api_url: str) -> dict[str, str]:
@@ -223,6 +249,17 @@ def _assert_contract(
         ]
         if empty:
             raise ContractError(f"{name}: generated empty files: {empty}")
+        required_text = expectation.get("contains")
+        if required_text:
+            missing_text = [
+                path
+                for path in matches
+                if required_text not in path.read_text(encoding="utf-8")
+            ]
+            if missing_text:
+                raise ContractError(
+                    f"{name}: generated files missing {required_text!r}: {missing_text}"
+                )
 
 
 def run_project(name: str, *, install: bool = False, keep: bool = False) -> None:
@@ -242,34 +279,40 @@ def run_project(name: str, *, install: bool = False, keep: bool = False) -> None
         elif contract["runtime"] == "typescript":
             _link_typescript_workspace(name, project_dir)
 
-        command = _command(contract)
-        timeout = int(contract.get("timeout", 30))
-        with fake_api_server() as api_url:
-            print(f"[{name}] {' '.join(command)}", flush=True)
-            try:
-                result = subprocess.run(
-                    command,
-                    cwd=project_dir,
-                    env=_environment(api_url),
-                    input=contract.get("stdin"),
-                    text=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    timeout=timeout,
-                    check=False,
-                )
-            except subprocess.TimeoutExpired as exc:
-                captured = exc.stdout or ""
-                raise ContractError(
-                    f"{name}: timed out after {timeout}s\n\n{captured}"
-                ) from exc
+        if contract["runtime"] == "typescript":
+            _typecheck_typescript(project_dir)
 
-        print(result.stdout, end="")
-        if result.returncode != 0:
-            raise ContractError(
-                f"{name}: exited with status {result.returncode}\n\n{result.stdout}"
-            )
-        _assert_contract(name, contract, project_dir, result.stdout)
+        timeout = int(contract.get("timeout", 30))
+        outputs = []
+        with fake_api_server() as api_url:
+            for command in _commands(contract):
+                print(f"[{name}] {' '.join(command)}", flush=True)
+                try:
+                    result = subprocess.run(
+                        command,
+                        cwd=project_dir,
+                        env=_environment(api_url),
+                        input=contract.get("stdin"),
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        timeout=timeout,
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired as exc:
+                    captured = exc.stdout or ""
+                    raise ContractError(
+                        f"{name}: timed out after {timeout}s\n\n{captured}"
+                    ) from exc
+
+                print(result.stdout, end="")
+                outputs.append(result.stdout)
+                if result.returncode != 0:
+                    raise ContractError(
+                        f"{name}: exited with status {result.returncode}\n\n{result.stdout}"
+                    )
+
+        _assert_contract(name, contract, project_dir, "".join(outputs))
         print(f"[{name}] contract passed", flush=True)
     finally:
         if keep:

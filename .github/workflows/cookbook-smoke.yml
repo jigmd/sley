@@ -43,8 +43,14 @@ jobs:
 
       - name: Validate catalog and Python syntax
         run: |
-          python -m pip install pytest
+          python -m pip install mypy openai pyright pytest
           python -m pytest tests/cookbook/test_catalog.py -q
+
+      - name: Type-check typed Python cookbooks
+        run: |
+          MYPYPATH=python python -m mypy --strict --ignore-missing-imports cookbook/python-hello-world
+          MYPYPATH=python python -m mypy --strict --ignore-missing-imports cookbook/python-node
+          pyright --project tests/cookbook/pyrightconfig.json
 
       - name: Build project matrix
         id: matrix
