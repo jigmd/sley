@@ -12,6 +12,9 @@ the `l` and beneath the `e`.
 The [favicon SVG](sley-favicon.svg) and [180 x 180 PNG](sley-favicon.png)
 use the `s` and thread at small sizes.
 
+The [GitHub social preview](sley-social-preview.png) is a 1280 x 640 raster
+asset with safe spacing for link previews.
+
 Prefer SVG whenever the destination supports it. Preserve the aspect ratio and
 leave clear space around the wordmark. Do not rearrange the letters, move the
 thread, add effects, or place the primary version on a dark background.
