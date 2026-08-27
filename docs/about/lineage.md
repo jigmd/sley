@@ -84,9 +84,7 @@ queue when no graph runtime is needed.
 Ready to move? Follow the [Caskada migration](migrate-from-caskada.md) or
 [PocketFlow migration](migrate-from-pocketflow.md).
 
----
-
-**Still wondering what a sley actually is?**
+## Still wondering what a sley actually is?
 
 You have reached the [hardware documentation](https://youtu.be/odf8Ju2k-Vs).
 
