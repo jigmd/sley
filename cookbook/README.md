@@ -15,17 +15,39 @@ Each project has one primary lesson and its own README.
 5. [`python-agent`](./python-agent): named routes and a search loop.
 6. [`python-rag`](./python-rag): offline and online workflows with explicit state
    handoff.
-7. [`python-supervisor`](./python-supervisor): named nested-Flow exits and
-   supervision.
+7. [`python-supervisor`](./python-supervisor): structured independent feedback
+   and bounded revision.
+8. [`python-orchestrator-workers`](./python-orchestrator-workers): dynamic
+   planning, worker fan-out, and an integration editor.
+9. [`python-best-of-n-judge`](./python-best-of-n-judge): blind pairwise selection
+   among qualitatively different candidates.
+10. [`python-quality-loop`](./python-quality-loop): a reference-grounded capstone
+    with component and whole-artifact quality gates.
 
-The TypeScript examples cover the same authoring model:
+The TypeScript path covers the authoring model from one node through bounded
+quality orchestration:
 
-- [`typescript-chat`](./typescript-chat): a typed self-loop and hard terminal.
-- [`typescript-agent`](./typescript-agent): typed state and a named decision
-  loop.
-- [`typescript-batch`](./typescript-batch): concurrent fan-out and combine.
-- [`typescript-resilient-batch`](./typescript-resilient-batch): Flow recovery
-  with settled branch terminals.
+1. [`typescript-hello-world`](./typescript-hello-world): one typed node and an
+   ordinary leaf.
+2. [`typescript-workflow`](./typescript-workflow): a small linear topology.
+3. [`typescript-inspection`](./typescript-inspection): compiled descriptions and
+   explicit run results.
+4. [`typescript-retry-recovery`](./typescript-retry-recovery): node retry and
+   local recovery.
+5. [`typescript-batch`](./typescript-batch): concurrent fan-out and combine.
+6. [`typescript-nested-flow`](./typescript-nested-flow): a concurrent multi-step
+   worker scope.
+7. [`typescript-resilient-batch`](./typescript-resilient-batch): Flow recovery
+   with settled branch terminals.
+8. [`typescript-chat`](./typescript-chat): a typed self-loop and hard terminal.
+9. [`typescript-agent`](./typescript-agent): typed state and a named decision
+   loop.
+10. [`typescript-mcp`](./typescript-mcp): MCP discovery, validation, and
+    execution over stdio.
+11. [`typescript-orchestrator-workers`](./typescript-orchestrator-workers):
+    dynamic planning, worker fan-out, and integration.
+12. [`typescript-quality-loop`](./typescript-quality-loop): bounded component
+    and whole-artifact evaluation loops.
 
 ## Find an Example
 

@@ -15,7 +15,7 @@
         },
         {
           "project": "python-flow",
-          "lesson": "Connect a readable linear Flow and deliberately hard-end one path.",
+          "lesson": "Connect a readable two-node cycle and deliberately hard-end one path.",
           "mechanisms": ["link", "Flow", "end"]
         },
         {
@@ -41,7 +41,7 @@
         {
           "project": "python-batch",
           "lesson": "Dispatch repeated work while the Flow admits one branch at a time.",
-          "mechanisms": ["emit", "input", "concurrency"]
+          "mechanisms": ["emit", "input", "end"]
         },
         {
           "project": "python-batch-node",
@@ -56,16 +56,21 @@
         {
           "project": "python-batch-flow",
           "lesson": "Reuse a nested Flow as one branch worker.",
-          "mechanisms": ["nested Flow", "emit", "combine"]
+          "mechanisms": ["nested Flow", "emit", "end"]
         },
         {
           "project": "python-parallel-batch-flow",
           "lesson": "Compare sequential and concurrent nested scopes.",
-          "mechanisms": ["nested Flow", "concurrency", "combine"]
+          "mechanisms": ["nested Flow", "concurrency", "end"]
         },
         {
           "project": "python-majority-vote",
           "lesson": "Collect several independent answers and choose a majority once.",
+          "mechanisms": ["emit", "end", "combine"]
+        },
+        {
+          "project": "python-best-of-n-judge",
+          "lesson": "Generate distinct candidates and select through blind pairwise judging.",
           "mechanisms": ["emit", "end", "combine"]
         },
         {
@@ -95,8 +100,13 @@
         },
         {
           "project": "python-thinking",
-          "lesson": "Bound a reasoning self-loop and retry the whole fallible step.",
+          "lesson": "Refine a compact plan through validated, bounded iterations.",
           "mechanisms": ["named link", "max_activations", "retry"]
+        },
+        {
+          "project": "python-orchestrator-workers",
+          "lesson": "Freeze a dynamic plan, fan sections out, and integrate the results.",
+          "mechanisms": ["emit", "input", "combine"]
         },
         {
           "project": "python-multi-agent",
@@ -105,18 +115,23 @@
         },
         {
           "project": "python-mcp",
-          "lesson": "Discover, select, and invoke MCP tools inside an explicit loop.",
-          "mechanisms": ["emit", "input", "max_activations"]
+          "lesson": "Discover, validate, and invoke one MCP tool in a linear Flow.",
+          "mechanisms": ["async handler", "input", "validation"]
         },
         {
           "project": "python-supervisor",
-          "lesson": "Use declared exits and supervisor retry across a nested Flow.",
-          "mechanisms": ["exits", "nested Flow", "retry"]
+          "lesson": "Revise against structured independent feedback until approval or a stop.",
+          "mechanisms": ["exits", "nested Flow", "max_activations"]
+        },
+        {
+          "project": "python-quality-loop",
+          "lesson": "Compose benchmarked component loops, integration, and blind final judging.",
+          "mechanisms": ["nested Flow", "combine", "max_activations"]
         },
         {
           "project": "python-a2a",
-          "lesson": "Expose a Flow through an external task protocol without runtime adapters.",
-          "mechanisms": ["run", "state", "Flow"]
+          "lesson": "Bridge a Flow to an application-owned JSON-RPC task boundary.",
+          "mechanisms": ["run", "state", "max_activations"]
         }
       ]
     },
@@ -126,7 +141,7 @@
         {
           "project": "python-structured-output",
           "lesson": "Parse and validate external structured output before committing state.",
-          "mechanisms": ["state", "emit", "validation"]
+          "mechanisms": ["state", "retry", "validation"]
         },
         {
           "project": "python-tool-database",
@@ -141,7 +156,7 @@
         {
           "project": "python-chat-memory",
           "lesson": "Combine recent state with retrieved history in a chat loop.",
-          "mechanisms": ["state", "named link", "end"]
+          "mechanisms": ["state", "named link", "max_activations"]
         },
         {
           "project": "python-rag",
@@ -165,23 +180,23 @@
         },
         {
           "project": "python-tool-pdf-vision",
-          "lesson": "Fan out PDF pages and combine extracted vision results.",
+          "lesson": "Fan out PDF files and combine their page-level vision results.",
           "mechanisms": ["emit", "end", "combine"]
         },
         {
           "project": "python-tool-crawler",
-          "lesson": "Crawl, analyze, combine, and report with scoped concurrency.",
-          "mechanisms": ["emit", "combine", "concurrency"]
+          "lesson": "Crawl once, fan pages out, and combine one report.",
+          "mechanisms": ["emit", "end", "combine"]
         },
         {
           "project": "python-llm-streaming",
           "lesson": "Stream provider output while application code owns interruption.",
-          "mechanisms": ["async handler", "state", "end"]
+          "mechanisms": ["node", "state", "run"]
         },
         {
           "project": "python-voice-chat",
           "lesson": "Connect speech input, response, and playback in a visible loop.",
-          "mechanisms": ["emit", "named link", "state"]
+          "mechanisms": ["emit", "named link", "max_activations"]
         },
         {
           "project": "python-visualization",
@@ -195,8 +210,8 @@
       "projects": [
         {
           "project": "python-chat",
-          "lesson": "Repeat a one-node conversation until a hard branch end.",
-          "mechanisms": ["named link", "state", "end"]
+          "lesson": "Repeat a one-node conversation until an ordinary leaf exit.",
+          "mechanisms": ["named link", "state", "max_activations"]
         },
         {
           "project": "python-chat-guardrail",
@@ -211,19 +226,39 @@
         {
           "project": "python-fastapi-hitl",
           "lesson": "Keep one short run alive while web requests deliver human feedback.",
-          "mechanisms": ["async handler", "state", "Flow"]
+          "mechanisms": ["async handler", "state", "max_activations"]
         }
       ]
     }
   ],
   "typescript": [
     {
-      "name": "TypeScript projects",
+      "name": "Start here",
       "projects": [
         {
-          "project": "typescript-chat",
-          "lesson": "Type shared state in a one-node loop with deliberate hard termination.",
-          "mechanisms": ["named link", "state", "end"]
+          "project": "typescript-hello-world",
+          "lesson": "Create one typed node, update shared state, and finish an ordinary leaf.",
+          "mechanisms": ["node", "state", "run"]
+        },
+        {
+          "project": "typescript-workflow",
+          "lesson": "Model a small three-step application as explicit topology.",
+          "mechanisms": ["node", "link", "Flow"]
+        },
+        {
+          "project": "typescript-inspection",
+          "lesson": "Inspect portable compiled topology and an explicit run result.",
+          "mechanisms": ["compile", "describe", "start"]
+        }
+      ]
+    },
+    {
+      "name": "Composition and failure",
+      "projects": [
+        {
+          "project": "typescript-retry-recovery",
+          "lesson": "Retry a complete handler and recover locally after attempts fail.",
+          "mechanisms": ["retry", "recover", "Failure"]
         },
         {
           "project": "typescript-batch",
@@ -231,14 +266,44 @@
           "mechanisms": ["emit", "end", "combine"]
         },
         {
+          "project": "typescript-nested-flow",
+          "lesson": "Run a multi-step nested worker concurrently and combine its results.",
+          "mechanisms": ["nested Flow", "concurrency", "combine"]
+        },
+        {
           "project": "typescript-resilient-batch",
           "lesson": "Recover a partial batch from settled terminal records.",
           "mechanisms": ["ScopeFailure", "terminals", "recover"]
+        }
+      ]
+    },
+    {
+      "name": "Agents and integrations",
+      "projects": [
+        {
+          "project": "typescript-chat",
+          "lesson": "Type shared state in a one-node loop with deliberate hard termination.",
+          "mechanisms": ["unlabelled link", "end", "maxActivations"]
         },
         {
           "project": "typescript-agent",
           "lesson": "Type state and branch input across a bounded search loop.",
           "mechanisms": ["emit", "input", "maxActivations"]
+        },
+        {
+          "project": "typescript-mcp",
+          "lesson": "Discover, validate, and invoke one MCP tool in a linear Flow.",
+          "mechanisms": ["async handler", "input", "validation"]
+        },
+        {
+          "project": "typescript-orchestrator-workers",
+          "lesson": "Freeze a dynamic plan, fan sections out, and integrate the results.",
+          "mechanisms": ["emit", "input", "combine"]
+        },
+        {
+          "project": "typescript-quality-loop",
+          "lesson": "Compose benchmarked component loops, integration, and final evaluation.",
+          "mechanisms": ["nested Flow", "combine", "maxActivations"]
         }
       ]
     }

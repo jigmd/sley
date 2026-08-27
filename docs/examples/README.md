@@ -18,17 +18,22 @@ other services alongside Sley.
 
 ## Start with the mechanism you need
 
-| Goal                       | Python                                                                                     | TypeScript                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| Provider-free next project | [Shared run state](https://github.com/jigmd/sley/tree/main/cookbook/python-communication)  | [Concurrent service checks](https://github.com/jigmd/sley/tree/main/cookbook/typescript-batch) |
-| Named routing and a loop   | [Research agent](https://github.com/jigmd/sley/tree/main/cookbook/python-agent)            | [Search agent](https://github.com/jigmd/sley/tree/main/cookbook/typescript-agent)              |
-| Fan-out and combine        | [Combine CSV chunks](https://github.com/jigmd/sley/tree/main/cookbook/python-batch-node)   | [Service checks](https://github.com/jigmd/sley/tree/main/cookbook/typescript-batch)            |
-| Partial-result recovery    | [Resilient batch](https://github.com/jigmd/sley/tree/main/cookbook/python-resilient-batch) | [Resilient batch](https://github.com/jigmd/sley/tree/main/cookbook/typescript-resilient-batch) |
-| Nested Flows               | [Reusable batch Flow](https://github.com/jigmd/sley/tree/main/cookbook/python-batch-flow)  | Start with the Python topology and the shared [Nested Flows lesson](../learn/nested-flows.md)  |
+| Goal                       | Python                                                                                                      | TypeScript                                                                                                   |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Provider-free next project | [Shared run state](https://github.com/jigmd/sley/tree/main/cookbook/python-communication)                   | [Hello world](https://github.com/jigmd/sley/tree/main/cookbook/typescript-hello-world)                       |
+| Retry and local recovery   | [Retry and recovery](https://github.com/jigmd/sley/tree/main/cookbook/python-node)                          | [Retry and recovery](https://github.com/jigmd/sley/tree/main/cookbook/typescript-retry-recovery)             |
+| Named routing and a loop   | [Research agent](https://github.com/jigmd/sley/tree/main/cookbook/python-agent)                             | [Search agent](https://github.com/jigmd/sley/tree/main/cookbook/typescript-agent)                            |
+| Fan-out and combine        | [Combine CSV chunks](https://github.com/jigmd/sley/tree/main/cookbook/python-batch-node)                    | [Service checks](https://github.com/jigmd/sley/tree/main/cookbook/typescript-batch)                          |
+| Partial-result recovery    | [Resilient batch](https://github.com/jigmd/sley/tree/main/cookbook/python-resilient-batch)                  | [Resilient batch](https://github.com/jigmd/sley/tree/main/cookbook/typescript-resilient-batch)               |
+| Nested Flows               | [Reusable batch Flow](https://github.com/jigmd/sley/tree/main/cookbook/python-batch-flow)                   | [Concurrent nested workers](https://github.com/jigmd/sley/tree/main/cookbook/typescript-nested-flow)         |
+| Dynamic decomposition      | [Orchestrator–workers–editor](https://github.com/jigmd/sley/tree/main/cookbook/python-orchestrator-workers) | [Orchestrator and workers](https://github.com/jigmd/sley/tree/main/cookbook/typescript-orchestrator-workers) |
+| Independent quality review | [Evaluator–optimizer supervisor](https://github.com/jigmd/sley/tree/main/cookbook/python-supervisor)        | [Bounded quality loop](https://github.com/jigmd/sley/tree/main/cookbook/typescript-quality-loop)             |
+| Blind candidate selection  | [Blind best-of-N judge](https://github.com/jigmd/sley/tree/main/cookbook/python-best-of-n-judge)            | Start with the Python topology                                                                               |
+| Reference parity capstone  | [Reference-grounded quality loop](https://github.com/jigmd/sley/tree/main/cookbook/python-quality-loop)     | [Bounded quality loop](https://github.com/jigmd/sley/tree/main/cookbook/typescript-quality-loop)             |
 
 The [Python catalog](python.md) covers the broadest set of application patterns.
-The smaller [TypeScript catalog](typescript.md) concentrates on agents,
-concurrent fan-out, and partial-result recovery.
+The [TypeScript catalog](typescript.md) provides a complete core path from one
+node through composition, recovery, integrations, and bounded quality loops.
 
 ## Read complexity as cognitive load
 

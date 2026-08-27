@@ -90,4 +90,6 @@ await generate(
   'Browse complete TypeScript projects by learning goal, Sley mechanism, and cognitive complexity.',
 )
 
-console.log('Generated catalogs for 37 Python and 4 TypeScript projects.')
+const pythonCount = (await projectDirectories('python')).length
+const typescriptCount = (await projectDirectories('typescript')).length
+console.log(`Generated catalogs for ${pythonCount} Python and ${typescriptCount} TypeScript projects.`)
