@@ -1,7 +1,8 @@
 import argparse
+import html
 import importlib
 import json
-import threading
+import re
 import webbrowser
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -127,9 +128,11 @@ def create_d3_visualization(data, output_dir, filename, html_title):
     directory.mkdir(parents=True, exist_ok=True)
     json_path = directory / f"{filename}.json"
     html_path = directory / f"{filename}.html"
-    json_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    json_path.write_text(f"{json.dumps(data, indent=2)}\n", encoding="utf-8")
     html_path.write_text(
-        HTML.replace("__TITLE__", html_title).replace("__JSON__", json_path.name),
+        HTML.replace("__TITLE__", html.escape(html_title)).replace(
+            "__JSON__", json_path.name
+        ),
         encoding="utf-8",
     )
     return str(html_path)
@@ -139,12 +142,16 @@ def serve_visualization(html_path, auto_open):
     path = Path(html_path).resolve()
     handler = partial(SimpleHTTPRequestHandler, directory=path.parent)
     server = ThreadingHTTPServer(("localhost", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
     url = f"http://localhost:{server.server_port}/{path.name}"
     if auto_open:
         webbrowser.open(url)
-    return thread, url
+    print(f"Serving visualization at {url}; press Ctrl+C to stop.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nVisualization server stopped.")
+    finally:
+        server.server_close()
 
 
 def visualize_flow(
@@ -156,15 +163,17 @@ def visualize_flow(
     html_title: str | None = None,
 ):
     print(build_mermaid(flow))
-    filename = flow_name.lower().replace(" ", "_")
+    filename = re.sub(r"[^a-z0-9_-]+", "_", flow_name.lower()).strip("_")
+    if not filename:
+        raise ValueError("flow_name must contain a letter or number")
     html_path = create_d3_visualization(
         flow_to_json(flow), output_dir, filename, html_title or flow_name
     )
     print(f"Visualization created at {html_path}")
     if not serve:
         return html_path
-    thread, url = serve_visualization(html_path, auto_open)
-    return html_path, thread, url
+    serve_visualization(html_path, auto_open)
+    return html_path
 
 
 def load_flow(module_name, variable):

@@ -22,9 +22,7 @@ state definition lives in `models.py`, leaving retry and recovery visible in
 ## Run
 
 ```bash
+export OPENAI_API_KEY="your-api-key"
 pip install -r requirements.txt
 python main.py
 ```
-
-Set your OpenAI API key in `utils/call_llm.py` before running against the live
-service.

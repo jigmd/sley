@@ -5,11 +5,15 @@ from openai import OpenAI
 
 
 def call_llm(prompt: str) -> str:
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     response = client.chat.completions.create(
-        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        model=os.environ.get("OPENAI_MODEL", "gpt-4o"),
+        messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content or ""
+    content = response.choices[0].message.content
+    if content is None:
+        raise RuntimeError("OpenAI returned no agent decision")
+    return content
 
 
 def search_web(query: str) -> str:

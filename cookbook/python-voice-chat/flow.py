@@ -6,4 +6,4 @@ transcribe.link(answer)
 answer.link(speak)
 speak.link(capture_audio, "next_turn")
 
-voice_chat = Flow(capture_audio)
+voice_chat = Flow(capture_audio, max_activations=400)

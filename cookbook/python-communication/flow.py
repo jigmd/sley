@@ -6,7 +6,7 @@ def build_flow() -> Flow:
     read_text.link(count_words, "count")
     count_words.link(show_stats, "show")
     show_stats.link(read_text, "continue")
-    return Flow(read_text)
+    return Flow(read_text, max_activations=150)
 
 
 word_counter = build_flow()

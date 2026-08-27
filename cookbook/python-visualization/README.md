@@ -26,6 +26,9 @@ interactive D3 view for exploring element and scope metadata. The visualization
 logic is intentionally more substantial than the sample graph: translating the
 portable description into useful developer tooling is the example's lesson.
 
+The command serves the generated files until you press Ctrl+C. Use
+`python visualize.py --no-serve` when you only want to write the artifacts.
+
 ## Run
 
 ```bash

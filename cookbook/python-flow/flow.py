@@ -50,4 +50,4 @@ def text_transform(context):
 text_input.link(text_transform)
 text_transform.link(text_input)
 
-flow = Flow(text_input)
+flow = Flow(text_input, max_activations=100)

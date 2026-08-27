@@ -7,6 +7,8 @@ def load_grades(context):
 
     with open(path) as grades_file:
         grades = [float(line.strip()) for line in grades_file]
+    if not grades:
+        raise ValueError(f"grade file is empty: {path}")
 
     context.emit("calculate", {**student, "grades": grades})
 

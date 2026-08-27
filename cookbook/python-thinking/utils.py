@@ -1,21 +1,16 @@
 import os
 
-from anthropic import Anthropic
+from anthropic import AsyncAnthropic
 
 
-def call_llm(prompt):
-    client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", "your-api-key"))
-    response = client.messages.create(
-        model="claude-3-7-sonnet-20250219",
-        max_tokens=6000,
+async def call_llm(prompt: str) -> str:
+    client = AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    response = await client.messages.create(
+        model=os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
+        max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.content[0].text
-
-
-if __name__ == "__main__":
-    print("## Testing call_llm")
-    prompt = "In a few words, what is the meaning of life?"
-    print(f"## Prompt: {prompt}")
-    response = call_llm(prompt)
-    print(f"## Response: {response}")
+    content = response.content[0]
+    if content.type != "text":
+        raise RuntimeError("Anthropic returned no text")
+    return content.text

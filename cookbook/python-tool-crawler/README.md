@@ -50,13 +50,16 @@ python-tool-crawler/
 
 ## Limitations
 
-- Only crawls within the same domain
-- Text content only (no images/media)
-- Rate limited by the OpenAI API
+- Crawls at most 25 pages from the exact starting origin; redirects are rejected.
+- Accepts only HTTP(S) URLs and rejects local or literal private addresses.
+- Reads at most one million characters per page and extracts text only.
+- Use it with public URLs you trust. Complete SSRF protection also requires
+  DNS and network policy at the application boundary.
+- Provider timeouts and rate-limit policy remain application concerns.
 
 ## Dependencies
 
 - Sley: Flow-based processing
 - Requests: HTTP requests
 - Beautiful Soup: HTML parsing
-- OpenAI: GPT-4 API access
+- OpenAI: page analysis

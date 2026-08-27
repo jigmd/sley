@@ -1,24 +1,27 @@
 import os
 
-import numpy as np
 from openai import OpenAI
 
 
 def call_llm(prompt):
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     response = client.chat.completions.create(
-        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        model=os.environ.get("OPENAI_MODEL", "gpt-4o"),
+        messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    if content is None:
+        raise RuntimeError("OpenAI returned no answer")
+    return content
 
 
 def get_embedding(text):
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     response = client.embeddings.create(
-        model="text-embedding-ada-002",
+        model=os.environ.get("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
         input=text,
     )
-    return np.array(response.data[0].embedding, dtype=np.float32)
+    return response.data[0].embedding
 
 
 def fixed_size_chunk(text, chunk_size=2000):
@@ -41,6 +44,6 @@ if __name__ == "__main__":
 
     oai_emb1 = get_embedding(text1)
     oai_emb2 = get_embedding(text2)
-    print(f"OpenAI Embedding 1 shape: {oai_emb1.shape}")
-    oai_similarity = np.dot(oai_emb1, oai_emb2)
+    print(f"OpenAI Embedding dimension: {len(oai_emb1)}")
+    oai_similarity = sum(left * right for left, right in zip(oai_emb1, oai_emb2))
     print(f"OpenAI similarity between texts: {oai_similarity:.4f}")

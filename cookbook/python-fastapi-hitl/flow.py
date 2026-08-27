@@ -6,7 +6,7 @@ process.link(review)
 review.link(show_result, "approved")
 review.link(process, "rejected")
 
-feedback_flow = Flow(process)
+feedback_flow = Flow(process, max_activations=20)
 
 
 def create_feedback_flow() -> Flow:

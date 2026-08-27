@@ -42,6 +42,14 @@
   and interactive exploration when they are part of what the example teaches.
 - Prompts whose responses are parsed by code must specify the exact response
   shape and validate required fields before changing state or control flow.
+- Every deliberate cycle must have an explicit Flow activation limit. Keep any
+  meaningful domain stop condition as well; the activation limit is its
+  independent graph-level backstop.
+- Provider examples must read credentials from the environment, fail clearly
+  when required configuration is absent, and allow model IDs to be overridden
+  without editing teaching code.
+- Generated example catalog lessons and mechanism labels must describe the
+  checked-in source, not an intended or older implementation.
 - TypeScript cookbook manifests must use the published `@jigging/sley` semver
   range so each project installs outside this repository; the root workspace
   may still prefer the matching local package during repository verification.

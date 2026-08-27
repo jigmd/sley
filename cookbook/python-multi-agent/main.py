@@ -44,8 +44,8 @@ async def guesser(context: Context) -> None:
 
 hinter.link(hinter, "continue")
 guesser.link(guesser, "continue")
-hinter_flow = Flow(hinter)
-guesser_flow = Flow(guesser)
+hinter_flow = Flow(hinter, max_activations=100)
+guesser_flow = Flow(guesser, max_activations=100)
 
 
 async def main() -> None:

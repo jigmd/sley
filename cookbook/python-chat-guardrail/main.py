@@ -99,7 +99,7 @@ read_question.link(validate_question, "validate")
 validate_question.link(read_question, "retry")
 validate_question.link(answer_question, "answer")
 answer_question.link(read_question, "continue")
-travel_chat = Flow(read_question)
+travel_chat = Flow(read_question, max_activations=300)
 
 
 async def main() -> None:

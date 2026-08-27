@@ -44,12 +44,29 @@ skill_indexes:
     required = {"name", "email", "experience", "skill_indexes"}
     if not isinstance(parsed, dict) or not required <= parsed.keys():
         raise ValueError("response is missing required resume fields")
-    if not isinstance(parsed["experience"], list):
-        raise TypeError("experience must be a list")
-    if not isinstance(parsed["skill_indexes"], list) or not all(
-        isinstance(index, int) for index in parsed["skill_indexes"]
+    if not all(
+        isinstance(parsed[field], str) and parsed[field].strip()
+        for field in ("name", "email")
     ):
-        raise ValueError("skill_indexes must be a list of integers")
+        raise ValueError("name and email must be non-empty text")
+    if not isinstance(parsed["experience"], list) or not all(
+        isinstance(item, dict)
+        and all(
+            isinstance(item.get(field), str) and item[field].strip()
+            for field in ("title", "company")
+        )
+        for item in parsed["experience"]
+    ):
+        raise TypeError("experience must contain title and company text")
+    if not isinstance(parsed["skill_indexes"], list) or not all(
+        isinstance(index, int)
+        and not isinstance(index, bool)
+        and 0 <= index < len(skills)
+        for index in parsed["skill_indexes"]
+    ):
+        raise ValueError("skill_indexes must refer to the supplied target skills")
+    if len(set(parsed["skill_indexes"])) != len(parsed["skill_indexes"]):
+        raise ValueError("skill_indexes must not contain duplicates")
 
     # Validate the complete model result before publishing it to run state.
     context.state["structured_data"] = parsed

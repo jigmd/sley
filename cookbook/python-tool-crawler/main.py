@@ -10,10 +10,14 @@ async def main():
         return
 
     max_pages = input("How many pages to crawl? (Enter a number): ")
+    try:
+        page_limit = int(max_pages) if max_pages else 10
+    except ValueError as error:
+        raise ValueError("page count must be an integer") from error
 
     initial_state = {
         "base_url": url,
-        "max_pages": int(max_pages) if max_pages else 10,
+        "max_pages": page_limit,
     }
 
     state = await create_flow().run(initial_state)

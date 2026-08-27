@@ -13,11 +13,12 @@ descriptions in run state; `decide_tool` sends one decision through
 
 ## Where MCP Ends and Sley Begins
 
-`simple_server.py` owns the external tool protocol and exposes `add` and
-`multiply`. The Sley Flow owns application order: discover the available
-tools, ask the model for a structured selection, then execute exactly that tool.
-This separation makes it possible to inspect the MCP server independently while
-keeping graph control visible in `main.py`.
+`simple_server.py` owns the external tool protocol and exposes `add`,
+`subtract`, `multiply`, and `divide`. The Sley Flow owns application order:
+discover the available tools, ask the model for a structured selection, validate
+the name and arguments against the discovered schema, then execute exactly that
+tool. This separation makes it possible to inspect the MCP server independently
+while keeping graph control visible in `main.py`.
 
 ## Run
 

@@ -6,4 +6,4 @@ generate_sql.link(execute_sql)
 execute_sql.link(debug_sql, "debug")
 debug_sql.link(execute_sql)
 
-text_to_sql_flow = Flow(get_schema)
+text_to_sql_flow = Flow(get_schema, max_activations=20)

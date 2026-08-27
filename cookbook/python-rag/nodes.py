@@ -1,5 +1,3 @@
-import faiss
-import numpy as np
 from utils import call_llm, fixed_size_chunk, get_embedding
 
 
@@ -22,35 +20,34 @@ def embed_documents(context):
 
 def create_index(context):
     print("🔍 Creating search index...")
-    embeddings = np.array(context.state["embeddings"], dtype=np.float32)
-    dimension = embeddings.shape[1]
-
-    index = faiss.IndexFlatL2(dimension)
-    index.add(embeddings)
-
-    context.state["index"] = index
-    print(f"✅ Index created with {index.ntotal} vectors")
+    context.state["index"] = context.state["embeddings"]
+    print(f"✅ Index created with {len(context.state['index'])} vectors")
 
 
 def embed_query(context):
     query = context.state["query"]
     print(f"🔍 Embedding query: {query}")
-    context.state["query_embedding"] = np.array(
-        [get_embedding(query)], dtype=np.float32
-    )
+    context.state["query_embedding"] = get_embedding(query)
 
 
 def retrieve_document(context):
     print("🔎 Searching for relevant documents...")
-    distances, indices = context.state["index"].search(
-        context.state["query_embedding"], k=1
-    )
-    best_index = indices[0][0]
+    query = context.state["query_embedding"]
+    if not context.state["index"]:
+        raise ValueError("cannot retrieve from an empty index")
+    if any(len(candidate) != len(query) for candidate in context.state["index"]):
+        raise ValueError("document and query embedding dimensions differ")
+    distances = [
+        sum((left - right) ** 2 for left, right in zip(query, candidate))
+        for candidate in context.state["index"]
+    ]
+    best_index = min(range(len(distances)), key=distances.__getitem__)
+    distance = distances[best_index]
 
     document = {
         "text": context.state["texts"][best_index],
         "index": best_index,
-        "distance": distances[0][0],
+        "distance": distance,
     }
     context.state["retrieved_document"] = document
 
@@ -68,6 +65,8 @@ def generate_answer(context):
 Briefly answer the following question based on the context provided:
 Question: {query}
 Context: {document["text"]}
+If the context does not answer the question, say that the supplied context is
+insufficient. Do not add unsupported facts.
 Answer:
 """
 

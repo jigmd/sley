@@ -25,7 +25,7 @@ def chat(context: Context) -> None:
 
 
 chat.link(chat, "continue")
-chat_flow = Flow(chat)
+chat_flow = Flow(chat, max_activations=100)
 
 
 async def main() -> None:

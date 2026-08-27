@@ -2,70 +2,57 @@
   "nodes": [
     {
       "id": 5,
-      "name": "Validate payment",
-      "group": 2
+      "name": "Validate payment"
     },
     {
       "id": 6,
-      "name": "Process payment",
-      "group": 2
+      "name": "Process payment"
     },
     {
       "id": 7,
-      "name": "Confirm payment",
-      "group": 2
+      "name": "Confirm payment"
     },
     {
       "id": 8,
-      "name": "Check stock",
-      "group": 3
+      "name": "Check stock"
     },
     {
       "id": 9,
-      "name": "Reserve items",
-      "group": 3
+      "name": "Reserve items"
     },
     {
       "id": 10,
-      "name": "Update inventory",
-      "group": 3
+      "name": "Update inventory"
     },
     {
       "id": 11,
-      "name": "Create label",
-      "group": 4
+      "name": "Create label"
     },
     {
       "id": 12,
-      "name": "Assign carrier",
-      "group": 4
+      "name": "Assign carrier"
     },
     {
       "id": 13,
-      "name": "Schedule pickup",
-      "group": 4
+      "name": "Schedule pickup"
     }
   ],
   "flows": [
     {
       "id": 1,
-      "name": "Order pipeline",
-      "group": null
+      "name": "Order pipeline"
     },
     {
       "id": 2,
-      "name": "Payment",
-      "group": 1
+      "name": "Payment"
     },
     {
       "id": 3,
-      "name": "Inventory",
-      "group": 1
+      "name": "Inventory"
     },
     {
       "id": 4,
-      "name": "Shipping",
-      "group": 1
+      "name": "Shipping"
     }
   ],
   "links": [

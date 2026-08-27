@@ -6,6 +6,44 @@ from sley import Context, Flow, node
 from utils import call_llm, call_tool, get_tools
 
 SERVER = "simple_server.py"
+JSON_TYPES = {
+    "string": str,
+    "integer": int,
+    "number": (int, float),
+    "boolean": bool,
+}
+
+
+def validate_decision(decision: object, tools: list) -> dict:
+    if not isinstance(decision, dict) or not {"tool", "parameters"} <= decision.keys():
+        raise ValueError("decision must contain tool and parameters")
+    if not isinstance(decision["tool"], str) or not isinstance(
+        decision["parameters"], dict
+    ):
+        raise TypeError("tool must be text and parameters must be a mapping")
+
+    available = {tool.name: tool for tool in tools}
+    if decision["tool"] not in available:
+        raise ValueError("decision selected a tool that was not discovered")
+    schema = available[decision["tool"]].inputSchema
+    parameters = decision["parameters"]
+    properties = schema.get("properties", {})
+    missing = set(schema.get("required", [])) - parameters.keys()
+    if missing:
+        raise ValueError(f"tool parameters are missing: {', '.join(sorted(missing))}")
+    if schema.get("additionalProperties") is False:
+        unknown = parameters.keys() - properties.keys()
+        if unknown:
+            raise ValueError(f"unknown tool parameters: {', '.join(sorted(unknown))}")
+    for name, value in parameters.items():
+        expected_name = properties.get(name, {}).get("type")
+        expected = JSON_TYPES.get(expected_name)
+        if expected and (
+            not isinstance(value, expected)
+            or (expected_name in {"integer", "number"} and isinstance(value, bool))
+        ):
+            raise TypeError(f"tool parameter {name!r} must be {expected_name}")
+    return decision
 
 
 @node
@@ -42,8 +80,7 @@ parameters:
     if "```yaml" not in response:
         raise ValueError("decision must contain a YAML block")
     decision = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
-    if not isinstance(decision, dict) or not {"tool", "parameters"} <= decision.keys():
-        raise ValueError("decision must contain tool and parameters")
+    decision = validate_decision(decision, context.state["tools"])
 
     print(f"💡 Selected tool: {decision['tool']}")
     print(f"🔢 Extracted parameters: {decision['parameters']}")

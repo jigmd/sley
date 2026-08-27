@@ -15,7 +15,9 @@ def create_base_flow():
 def dispatch_class(context):
     class_name = context.input["item"]
     class_path = os.path.join("school", class_name)
-    students = [name for name in os.listdir(class_path) if name.endswith(".txt")]
+    students = sorted(name for name in os.listdir(class_path) if name.endswith(".txt"))
+    if not students:
+        raise ValueError(f"class has no student grade files: {class_name}")
 
     print(f"Processing {class_name}...")
     # These branches belong to this class Flow, so it joins only this class's students.
@@ -45,11 +47,13 @@ def create_class_flow():
 
 
 def dispatch_school(context):
-    classes = [
+    classes = sorted(
         name
         for name in os.listdir("school")
         if os.path.isdir(os.path.join("school", name))
-    ]
+    )
+    if not classes:
+        raise ValueError("school has no class directories")
 
     for class_name in classes:
         context.emit("class", {"item": class_name})

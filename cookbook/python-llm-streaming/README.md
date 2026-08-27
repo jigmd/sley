@@ -2,11 +2,11 @@
 complexity: 4
 ---
 
-# LLM Streaming and Interruption
+# Stream an LLM Response
 
-One Sley node prints an OpenAI stream while a small listener thread waits for
-ENTER. The example keeps user-driven stream interruption inside the tool code;
-the Flow itself remains a normal one-node workflow.
+One Sley node prints an OpenAI stream as chunks arrive. The provider iterator
+and Ctrl+C interruption stay inside the handler; the Flow remains a normal
+one-node workflow.
 
 ## Run
 
@@ -16,4 +16,6 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Press ENTER while text is streaming to stop reading further chunks.
+Press Ctrl+C while text is streaming to stop reading further chunks. A normal
+completed response exits immediately; there is no background input thread to
+keep the process alive.

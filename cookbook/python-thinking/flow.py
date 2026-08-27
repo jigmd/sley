@@ -1,13 +1,11 @@
-from nodes import chain_of_thought
+from nodes import refine_plan
 from sley import Flow, RetryPolicy, node
 
 
-def create_chain_of_thought_flow():
-    thought = node(
-        chain_of_thought,
-        retry=RetryPolicy(max_attempts=3, delay_ms=10_000),
+def create_refinement_flow() -> Flow:
+    refine = node(
+        refine_plan,
+        retry=RetryPolicy(max_attempts=3, delay_ms=1_000),
     )
-
-    thought.link(thought, "continue")
-
-    return Flow(thought, max_activations=50)
+    refine.link(refine, "continue")
+    return Flow(refine, max_activations=4)

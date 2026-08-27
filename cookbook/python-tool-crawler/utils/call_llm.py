@@ -1,30 +1,20 @@
-from openai import OpenAI
 import os
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from openai import OpenAI
+
 
 def call_llm(prompt: str) -> str:
-    """Call OpenAI API to analyze text
-    
-    Args:
-        prompt (str): Input prompt for the model
-        
-    Returns:
-        str: Model response
-    """
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.choices[0].message.content
-        
-    except Exception as e:
-        print(f"Error calling LLM API: {str(e)}")
-        return ""
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    response = client.chat.completions.create(
+        model=os.environ.get("OPENAI_MODEL", "gpt-4o"),
+        messages=[{"role": "user", "content": prompt}],
+    )
+    content = response.choices[0].message.content
+    if content is None:
+        raise RuntimeError("OpenAI returned no page analysis")
+    return content
+
 
 if __name__ == "__main__":
-    # Test LLM call
     response = call_llm("What is web crawling?")
     print("Response:", response)

@@ -5,7 +5,8 @@ complexity: 4.5
 # Combine CSV Chunks
 
 This example processes a sales CSV in chunks and combines their statistics into
-one result.
+one result. It uses the standard-library CSV reader so the graph mechanism is
+not hidden behind a dataframe dependency.
 
 ## Run
 

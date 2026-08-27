@@ -2,11 +2,15 @@ import os
 
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
 
 def call_llm(prompt: str) -> str:
     response = client.chat.completions.create(
-        model="gpt-4o", messages=[{"role": "user", "content": prompt}]
+        model=os.environ.get("OPENAI_MODEL", "gpt-4o"),
+        messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content or ""
+    content = response.choices[0].message.content
+    if content is None:
+        raise RuntimeError("OpenAI returned no search analysis")
+    return content

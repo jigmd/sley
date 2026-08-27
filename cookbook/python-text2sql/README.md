@@ -16,7 +16,12 @@ get_schema --> generate_sql --> execute_sql
 An SQLite error emits `"debug"`; the corrected query follows another
 unlabelled link back to `execute_sql`. A successful execution emits nothing, so
 it leaves the Flow normally. The application-level attempt count prevents an
-endless repair loop.
+endless repair loop, and `max_activations` is the graph-level backstop.
+
+The parser accepts one `SELECT` or `WITH` statement. Execution opens SQLite in
+read-only, `query_only` mode and caps displayed results at 100 rows. These small
+guards keep the example's generated query from changing the sample database;
+they are application policy, not behavior supplied by Sley.
 
 ## Why the Repair Loop Is Visible
 

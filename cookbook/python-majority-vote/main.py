@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 from collections import Counter
+from fractions import Fraction
 
 import yaml
 from sley import Context, Flow, ScopeResult, node
@@ -21,7 +22,6 @@ Answer this question:
 
 Return strictly using the following YAML structure:
 ```yaml
-thinking: your reasoning
 answer: 0.123
 ```
 """
@@ -31,17 +31,38 @@ answer: 0.123
     parsed = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
     if not isinstance(parsed, dict) or "answer" not in parsed:
         raise ValueError("response is missing answer")
-    context.end(str(parsed["answer"]))
+    answer = parsed["answer"]
+    if isinstance(answer, bool) or not isinstance(answer, (str, int, float)):
+        raise TypeError("answer must be text or a number")
+    display = str(answer).strip()
+    if not display:
+        raise ValueError("answer cannot be empty")
+    context.end(display)
+
+
+def vote_key(answer: str) -> tuple[str, object]:
+    try:
+        return "number", Fraction(answer)
+    except ValueError:
+        return "text", " ".join(answer.casefold().split())
 
 
 def choose_majority(context: Context, result: ScopeResult) -> None:
     answers = list(result.outputs)
-    best_answer, frequency = Counter(answers).most_common(1)[0]
+    if not answers:
+        raise ValueError("majority vote needs at least one answer")
+
+    keys = [vote_key(answer) for answer in answers]
+    best_key, frequency = Counter(keys).most_common(1)[0]
+    best_answer = next(answer for answer, key in zip(answers, keys) if key == best_key)
+    has_majority = frequency > len(answers) / 2
+    if not has_majority:
+        best_answer = None
     context.state["majority_answer"] = best_answer
 
     print("========================")
     print("All structured answers:", answers)
-    print("Majority vote =>", best_answer)
+    print("Majority vote =>", best_answer if has_majority else "no majority")
     print("Frequency =>", frequency)
     print("========================")
 

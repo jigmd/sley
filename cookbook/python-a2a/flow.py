@@ -5,4 +5,4 @@ decide.link(search, "search")
 decide.link(answer, "answer")
 search.link(decide, "decide")
 
-agent_flow = Flow(decide)
+agent_flow = Flow(decide, max_activations=20)

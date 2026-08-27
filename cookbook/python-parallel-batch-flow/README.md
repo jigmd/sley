@@ -18,6 +18,11 @@ Only the owning Flow's local concurrency cap changes. Fresh node occurrences are
 created for each graph because links belong to occurrences, not handler
 functions.
 
+Image reads, transforms, and writes use `asyncio.to_thread`, so async handlers
+yield while blocking library work runs outside the event-loop thread. Increasing
+Flow concurrency would not create useful overlap if those calls blocked the
+event loop directly.
+
 ## Run
 
 ```bash

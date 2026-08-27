@@ -4,9 +4,9 @@ from openai import OpenAI
 
 
 def text_to_speech_api(text: str) -> bytes:
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     response = client.audio.speech.create(
-        model="gpt-4o-mini-tts",
+        model=os.environ.get("OPENAI_TTS_MODEL", "gpt-4o-mini-tts"),
         voice="alloy",  # Other voices include echo, fable, onyx, nova, and shimmer.
         input=text,
         response_format="mp3",  # Opus, AAC, and FLAC are also available.

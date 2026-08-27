@@ -79,7 +79,7 @@ def archive_memory(context: Context) -> None:
 
     index = context.state.get("vector_index")
     if index is None:
-        index = create_index()
+        index = create_index(len(embedding))
         context.state["vector_index"] = index
     conversations = context.state.setdefault("vector_items", [])
     position = add_vector(index, embedding)

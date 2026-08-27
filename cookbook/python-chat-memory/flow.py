@@ -7,4 +7,4 @@ answer_question.link(read_question, "continue")
 answer_question.link(archive_memory, "archive")
 archive_memory.link(read_question, "continue")
 
-chat_flow = Flow(read_question)
+chat_flow = Flow(read_question, max_activations=400)

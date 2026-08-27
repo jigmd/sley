@@ -22,6 +22,7 @@
       <div id="review-section" class="hidden review-box">
         <h3>Review Output</h3>
         <pre id="review-output"></pre>
+        <textarea id="revision-instructions" rows="2" placeholder="Required when rejecting: what should change?"></textarea>
         <button id="approve-button" class="feedback-button approve">Approve</button>
         <button id="reject-button" class="feedback-button reject">Reject</button>
       </div>
@@ -39,6 +40,7 @@
       const statusDisplay = document.getElementById('status-display')
       const reviewSection = document.getElementById('review-section')
       const reviewOutput = document.getElementById('review-output')
+      const revisionInstructions = document.getElementById('revision-instructions')
       const approveButton = document.getElementById('approve-button')
       const rejectButton = document.getElementById('reject-button')
       const resultSection = document.getElementById('result-section')
@@ -156,6 +158,10 @@
 
       async function handleFeedback(feedbackValue) {
         if (!currentTaskId) return
+        const instructions = revisionInstructions.value.trim()
+        if (feedbackValue === 'rejected' && !instructions) {
+          return alert('Describe what should change before rejecting.')
+        }
         approveButton.disabled = true
         rejectButton.disabled = true
         statusDisplay.textContent = `Sending ${feedbackValue}...` // Optimistic UI update
@@ -164,12 +170,12 @@
           const response = await fetch(`/feedback/${currentTaskId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ feedback: feedbackValue }),
+            body: JSON.stringify({ feedback: feedbackValue, instructions: instructions || null }),
           })
           if (!response.ok) {
             // Rely on SSE for status change or error reporting
             const errorData = await response.json().catch(() => ({ error: `Feedback failed: ${response.status}` }))
-            throw new Error(errorData.error)
+            throw new Error(errorData.detail || errorData.error)
           }
           console.log(`Feedback ${feedbackValue} POST successful.`)
           // Successful POST - wait for SSE to update status to 'processing', then 'running' etc.
@@ -190,6 +196,7 @@
         reviewSection.classList.add('hidden')
         resultSection.classList.add('hidden')
         taskInput.value = ''
+        revisionInstructions.value = ''
         submitButton.disabled = false
         approveButton.disabled = false
         rejectButton.disabled = false

@@ -1,3 +1,5 @@
+import os
+
 from PIL import Image
 from tools.pdf import image_to_base64
 from utils.call_llm import client
@@ -6,7 +8,7 @@ from utils.call_llm import client
 def extract_text_from_image(image: Image.Image, prompt: str) -> str:
     encoded = image_to_base64(image)
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o"),
         messages=[
             {
                 "role": "user",
@@ -20,4 +22,7 @@ def extract_text_from_image(image: Image.Image, prompt: str) -> str:
             }
         ],
     )
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    if content is None:
+        raise RuntimeError("OpenAI returned no vision result")
+    return content

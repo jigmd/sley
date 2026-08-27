@@ -1,29 +1,30 @@
-import sys
+import argparse
 
-from flow import create_chain_of_thought_flow
+from flow import create_refinement_flow
 
 
-async def main():
+def arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("problem", nargs="?")
+    parser.add_argument("--max-iterations", type=int, default=4)
+    return parser.parse_args()
+
+
+async def main() -> None:
     default_question = "You keep rolling a fair die until you roll three, four, five in that order consecutively on three rolls. What is the probability that you roll the die an odd number of times?"
+    args = arguments()
+    if not 1 <= args.max_iterations <= 4:
+        raise ValueError("--max-iterations must be between 1 and 4")
+    question = args.problem or default_question
+    print(f"Refining a plan for: {question}")
 
-    question = default_question
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            question = arg[2:]
-            break
-
-    print(f"🤔 Processing question: {question}")
-
-    cot_flow = create_chain_of_thought_flow()
     initial_state = {
         "problem": question,
-        "thoughts": [],
-        "current_thought_number": 0,
-        "total_thoughts_estimate": 10,
+        "max_iterations": args.max_iterations,
+        "iterations": [],
         "solution": None,
     }
-
-    await cot_flow.run(initial_state)
+    await create_refinement_flow().run(initial_state)
 
 
 if __name__ == "__main__":

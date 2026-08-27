@@ -2,6 +2,7 @@ import asyncio
 import json
 import uuid
 from pathlib import Path
+from typing import Literal
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -27,7 +28,8 @@ class SubmitResponse(BaseModel):
 
 
 class FeedbackRequest(BaseModel):
-    feedback: str
+    feedback: Literal["approved", "rejected"]
+    instructions: str | None = None
 
 
 async def run_flow_background(task_id: str) -> None:
@@ -41,6 +43,7 @@ async def run_flow_background(task_id: str) -> None:
                 "task_input": task["input"],
                 "review": task["review"],
                 "sse_queue": queue,
+                "max_revisions": 3,
             }
         )
         task["state"] = state
@@ -62,10 +65,13 @@ async def get_index(request: Request):
     "/submit", response_model=SubmitResponse, status_code=status.HTTP_202_ACCEPTED
 )
 async def submit_task(request: SubmitRequest, background: BackgroundTasks):
+    task_input = request.data.strip()
+    if not task_input:
+        raise HTTPException(status_code=422, detail="Task input cannot be blank")
     task_id = str(uuid.uuid4())
     tasks[task_id] = {
-        "input": request.data,
-        "review": {"event": asyncio.Event(), "feedback": None},
+        "input": task_input,
+        "review": {"event": asyncio.Event(), "feedback": None, "waiting": False},
         "queue": asyncio.Queue(),
         "status": "pending",
     }
@@ -78,17 +84,22 @@ async def submit_task(request: SubmitRequest, background: BackgroundTasks):
 async def provide_feedback(task_id: str, request: FeedbackRequest):
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
-    if request.feedback not in {"approved", "rejected"}:
-        raise HTTPException(
-            status_code=422, detail="Feedback must be approved or rejected"
-        )
-
     task = tasks[task_id]
     channel = task["review"]
+    if not channel["waiting"]:
+        raise HTTPException(status_code=409, detail="Task is not awaiting feedback")
     if channel["event"].is_set():
         raise HTTPException(status_code=409, detail="Feedback already submitted")
+    instructions = request.instructions.strip() if request.instructions else None
+    if request.feedback == "rejected" and not instructions:
+        raise HTTPException(
+            status_code=422, detail="Rejected work needs revision instructions"
+        )
 
-    channel["feedback"] = request.feedback
+    channel["feedback"] = {
+        "decision": request.feedback,
+        "instructions": instructions,
+    }
     await task["queue"].put(
         {"status": "processing_feedback", "feedback_value": request.feedback}
     )
