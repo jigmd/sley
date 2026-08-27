@@ -1,0 +1,35 @@
+title: Branching Script Migration Note
+slice: A two-section note for a developer deciding whether to adopt Sley.
+foundation:
+  audience: A Python or TypeScript developer with a branching in-process workflow.
+  voice: Direct, concrete, and candid about boundaries.
+  shared_claim: Use a graph only when it makes meaningful workflow paths easier to see.
+dimensions:
+  - name: correctness
+    priority: 1
+  - name: decision usefulness
+    priority: 2
+  - name: clarity
+    priority: 3
+acceptance:
+  comparisons: 3
+  required_wins: 2
+  max_component_attempts: 3
+  max_integration_attempts: 3
+components:
+  - id: boundary
+    goal: Explain what Sley owns and what remains application-owned.
+    required_phrases:
+      - in-process
+      - persistence
+    reference: |
+      Sley schedules an in-process graph. Your application still owns persistence,
+      provider timeouts, shared rate limits, and work that must survive process loss.
+  - id: topology
+    goal: Explain when a graph improves a normal program.
+    required_phrases:
+      - ordinary function
+      - named links
+    reference: |
+      Start with an ordinary function. Add named links when decisions, repeated work,
+      fan-out, or joins become easier to understand as visible topology.

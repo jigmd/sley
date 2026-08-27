@@ -11,5 +11,5 @@ async def call_llm(prompt: str) -> str:
     )
     content = response.choices[0].message.content
     if content is None:
-        raise RuntimeError("OpenAI returned no supervisor result")
+        raise RuntimeError("OpenAI returned no quality-loop result")
     return content

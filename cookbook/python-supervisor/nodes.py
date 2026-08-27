@@ -1,133 +1,110 @@
-import random
-
 import yaml
-from utils import call_llm, search_web
+from sley import Context
+from utils import call_llm
 
 
-async def decide_action(context):
-    shared = context.state
-    question = shared["question"]
-    research = shared.get("context", "No previous search")
+def _yaml_block(response: str) -> dict:
+    if "```yaml" not in response:
+        raise ValueError("evaluation must contain a YAML block")
+    parsed = yaml.safe_load(response.split("```yaml", 1)[1].split("```", 1)[0])
+    if not isinstance(parsed, dict):
+        raise TypeError("evaluation must be a YAML object")
+    return parsed
 
-    print("🤔 Agent deciding what to do next...")
-    prompt = f"""
-### CONTEXT
-You are a research assistant that can search the web.
-Question: {question}
-Previous Research: {research}
 
-### ACTION SPACE
-[1] search
-  Description: Look up more information on the web
-  Parameters:
-    - query (str): What to search for
+async def build_candidate(context: Context) -> None:
+    state = context.state
+    state["attempt"] += 1
+    feedback = state.get("feedback") or "No previous feedback."
+    state["candidate"] = await call_llm(
+        f"""
+Write a customer-facing incident update from the supplied facts.
 
-[2] answer
-  Description: Answer the question with current knowledge
-  Parameters:
-    - answer (str): Final answer to the question
+Facts:
+{state["facts"]}
 
-## NEXT ACTION
-Decide the next action based on the context and available actions.
-Return your response in this format:
+Quality rubric:
+{state["rubric"]}
 
+Evaluator feedback from the previous attempt:
+{feedback}
+
+Do not invent facts. Return only the incident update.
+"""
+    )
+    print(f"Builder produced attempt {state['attempt']}")
+    context.emit("candidate")
+
+
+async def evaluate_candidate(context: Context) -> None:
+    state = context.state
+    response = await call_llm(
+        f"""
+Act as an independent evaluator. You did not build the candidate.
+
+Facts:
+{state["facts"]}
+
+Quality rubric:
+{state["rubric"]}
+
+Candidate:
+{state["candidate"]}
+
+Return exactly this YAML structure:
 ```yaml
-thinking: |
-    <your step-by-step reasoning process>
-action: search OR answer
-reason: <why you chose this action>
-search_query: <specific search query if action is search>
+verdict: approved | revise | unreachable
+summary: one sentence
+findings:
+  - criterion: rubric criterion
+    evidence: exact observable evidence from the candidate
+    requested_change: the smallest change that would satisfy the criterion
 ```
 
-IMPORTANT: Make sure to:
-1. Use proper indentation (4 spaces) for all multi-line fields
-2. Use the | character for multi-line text fields
-3. Keep single-line fields without the | character
-4. Your answer must be wrapped in yaml code block or it will result in an error. Do not forget to include the ```yaml sequence at the beginning and end it with ```.
+Use `approved` only when every rubric criterion passes. Use `unreachable` only
+when the supplied facts make the rubric impossible to satisfy. For an approved
+candidate, return an empty `findings` list.
 """
+    )
+    evaluation = _yaml_block(response)
+    verdict = evaluation.get("verdict")
+    findings = evaluation.get("findings")
+    if verdict not in {"approved", "revise", "unreachable"}:
+        raise ValueError("verdict must be approved, revise, or unreachable")
+    if not isinstance(evaluation.get("summary"), str) or not isinstance(findings, list):
+        raise TypeError("evaluation is missing summary or findings")
+    for finding in findings:
+        if not isinstance(finding, dict) or any(
+            not isinstance(finding.get(field), str) or not finding[field].strip()
+            for field in ("criterion", "evidence", "requested_change")
+        ):
+            raise ValueError(
+                "each finding needs criterion, evidence, and requested_change"
+            )
 
-    response = call_llm(prompt)
-    assert "```yaml" in response, "Response must contain yaml block"
-
-    yaml_text = response.split("```yaml")[1].split("```")[0].strip()
-    decision = yaml.safe_load(yaml_text)
-
-    if decision["action"] == "search":
-        shared["search_query"] = decision["search_query"]
-        print(f"🔍 Agent decided to search for: {decision['search_query']}")
-    else:
-        print("💡 Agent decided to answer the question")
-
-    context.emit(decision["action"])
-
-
-async def search(context):
-    shared = context.state
-    query = shared["search_query"]
-
-    print(f"🌐 Searching the web for: {query}")
-    results = search_web(query)
-
-    previous = shared.get("context", "")
-    shared["context"] = previous + "\n\nSEARCH: " + query + "\nRESULTS: " + results
-    print("📚 Found information, analyzing results...")
-    context.emit("decide")
-
-
-async def answer_unreliably(context):
-    shared = context.state
-
-    if random.random() < 0.5:
-        print("🤪 Generating unreliable dummy answer...")
-        answer = (
-            "Sorry, I'm on a coffee break right now. All information I provide "
-            "is completely made up anyway. The answer to your question is 42, "
-            "or maybe purple unicorns. Who knows? Certainly not me!"
-        )
-    else:
-        print("✍️ Crafting final answer...")
-        prompt = f"""
-### CONTEXT
-Based on the following information, answer the question.
-Question: {shared["question"]}
-Research: {shared.get("context", "")}
-
-## YOUR ANSWER:
-Provide a comprehensive answer using the research results.
-"""
-        answer = call_llm(prompt)
-
-    shared["answer"] = answer
-    print("✅ Answer generated successfully")
-    # Emitting nothing exits the inner Flow and reaches the supervisor.
-
-
-async def supervise(context):
-    shared = context.state
-    answer = shared["answer"]
-
-    print("    🔍 Supervisor checking answer quality...")
-    nonsense_markers = [
-        "coffee break",
-        "purple unicorns",
-        "made up",
-        "42",
-        "Who knows?",
-    ]
-    is_nonsense = any(marker in answer for marker in nonsense_markers)
-
-    if not is_nonsense:
-        print("    ✅ Supervisor approved answer: Answer appears to be legitimate")
-        # Emitting nothing exits the outer Flow and completes the run.
+    state["evaluation"] = evaluation
+    if verdict == "approved":
+        print("Evaluator approved candidate")
+        context.emit("approved")
         return
 
-    print(
-        "    ❌ Supervisor rejected answer: "
-        "Answer appears to be nonsensical or unhelpful"
+    if verdict == "unreachable":
+        state["stop_reason"] = "The evaluator found the rubric unreachable."
+        print("Evaluator stopped: unreachable rubric")
+        context.emit("stopped")
+        return
+
+    if state["attempt"] >= state["max_attempts"]:
+        state["stop_reason"] = "The revision budget was exhausted."
+        print("Evaluator stopped: revision budget exhausted")
+        context.emit("stopped")
+        return
+
+    if not findings:
+        raise ValueError("a revise verdict needs at least one finding")
+    state["feedback"] = yaml.safe_dump(
+        {"summary": evaluation["summary"], "findings": findings},
+        sort_keys=False,
     )
-    shared["answer"] = None
-    previous = shared.get("context", "")
-    shared["context"] = (
-        previous + "\n\nNOTE: Previous answer attempt was rejected by supervisor."
-    )
-    context.emit("retry")
+    print("Evaluator requested a revision")
+    context.emit("revise")

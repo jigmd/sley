@@ -1,26 +1,31 @@
-import sys
+import asyncio
 
-from flow import create_agent_flow
+from flow import supervisor_flow
 
 
-async def main():
-    default_question = "Who won the Nobel Prize in Physics 2024?"
+async def main() -> None:
+    state = await supervisor_flow.run(
+        {
+            "facts": """\
+- Checkout was unavailable from 14:05 to 14:23 UTC.
+- Deployments are paused while the team investigates.
+- There is no evidence of lost orders.
+- The next update will be posted at 15:00 UTC.""",
+            "rubric": """\
+1. State the affected service and exact time window.
+2. Separate confirmed impact from what remains under investigation.
+3. State the next action or update time.
+4. Use no facts beyond those supplied.""",
+            "attempt": 0,
+            "max_attempts": 3,
+        }
+    )
 
-    question = default_question
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            question = arg[2:]
-            break
-
-    agent_flow = create_agent_flow()
-
-    print(f"🤔 Processing question: {question}")
-    state = await agent_flow.run({"question": question})
-    print("\n🎯 Final Answer:")
-    print(state.get("answer", "No answer found"))
+    print("\nFinal candidate:")
+    print(state["candidate"])
+    if "stop_reason" in state:
+        print(f"\nStopped: {state['stop_reason']}")
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())
